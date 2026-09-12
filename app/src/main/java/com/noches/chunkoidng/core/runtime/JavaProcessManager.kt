@@ -26,7 +26,20 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
     /**
      * Executes the CLI jar with arguments and streams the output log in real-time.
      */
-    fun runCliJar(jarFile: File, vararg arguments: String): Flow<String> = flow {
+    fun runCliJar(jarFile: File, vararg arguments: String): Flow<String> {
+        return runCliJarAdvanced(jarFile, emptyList(), arguments.toList())
+    }
+
+    /**
+     * Executes the CLI jar with custom JVM options and CLI arguments.
+     * Supports cooperative coroutine cancellation and process handles.
+     */
+    fun runCliJarAdvanced(
+        jarFile: File,
+        jvmOptions: List<String> = emptyList(),
+        cliArguments: List<String> = emptyList(),
+        onProcessCreated: ((Process) -> Unit)? = null
+    ): Flow<String> = flow {
         if (!runtimeEnv.isRootfsReady()) {
             emit("[SYSTEM] Error: RootFS environment is not ready.")
             return@flow
@@ -41,45 +54,40 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         val args = mutableListOf(
             "-Xms256m",
             "-Xmx${maxMemoryMB}m",
-            "-Djava.io.tmpdir=${context.cacheDir.absolutePath}", // Fix for modern Android
-            "-jar",
-            jarFile.absolutePath
+            "-Djava.io.tmpdir=${context.cacheDir.absolutePath}"
         )
-        args.addAll(arguments)
+        args.addAll(jvmOptions)
+        args.add("-jar")
+        args.add(jarFile.absolutePath)
+        args.addAll(cliArguments)
 
-        val cmd = mutableListOf(javaBin.absolutePath)
+        val linker = if (Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()) "/system/bin/linker64" else "/system/bin/linker"
+        val cmd = mutableListOf(linker, javaBin.absolutePath)
         cmd.addAll(args)
 
-        var pb = ProcessBuilder(cmd)
+        val pb = ProcessBuilder(cmd)
         setupEnvironment(pb.environment())
         pb.directory(context.filesDir)
         pb.redirectErrorStream(true)
 
         var process: Process? = null
         try {
-            Log.d(TAG, "Starting Java process directly...")
             process = pb.start()
+            onProcessCreated?.invoke(process)
         } catch (e: Exception) {
-            if (e.message?.contains("Permission denied") == true) {
-                emit("[SYSTEM] Direct execution denied. Attempting fallback via linker...")
-                Log.d(TAG, "Permission denied, trying with linker")
-                val linker = if (Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()) "/system/bin/linker64" else "/system/bin/linker"
-                val fallbackCmd = mutableListOf(linker, javaBin.absolutePath)
-                fallbackCmd.addAll(args)
-                pb = ProcessBuilder(fallbackCmd)
-                setupEnvironment(pb.environment())
-                pb.directory(context.filesDir)
-                pb.redirectErrorStream(true)
-                try {
-                    process = pb.start()
-                } catch (ex: Exception) {
-                    emit("[SYSTEM] Critical Error: Failed to start process even with linker.")
-                    emit(ex.stackTraceToString())
-                    return@flow
-                }
-            } else {
-                emit("[SYSTEM] Critical Error: Failed to start process.")
-                emit(e.stackTraceToString())
+            // If linker call fails directly, try direct binary execution as fallback
+            try {
+                val directCmd = mutableListOf(javaBin.absolutePath)
+                directCmd.addAll(args)
+                val directPb = ProcessBuilder(directCmd)
+                setupEnvironment(directPb.environment())
+                directPb.directory(context.filesDir)
+                directPb.redirectErrorStream(true)
+                process = directPb.start()
+                onProcessCreated?.invoke(process)
+            } catch (ex: Exception) {
+                emit("[SYSTEM] Critical Error: Failed to start Java process: ${e.message}")
+                emit(ex.stackTraceToString())
                 return@flow
             }
         }

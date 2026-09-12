@@ -34,11 +34,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,19 +43,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
 @Composable
 fun SettingsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = viewModel()
 ) {
-    var dynamicColorEnabled by remember { mutableStateOf(true) }
-    var wakeLockEnabled by remember { mutableStateOf(true) }
-    var lowRamModeEnabled by remember { mutableStateOf(false) }
-    var keepOriginalNbt by remember { mutableStateOf(false) }
-    var vibrationEnabled by remember { mutableStateOf(true) }
-    var maxMemoryMb by remember { mutableFloatStateOf(4096f) }
+    val uiState by viewModel.uiState.collectAsState()
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -67,7 +61,7 @@ fun SettingsScreen(
     ) {
         // 1. UI Appearance
         item {
-            SettingsCategoryHeader(title = "ç•Œé¢ä¸å¤–è§‚ (Appearance)")
+            SettingsCategoryHeader(title = "½çÃæÓëÍâ¹Û (Appearance)")
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -77,10 +71,10 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Palette,
-                        title = "åŠ¨æ€å–è‰² (Monet / Dynamic Color)",
-                        subtitle = "è·Ÿéšç³»ç»Ÿå£çº¸è‰²è°ƒè‡ªåŠ¨é€‚é… MD3 ä¸»é¢˜å®¹å™¨é¢œè‰²",
-                        checked = dynamicColorEnabled,
-                        onCheckedChange = { dynamicColorEnabled = it }
+                        title = "¶¯Ì¬È¡É« (Monet / Dynamic Color)",
+                        subtitle = "¸úËæÏµÍ³±ÚÖ½É«µ÷×Ô¶¯ÊÊÅä MD3 Ö÷ÌâÈİÆ÷ÑÕÉ«",
+                        checked = uiState.dynamicColorEnabled,
+                        onCheckedChange = { viewModel.updateDynamicColor(it) }
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 12.dp),
@@ -88,8 +82,8 @@ fun SettingsScreen(
                     )
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Brightness4,
-                        title = "æ·±è‰²æ¨¡å¼è·Ÿéšç³»ç»Ÿ",
-                        subtitle = "ä¾æ® Android ç³»ç»Ÿçš„æ·±æµ…è‰²æ¨¡å¼è‡ªåŠ¨åˆ‡æ¢ç•Œé¢",
+                        title = "ÉîÉ«Ä£Ê½¸úËæÏµÍ³",
+                        subtitle = "ÒÀ¾İ Android ÏµÍ³µÄÉîÇ³É«Ä£Ê½×Ô¶¯ÇĞ»»½çÃæ",
                         checked = true,
                         onCheckedChange = {}
                     )
@@ -99,7 +93,7 @@ fun SettingsScreen(
 
         // 2. Conversion Engine & Performance
         item {
-            SettingsCategoryHeader(title = "è½¬æ¢å¼•æ“ä¸æ€§èƒ½ (Engine & Performance)")
+            SettingsCategoryHeader(title = "×ª»»ÒıÇæÓëĞÔÄÜ (Engine & Performance)")
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -129,12 +123,12 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "JVM æœ€å¤§å †å†…å­˜åˆ†é…",
+                                text = "JVM ×î´ó¶ÑÄÚ´æ·ÖÅä",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "å½“å‰è®¾å®šï¼š${maxMemoryMb.toInt()} MB",
+                                text = "µ±Ç°Éè¶¨£º${uiState.maxMemoryMb.toInt()} MB",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
@@ -143,8 +137,8 @@ fun SettingsScreen(
                     }
 
                     Slider(
-                        value = maxMemoryMb,
-                        onValueChange = { maxMemoryMb = it },
+                        value = uiState.maxMemoryMb,
+                        onValueChange = { viewModel.updateMaxMemory(it) },
                         valueRange = 1024f..8192f,
                         steps = 6,
                         modifier = Modifier.padding(top = 8.dp)
@@ -157,10 +151,10 @@ fun SettingsScreen(
 
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Security,
-                        title = "é˜²é—ªé€€æ¨¡å¼ (ä½è¿å­˜ä¼˜åŒ–)",
-                        subtitle = "é™åˆ¶ GC å †å†…å­˜æ¯”ä¾‹ä¸å•çº¿ç¨‹å¹¶å‘ï¼Œé˜²æ­¢å°è¿å­˜æ‰‹æœº OOM",
-                        checked = lowRamModeEnabled,
-                        onCheckedChange = { lowRamModeEnabled = it }
+                        title = "·ÀÉÁÍËÄ£Ê½ (µÍÔË´æÓÅ»¯)",
+                        subtitle = "ÏŞÖÆ GC ¶ÑÄÚ´æ±ÈÀıÓëµ¥Ïß³Ì²¢·¢£¬·ÀÖ¹Ğ¡ÔË´æÊÖ»ú OOM",
+                        checked = uiState.lowRamModeEnabled,
+                        onCheckedChange = { viewModel.updateLowRamMode(it) }
                     )
 
                     HorizontalDivider(
@@ -170,10 +164,10 @@ fun SettingsScreen(
 
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Power,
-                        title = "åå°å”¤é†’é” (WakeLock)",
-                        subtitle = "è½¬æ¢è¿‡ç¨‹ä¸­æŒæœ‰ CPU å”¤é†’é”ï¼Œé˜²æ­¢ç³»ç»Ÿæ¯å±æ€åå°",
-                        checked = wakeLockEnabled,
-                        onCheckedChange = { wakeLockEnabled = it }
+                        title = "ºóÌ¨»½ĞÑËø (WakeLock)",
+                        subtitle = "×ª»»¹ı³ÌÖĞ³ÖÓĞ CPU »½ĞÑËø£¬·ÀÖ¹ÏµÍ³Ï¢ÆÁÉ±ºóÌ¨",
+                        checked = uiState.wakeLockEnabled,
+                        onCheckedChange = { viewModel.updateWakeLock(it) }
                     )
 
                     HorizontalDivider(
@@ -183,10 +177,10 @@ fun SettingsScreen(
 
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Storage,
-                        title = "ä¿ç•™æœªä¿®æ”¹çš„åŸå§‹ NBT",
-                        subtitle = "åœ¨æ ¼å¼å…¼å®¹å‰æä¸‹ï¼Œå°½å¯èƒ½ç»§æ‰¿åŸä¸–ç•Œçš„æœªçŸ¥æ ‡ç­¾",
-                        checked = keepOriginalNbt,
-                        onCheckedChange = { keepOriginalNbt = it }
+                        title = "±£ÁôÎ´ĞŞ¸ÄµÄÔ­Ê¼ NBT",
+                        subtitle = "ÔÚ¸ñÊ½¼æÈİÇ°ÌáÏÂ£¬¾¡¿ÉÄÜ¼Ì³ĞÔ­ÊÀ½çµÄÎ´Öª±êÇ©",
+                        checked = uiState.keepOriginalNbt,
+                        onCheckedChange = { viewModel.updateKeepOriginalNbt(it) }
                     )
                 }
             }
@@ -194,7 +188,7 @@ fun SettingsScreen(
 
         // 3. System & Sandbox Management
         item {
-            SettingsCategoryHeader(title = "æ²™ç®±ç®¡ç†ä¸ç»´æŠ¤ (Sandbox)")
+            SettingsCategoryHeader(title = "É³Ïä¹ÜÀíÓëÎ¬»¤ (Sandbox)")
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -204,10 +198,10 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Vibration,
-                        title = "è½¬æ¢å®Œæˆéœ‡åŠ¨æç¤º",
-                        subtitle = "åœ¨åå°æˆ–å‰å°è½¬æ¢ä»»åŠ¡å®Œæˆæ—¶è§¦å‘è½»å¾®è§¦æ„Ÿéœ‡åŠ¨",
-                        checked = vibrationEnabled,
-                        onCheckedChange = { vibrationEnabled = it }
+                        title = "×ª»»Íê³ÉÕğ¶¯ÌáÊ¾",
+                        subtitle = "ÔÚºóÌ¨»òÇ°Ì¨×ª»»ÈÎÎñÍê³ÉÊ±´¥·¢ÇáÎ¢´¥¸ĞÕğ¶¯",
+                        checked = uiState.vibrationEnabled,
+                        onCheckedChange = { viewModel.updateVibration(it) }
                     )
 
                     HorizontalDivider(
@@ -230,7 +224,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("é‡ç½® RootFS", fontSize = 12.sp)
+                            Text("ÖØÖÃ RootFS", fontSize = 12.sp)
                         }
 
                         OutlinedButton(
@@ -244,7 +238,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("æ¸…ç†ç¼“å­˜", fontSize = 12.sp)
+                            Text("ÇåÀí»º´æ", fontSize = 12.sp)
                         }
                     }
                 }
@@ -312,3 +306,4 @@ private fun SettingsSwitchRow(
         )
     }
 }
+

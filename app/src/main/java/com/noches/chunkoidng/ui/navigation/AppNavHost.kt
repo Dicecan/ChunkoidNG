@@ -111,16 +111,31 @@ fun MainAppScaffold() {
             composable(Screen.Features.route) {
                 FeaturesScreen(
                     onFeatureClick = { feature ->
-                        if (feature.id == "sandbox_terminal") {
-                            navController.navigate("console")
-                        } else {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "已选择功能: ${feature.title} [${feature.badge}]"
-                                )
+                        when (feature.id) {
+                            "world_converter" -> navController.navigate("world_converter")
+                            "sandbox_terminal" -> navController.navigate("console")
+                            else -> {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "已选择功能: ${feature.title} [${feature.badge}]"
+                                    )
+                                }
                             }
                         }
                     }
+                )
+            }
+
+            composable("world_converter") {
+                com.noches.chunkoidng.ui.screens.converter.WorldConverterScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToHistory = { navController.navigate("conversion_history") }
+                )
+            }
+            
+            composable("conversion_history") {
+                com.noches.chunkoidng.ui.screens.history.ConversionHistoryScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
