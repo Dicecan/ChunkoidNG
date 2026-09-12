@@ -73,7 +73,7 @@
 
 * **原作者与奠基人**：Dozener (DozenesStudio)
 * **当前维护团队**：DICECAN (EncoreTeam)
-* **核心贡献者**：Ryan Steven、Dozener、Weiyin 1A
+* **核心贡献者**：Ryan Steven、Dozener
 * **核心依赖项目**：
   * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT)
   * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT)

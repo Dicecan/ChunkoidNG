@@ -65,7 +65,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 * **Original Author & Founder**: Dozener (DozenesStudio) (<dozener@outlook.com>)
 * **Current Maintainer**: DICECAN (EncoreTeam)
-* **Core Contributors**: Ryan Steven, Dozener, Weiyin 1A
+* **Core Contributors**: Ryan Steven, Dozener
 * **Open Source Dependencies**:
   * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT License)
   * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT License)
