@@ -14,32 +14,28 @@
 
 ---
 
-## 💡 What's New in NG (Next-Generation)?
-
-While the original Chunkoid established the viability of mobile world conversion, Chunkoid NG delivers a generational leap forward:
-
-1. **Jetpack Compose & MD3 Expressive (MD3E)**:
-   * Entirely re-engineered with Jetpack Compose, discarding legacy XML layouts.
-   * Dynamic Material You color schemes, non-linear fluid page animations, and adaptive staggered grid cards.
-2. **Ultra-Slim RootFS 2.0**:
-   * Pruned payload down from 146 fragmented files to just **57 essential binaries**.
-   * Extraction speeds boosted by over 300% with nearly 50% storage savings, providing instant OpenJDK 17 aarch64 deployment.
-3. **Interactive Developer Sandbox Console**:
-   * Built-in full-screen terminal emulator enabling direct execution of Shell, OpenJDK 17, and Chunker CLI commands.
-   * Native handling for Android 10+ `W^X` memory protection using dynamic linkers.
-   * Free-form text selection, one-click clipboard copying, syntax color highlighting, and micro-batched 60fps streaming.
-4. **Reactive Coroutine & Flow Architecture**:
-   * All background operations, extraction tracking, and stdout streaming migrated to pure Kotlin `Flow<T>`, eliminating legacy thread blocking and ANR issues.
+> [!WARNING]
+> ### 🚧 Early Canary Preview Phase
+> This project is currently undergoing full active migration and refactoring from the legacy Chunkoid code. **Most core business features remain in development or pending migration.** Currently, only the foundational OpenJDK 17 sandbox environment and interactive terminal console are implemented.
 
 ---
 
-## 🚀 Key Features
+## 🌟 NG (Next-Generation) Highlights
 
-* 🔄 **Bidirectional World Conversion**: Bedrock (BE/PE) ↔ Java Edition (JE) conversion supporting Minecraft versions 1.8.8 through 1.21+.
-* 📦 **Version Upgrading / Downgrading & Dimension Pruning**: Seamless version translation and unneeded dimension cleanup.
-* 🔓 **Encrypted NetEase World Decryption**: Built-in LevelDB pointer XOR streaming decryption engine.
-* 🛠️ **NBT & LevelDB Visual Explorer**: Hierarchical tree-based inspection and manipulation of world state.
-* 🎨 **Texture & Resource Pack Converter**: Cross-edition pack format translation.
+* **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards.
+* **Ultra-Slim RootFS**: Heavily pruned payload down to 57 binaries with 50% storage savings.
+* **Interactive Sandbox Console**: Built-in environment self-check and terminal for debugging OpenJDK 17 and Chunker CLI.
+
+---
+
+## 🚀 Core Features Roadmap (Canary Status)
+
+* ✅ **Interactive Sandbox Console**: `Implemented` (Supports OpenJDK 17 and Shell commands)
+* ⏳ **Bidirectional World Conversion**: `In Development` (Pending core engine migration)
+* ⏳ **Version Upgrading & Dimension Pruning**: `In Development`
+* ⏳ **NetEase World Decryption**: `In Development` (Pending LevelDB XOR algorithm migration)
+* ⏳ **NBT / LevelDB Visual Explorer**: `In Development`
+* ⏳ **Resource Pack Converter**: `In Development`
 
 ---
 
