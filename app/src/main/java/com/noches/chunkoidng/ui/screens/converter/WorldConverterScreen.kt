@@ -1,4 +1,4 @@
-﻿package com.noches.chunkoidng.ui.screens.converter
+package com.noches.chunkoidng.ui.screens.converter
 
 import android.content.Intent
 import android.net.Uri
@@ -204,9 +204,9 @@ private fun SelectSourceView(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = "导入源存档",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
@@ -224,7 +224,7 @@ private fun SelectSourceView(
         Card(
             onClick = onSelectFolder,
             modifier = Modifier.fillMaxWidth().height(100.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             shape = RoundedCornerShape(20.dp)
         ) {
             Row(
@@ -235,12 +235,12 @@ private fun SelectSourceView(
                     Icons.Outlined.Folder, 
                     contentDescription = null, 
                     modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("选择文件夹", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text("Android/data/.../minecraftWorlds", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
+                    Text("选择文件夹", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+                    Text("Android/data/.../minecraftWorlds", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -250,7 +250,7 @@ private fun SelectSourceView(
         Card(
             onClick = onSelectArchive,
             modifier = Modifier.fillMaxWidth().height(100.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             shape = RoundedCornerShape(20.dp)
         ) {
             Row(
@@ -261,12 +261,12 @@ private fun SelectSourceView(
                     Icons.Outlined.FolderZip, 
                     contentDescription = null, 
                     modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("选择压缩包", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text(".zip 或 .mcworld", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.7f))
+                    Text("选择压缩包", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+                    Text(".zip 或 .mcworld", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
