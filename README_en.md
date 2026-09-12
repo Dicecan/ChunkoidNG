@@ -16,7 +16,7 @@
 
 > [!WARNING]
 > ### 🚧 Early Canary Preview Phase
-> This project is currently undergoing full active migration and refactoring from the legacy Chunkoid code. **Most core business features remain in development or pending migration.** Currently, only the foundational OpenJDK 17 sandbox environment and interactive terminal console are implemented.
+> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, and full bidirectional Minecraft world conversion & export features have been implemented.
 
 ---
 
@@ -25,14 +25,15 @@
 * **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards.
 * **Ultra-Slim RootFS**: Heavily pruned payload down to 57 binaries with 50% storage savings.
 * **Interactive Sandbox Console**: Built-in environment self-check and terminal for debugging OpenJDK 17 and Chunker CLI.
+* **Full-Featured World Converter**: Supports Java/Bedrock bidirectional conversion, multi-version targets, foreground service persistence, history logs, and custom SAF export.
 
 ---
 
 ## 🚀 Core Features Roadmap (Canary Status)
 
 * ✅ **Interactive Sandbox Console**: `Implemented` (Supports OpenJDK 17 and Shell commands)
-* ⏳ **Bidirectional World Conversion**: `In Development` (Pending core engine migration)
-* ⏳ **Version Upgrading & Dimension Pruning**: `In Development`
+* ✅ **Bidirectional World Conversion**: `Implemented` (Supports Java/Bedrock conversion, version targets, history logs, and remedy export)
+* ⏳ **Version Upgrading & Dimension Pruning**: `In Development` (Advanced conversion options)
 * ⏳ **NetEase World Decryption**: `In Development` (Pending LevelDB XOR algorithm migration)
 * ⏳ **NBT / LevelDB Visual Explorer**: `In Development`
 * ⏳ **Resource Pack Converter**: `In Development`
