@@ -83,38 +83,61 @@ object WorldMetadataReader {
     fun loadWorldIcon(worldDir: File): Bitmap? {
         val candidateNames = listOf("world_icon.jpeg", "world_icon.jpg", "icon.png")
         for (name in candidateNames) {
-            val iconFile = File(worldDir, name)
-            if (iconFile.exists() && iconFile.isFile) {
+                val iconFile = File(worldDir, name)
+                if (iconFile.exists() && iconFile.isFile) {
                 try {
-                    return BitmapFactory.decodeFile(iconFile.absolutePath)
+                    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    BitmapFactory.decodeFile(iconFile.absolutePath, bounds)
+                    val sample = calculateSampleSize(bounds.outWidth, bounds.outHeight, 128)
+                    val options = BitmapFactory.Options().apply { inSampleSize = sample }
+                    return BitmapFactory.decodeFile(iconFile.absolutePath, options)
                 } catch (_: Exception) {}
             }
         }
         return null
     }
 
+    private fun calculateSampleSize(width: Int, height: Int, targetSize: Int): Int {
+        var sample = 1
+        while (width / (sample * 2) >= targetSize && height / (sample * 2) >= targetSize) {
+            sample *= 2
+        }
+        return sample
+    }
+
     fun readLevelDat(levelDatFile: File): ParsedMetadata? {
         return try {
-            levelDatFile.inputStream().use { stream ->
-                readLevelDatStream(stream)
-            }
+            parseRootTag(NbtIO.readNbtFileDetectingSettings(levelDatFile).tag as? NbtCompound)
         } catch (_: Exception) {
-            null
+            levelDatFile.inputStream().use { stream -> readLevelDatStream(stream) }
         }
     }
 
     fun readLevelDatStream(inputStream: InputStream): ParsedMetadata? {
         val bytes = inputStream.readBytes()
-        val attempts = listOf(
-            Triple(true, false, false),  // Java (GZIP)
-            Triple(false, true, true),   // Bedrock (Header + LE)
-            Triple(false, true, false),  // Bedrock (LE without header)
-            Triple(true, false, true),
-            Triple(true, true, false),
-            Triple(true, true, true),
-            Triple(false, false, false),
-            Triple(false, false, true)
-        )
+        return readLevelDatBytes(bytes)
+    }
+
+    private fun readLevelDatBytes(bytes: ByteArray): ParsedMetadata? {
+        // Java and Bedrock have distinctive headers. Try the common format first and
+        // retain the fallback combinations only for unusual legacy files.
+        val looksGzip = bytes.size >= 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()
+        val attempts = if (looksGzip) {
+            listOf(
+                Triple(true, false, false),
+                Triple(true, false, true),
+                Triple(true, true, false),
+                Triple(false, true, true)
+            )
+        } else {
+            listOf(
+                Triple(false, true, true),
+                Triple(false, true, false),
+                Triple(false, false, false),
+                Triple(false, false, true),
+                Triple(true, false, false)
+            )
+        }
 
         for ((compressed, littleEndian, readHeaders) in attempts) {
             try {

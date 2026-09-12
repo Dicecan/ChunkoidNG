@@ -10,9 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
-import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
+import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -77,8 +76,9 @@ class ArchiveManager(private val context: Context) {
             val inputStream = contentResolver.openInputStream(archiveUri)
                 ?: return@withContext Result.failure(Exception("无法打开输入归档文件"))
 
-            val buffer = ByteArray(8192)
+            val buffer = ByteArray(64 * 1024)
             var extractedCount = 0
+            val inputCanonicalPath = inputDir.canonicalPath + File.separator
 
             inputStream.use { rawIn ->
                 ZipInputStream(rawIn).use { zis ->
@@ -91,7 +91,7 @@ class ArchiveManager(private val context: Context) {
 
                         val entryFile = File(inputDir, entry.name)
                         // Zip Slip vulnerability guard
-                        if (!entryFile.canonicalPath.startsWith(inputDir.canonicalPath)) {
+                        if (!entryFile.canonicalPath.startsWith(inputCanonicalPath)) {
                             entry = zis.nextEntry
                             continue
                         }
@@ -100,7 +100,7 @@ class ArchiveManager(private val context: Context) {
                             entryFile.mkdirs()
                         } else {
                             entryFile.parentFile?.mkdirs()
-                            FileOutputStream(entryFile).use { out ->
+                        FileOutputStream(entryFile).buffered(64 * 1024).use { out ->
                                 var len: Int
                                 while (zis.read(buffer).also { len = it } != -1) {
                                     out.write(buffer, 0, len)
@@ -208,8 +208,8 @@ class ArchiveManager(private val context: Context) {
                 } else if (child.isFile) {
                     try {
                         contentResolver.openInputStream(child.uri)?.use { inStream ->
-                            FileOutputStream(destChild).use { outStream ->
-                                inStream.copyTo(outStream)
+                            FileOutputStream(destChild).buffered(64 * 1024).use { outStream ->
+                                inStream.copyTo(outStream, 64 * 1024)
                             }
                         }
                         totalCopied++
@@ -278,22 +278,14 @@ class ArchiveManager(private val context: Context) {
 
             if (packAsArchive) {
                 val extension = if (isBedrock) ".mcworld" else ".zip"
-                val archiveFile = File(workspaceDir, "temp_export$extension")
-                if (archiveFile.exists()) archiveFile.delete()
-
-                ZipOutputStream(BufferedOutputStream(FileOutputStream(archiveFile))).use { zos ->
-                    zipDirectory(outputDir, outputDir, zos)
-                }
-
                 val docFile = treeDoc.createFile("application/zip", "$safeName$extension")
                     ?: return@withContext Result.failure(Exception("无法在目标位置创建归档文件"))
-                
+
                 context.contentResolver.openOutputStream(docFile.uri)?.use { out ->
-                    archiveFile.inputStream().use { input ->
-                        input.copyTo(out)
+                    ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
+                        zipDirectory(outputDir, outputDir, zos)
                     }
-                }
-                archiveFile.delete()
+                } ?: return@withContext Result.failure(Exception("无法打开归档输出流"))
                 Result.success(Unit)
             } else {
                 val destDirDoc = treeDoc.createDirectory(safeName)
@@ -317,10 +309,10 @@ class ArchiveManager(private val context: Context) {
             } else {
                 val newFile = destDirDoc.createFile("application/octet-stream", file.name)
                 if (newFile != null) {
-                    context.contentResolver.openOutputStream(newFile.uri)?.use { out ->
-                        file.inputStream().use { input ->
-                            input.copyTo(out)
-                        }
+                        context.contentResolver.openOutputStream(newFile.uri)?.buffered(64 * 1024)?.use { out ->
+                            file.inputStream().use { input ->
+                                input.copyTo(out, 64 * 1024)
+                            }
                     }
                 }
             }
@@ -329,7 +321,7 @@ class ArchiveManager(private val context: Context) {
 
     private fun zipDirectory(rootDir: File, currentDir: File, zos: ZipOutputStream) {
         val files = currentDir.listFiles() ?: return
-        val buffer = ByteArray(8192)
+        val buffer = ByteArray(64 * 1024)
         for (file in files) {
             if (file.isDirectory) {
                 val relPath = file.relativeTo(rootDir).path.replace('\\', '/') + "/"

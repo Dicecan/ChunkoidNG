@@ -44,6 +44,8 @@ class ConversionForegroundService : Service() {
     private var conversionJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var engine: ConversionEngine? = null
+    private var lastNotificationAt = 0L
+    private var lastNotificationPercent = -1
 
     private val _progressPercent = MutableStateFlow(0)
     val progressPercent: StateFlow<Int> = _progressPercent.asStateFlow()
@@ -73,6 +75,10 @@ class ConversionForegroundService : Service() {
 
     fun startConversion(config: ConversionConfig) {
         if (_isRunning.value) return
+        startConversionInternal(config)
+    }
+
+    private fun startConversionInternal(config: ConversionConfig) {
 
         _isRunning.value = true
         _progressPercent.value = 0
@@ -99,7 +105,7 @@ class ConversionForegroundService : Service() {
                         is ConversionEvent.Progress -> {
                             _progressPercent.value = event.percent
                             _statusMessage.value = event.stage
-                            updateNotification("${event.stage} (${event.percent}%)", event.percent, false)
+                            updateNotificationThrottled("${event.stage} (${event.percent}%)", event.percent)
                         }
                         is ConversionEvent.Success -> {
                             _progressPercent.value = 100
@@ -177,6 +183,15 @@ class ConversionForegroundService : Service() {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             manager?.notify(NOTIFICATION_ID, buildNotification(statusText, progress, indeterminate))
         } catch (_: Exception) {}
+    }
+
+    private fun updateNotificationThrottled(statusText: String, progress: Int) {
+        val now = System.currentTimeMillis()
+        if (progress == lastNotificationPercent && now - lastNotificationAt < 500L) return
+        if (now - lastNotificationAt < 250L && progress < 100) return
+        lastNotificationAt = now
+        lastNotificationPercent = progress
+        updateNotification(statusText, progress, false)
     }
 
     private fun acquireWakeLock() {

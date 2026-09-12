@@ -18,11 +18,13 @@ import com.noches.chunkoidng.core.world.HistoryManager
 import com.noches.chunkoidng.core.world.WorldInfo
 import com.noches.chunkoidng.service.ConversionForegroundService
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class ConverterStage {
     SELECT_SOURCE,
@@ -54,7 +56,8 @@ data class ConverterUiState(
     // Result
     val exportedUri: Uri? = null,
     val isExporting: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val latestHistoryId: String? = null
 )
 
 class WorldConverterViewModel(application: Application) : AndroidViewModel(application) {
@@ -68,12 +71,17 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
 
     private var boundService: ConversionForegroundService? = null
     private var serviceJob: Job? = null
+    private var pendingConfig: ConversionConfig? = null
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as? ConversionForegroundService.LocalBinder
             boundService = binder?.getService()
             observeService()
+            pendingConfig?.let { config ->
+                pendingConfig = null
+                boundService?.startConversion(config)
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -101,32 +109,38 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                         }
                     }
                     is ConversionEvent.LogOutput -> {
-                        _uiState.update {
-                            val updatedLogs = (it.conversionLogs + event.line).takeLast(1200)
-                            it.copy(conversionLogs = updatedLogs)
+                        logBatch.add(event.line)
+                        val now = System.currentTimeMillis()
+                        if (now - lastLogFlushAt >= LOG_FLUSH_INTERVAL_MS || logBatch.size >= LOG_BATCH_SIZE) {
+                            flushLogs()
                         }
                     }
                     is ConversionEvent.Success -> {
                         val state = _uiState.value
-                        val duration = System.currentTimeMillis() - state.startTimestamp
-                        
-                        historyManager.addRecord(
-                            worldName = state.overrideWorldName.ifBlank { state.worldInfo?.name ?: "Unknown" },
-                            sourcePlatform = state.worldInfo?.platform?.displayName ?: "Unknown",
-                            targetPlatform = state.targetFormat.platform.displayName,
-                            durationMs = duration,
-                            icon = state.worldInfo?.iconBitmap
-                        )
-                        
-                        _uiState.update {
-                            it.copy(
-                                stage = ConverterStage.COMPLETED,
-                                conversionProgress = 100,
-                                conversionStageText = "转换完成！"
+                        if (state.stage != ConverterStage.CONVERTING) return@collect
+                        flushLogs()
+                        viewModelScope.launch(Dispatchers.IO) {
+                            val historyId = historyManager.addRecord(
+                                worldName = state.overrideWorldName.ifBlank { state.worldInfo?.name ?: "Unknown" },
+                                sourcePlatform = state.worldInfo?.platform?.displayName ?: "Unknown",
+                                targetPlatform = state.targetFormat.platform.displayName,
+                                durationMs = System.currentTimeMillis() - state.startTimestamp,
+                                icon = state.worldInfo?.iconBitmap
                             )
+                            withContext(Dispatchers.Main) {
+                                _uiState.update {
+                                    it.copy(
+                                        stage = ConverterStage.COMPLETED,
+                                        conversionProgress = 100,
+                                        conversionStageText = "转换完成！",
+                                        latestHistoryId = historyId
+                                    )
+                                }
+                            }
                         }
                     }
                     is ConversionEvent.Failure -> {
+                        flushLogs()
                         _uiState.update {
                             it.copy(
                                 stage = ConverterStage.ERROR,
@@ -136,6 +150,19 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                     }
                 }
             }
+        }
+    }
+
+    private val logBatch = ArrayList<String>(LOG_BATCH_SIZE)
+    private var lastLogFlushAt = 0L
+
+    private fun flushLogs() {
+        if (logBatch.isEmpty()) return
+        val batch = logBatch.toList()
+        logBatch.clear()
+        lastLogFlushAt = System.currentTimeMillis()
+        _uiState.update { state ->
+            state.copy(conversionLogs = (state.conversionLogs + batch).takeLast(MAX_UI_LOG_LINES))
         }
     }
 
@@ -274,7 +301,12 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         // Start Foreground Service
         val serviceIntent = Intent(getApplication(), ConversionForegroundService::class.java)
         getApplication<Application>().startService(serviceIntent)
-        boundService?.startConversion(config)
+        val service = boundService
+        if (service != null) {
+            service.startConversion(config)
+        } else {
+            pendingConfig = config
+        }
     }
 
     fun cancelConversion() {
@@ -299,6 +331,11 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             _uiState.update { it.copy(isExporting = false) }
             result.onSuccess {
                 _uiState.update { it.copy(exportedUri = targetUri) }
+                s.latestHistoryId?.let { id ->
+                    withContext(Dispatchers.IO) {
+                        historyManager.updateExportLocation(id, targetUri.toString())
+                    }
+                }
                 onDone(targetUri)
             }
         }
@@ -312,10 +349,17 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
     }
 
     override fun onCleared() {
+        flushLogs()
         try {
             getApplication<Application>().unbindService(serviceConnection)
         } catch (_: Exception) {}
         super.onCleared()
+    }
+
+    private companion object {
+        const val LOG_BATCH_SIZE = 20
+        const val LOG_FLUSH_INTERVAL_MS = 100L
+        const val MAX_UI_LOG_LINES = 500
     }
 }
 

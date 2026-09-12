@@ -8,6 +8,8 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 data class ConversionHistoryRecord(
     val id: String,
@@ -16,20 +18,23 @@ data class ConversionHistoryRecord(
     val sourcePlatform: String,
     val targetPlatform: String,
     val durationMs: Long,
-    val iconPath: String?
+    val iconPath: String?,
+    val exportedUri: String? = null
 )
 
 class HistoryManager(private val context: Context) {
+    private val maxRecords = 100
     private val historyFile = File(context.filesDir, "history.json")
     private val iconDir = File(context.filesDir, "history_icons").apply { mkdirs() }
 
+    @Synchronized
     fun addRecord(
         worldName: String,
         sourcePlatform: String,
         targetPlatform: String,
         durationMs: Long,
         icon: Bitmap?
-    ) {
+    ): String {
         val id = UUID.randomUUID().toString()
         var iconPath: String? = null
         if (icon != null) {
@@ -52,7 +57,18 @@ class HistoryManager(private val context: Context) {
 
         val records = getRecords().toMutableList()
         records.add(0, record) // Add to top
-        saveRecords(records)
+        saveRecords(records.take(maxRecords))
+        return id
+    }
+
+    @Synchronized
+    fun updateExportLocation(id: String, uri: String) {
+        val records = getRecords().toMutableList()
+        val index = records.indexOfFirst { it.id == id }
+        if (index != -1) {
+            records[index] = records[index].copy(exportedUri = uri)
+            saveRecords(records.take(maxRecords))
+        }
     }
 
     fun getRecords(): List<ConversionHistoryRecord> {
@@ -71,7 +87,8 @@ class HistoryManager(private val context: Context) {
                         sourcePlatform = obj.getString("sourcePlatform"),
                         targetPlatform = obj.getString("targetPlatform"),
                         durationMs = obj.getLong("durationMs"),
-                        iconPath = if (obj.has("iconPath")) obj.getString("iconPath") else null
+                        iconPath = if (obj.has("iconPath")) obj.getString("iconPath") else null,
+                        exportedUri = if (obj.has("exportedUri")) obj.getString("exportedUri") else null
                     )
                 )
             }
@@ -94,12 +111,33 @@ class HistoryManager(private val context: Context) {
                 if (record.iconPath != null) {
                     put("iconPath", record.iconPath)
                 }
+                if (record.exportedUri != null) {
+                    put("exportedUri", record.exportedUri)
+                }
             }
             array.put(obj)
         }
-        historyFile.writeText(array.toString())
+        val tempFile = File(context.filesDir, "history.json.tmp")
+        tempFile.bufferedWriter().use { writer ->
+            writer.write(array.toString())
+        }
+        try {
+            Files.move(
+                tempFile.toPath(),
+                historyFile.toPath(),
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE
+            )
+        } catch (_: Exception) {
+            // Some providers/filesystems do not support atomic moves.
+            if (!tempFile.renameTo(historyFile)) {
+                tempFile.delete()
+                throw IllegalStateException("无法保存转换历史")
+            }
+        }
     }
 
+    @Synchronized
     fun clearHistory() {
         if (historyFile.exists()) historyFile.delete()
         if (iconDir.exists()) {

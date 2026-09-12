@@ -112,7 +112,8 @@ fun WorldConverterScreen(
                             Icon(Icons.Outlined.Refresh, contentDescription = "重新选择")
                         }
                     }
-                }
+                },
+                windowInsets = WindowInsets(0.dp)
             )
         }
     ) { innerPadding ->
@@ -470,12 +471,17 @@ private fun ConvertingView(progress: Int, stageText: String, logs: List<String>,
 private fun CompletedView(targetFormat: ChunkerFormat, isExporting: Boolean, onExportDirectory: () -> Unit, onExportArchive: () -> Unit, onNewConversion: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(80.dp))
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("转换成功！", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(32.dp))
+        Box(
+            modifier = Modifier.size(80.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("转换成功！", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
         Text("已转换为 ${targetFormat.displayName}", color = MaterialTheme.colorScheme.onSurfaceVariant)
         
         Spacer(modifier = Modifier.height(48.dp))
@@ -488,7 +494,7 @@ private fun CompletedView(targetFormat: ChunkerFormat, isExporting: Boolean, onE
         ) {
             Icon(Icons.Outlined.Folder, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("选择文件夹并导出 (解包)", fontSize = 16.sp)
+            Text("导出到文件夹 (解包)", fontSize = 16.sp)
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
@@ -499,7 +505,7 @@ private fun CompletedView(targetFormat: ChunkerFormat, isExporting: Boolean, onE
         ) {
             Icon(Icons.Outlined.FolderZip, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("选择文件夹并导出 (打包 ${if(targetFormat.platform.isBedrock) ".mcworld" else ".zip"})", fontSize = 16.sp)
+            Text("导出为压缩包 (${if(targetFormat.platform.isBedrock) ".mcworld" else ".zip"})", fontSize = 16.sp)
         }
         
         Spacer(modifier = Modifier.height(24.dp))

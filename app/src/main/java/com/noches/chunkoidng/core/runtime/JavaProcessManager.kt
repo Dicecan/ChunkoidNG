@@ -20,7 +20,18 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
     private var maxMemoryMB = 2048
 
     fun setMaxMemory(mb: Int) {
-        this.maxMemoryMB = mb
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+        val memInfo = android.app.ActivityManager.MemoryInfo()
+        val deviceLimitMb = if (activityManager != null) {
+            activityManager.getMemoryInfo(memInfo)
+            val totalPhysicalRamMb = (memInfo.totalMem / (1024 * 1024)).toInt()
+            // Leave room for Android OS, Chunkoid foreground app and system services.
+            val reservedRamMb = (totalPhysicalRamMb * 0.25f).toInt().coerceAtLeast(1024)
+            (totalPhysicalRamMb - reservedRamMb).coerceAtLeast(512)
+        } else {
+            mb
+        }
+        this.maxMemoryMB = mb.coerceIn(256, deviceLimitMb)
     }
 
     /**
@@ -51,8 +62,9 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
             return@flow
         }
 
+        val initialHeapMb = if (maxMemoryMB <= 768) 64 else 128
         val args = mutableListOf(
-            "-Xms256m",
+            "-Xms${initialHeapMb}m",
             "-Xmx${maxMemoryMB}m",
             "-Djava.io.tmpdir=${context.cacheDir.absolutePath}"
         )
@@ -102,8 +114,8 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 }
                 val exitCode = process.waitFor()
                 emit("[SYSTEM] Process exited with code: $exitCode")
-            } finally {
-                process.destroy()
+                } finally {
+                    if (process.isAlive) process.destroyForcibly()
             }
         }
     }.flowOn(Dispatchers.IO)
@@ -154,8 +166,9 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 }
 
                 val linker = if (Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()) "/system/bin/linker64" else "/system/bin/linker"
+                val initialHeapMb = if (maxMemoryMB <= 768) 64 else 128
                 val jvmArgs = mutableListOf(
-                    "-Xms256m",
+                    "-Xms${initialHeapMb}m",
                     "-Xmx${maxMemoryMB}m",
                     "-Djava.io.tmpdir=${context.cacheDir.absolutePath}"
                 )
@@ -186,7 +199,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 } catch (e: Exception) {
                     emit("Error executing java: ${e.message}")
                 } finally {
-                    process?.destroy()
+                    process?.let { if (it.isAlive) it.destroyForcibly() }
                 }
             }
 
@@ -213,7 +226,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 } catch (e: Exception) {
                     emit("Error executing command: ${e.message}")
                 } finally {
-                    process?.destroy()
+                    process?.let { if (it.isAlive) it.destroyForcibly() }
                 }
             }
         }
