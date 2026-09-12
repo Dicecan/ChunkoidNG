@@ -38,6 +38,22 @@ import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
 import kotlinx.coroutines.launch
 
+private const val MAX_CONSOLE_LOG_LINES = 2000
+
+private val quickCommands = listOf(
+    "Chunker 帮助" to "java -jar cli.jar",
+    "Java 版本" to "java -version",
+    "查看目录" to "ls",
+    "当前路径" to "pwd",
+    "内核信息" to "uname -a"
+)
+
+private fun trimLogs(logs: MutableList<String>) {
+    if (logs.size > MAX_CONSOLE_LOG_LINES) {
+        logs.subList(0, logs.size - MAX_CONSOLE_LOG_LINES).clear()
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsoleScreen(
@@ -76,15 +92,6 @@ fun ConsoleScreen(
         }
     }
 
-    data class QuickCmd(val label: String, val cmd: String)
-    val quickCommands = listOf(
-        QuickCmd("Chunker 帮助", "java -jar cli.jar"),
-        QuickCmd("Java 版本", "java -version"),
-        QuickCmd("查看目录", "ls"),
-        QuickCmd("当前路径", "pwd"),
-        QuickCmd("内核信息", "uname -a")
-    )
-
     fun executeCommand(cmd: String) {
         if (cmd.isNotBlank() && !isExecuting) {
             logs.add("$ $cmd")
@@ -98,12 +105,14 @@ fun ConsoleScreen(
                     val now = System.currentTimeMillis()
                     if (now - lastFlush >= 50 || batch.size >= 15) {
                         logs.addAll(batch)
+                        trimLogs(logs)
                         batch.clear()
                         lastFlush = now
                     }
                 }
                 if (batch.isNotEmpty()) {
                     logs.addAll(batch)
+                    trimLogs(logs)
                     batch.clear()
                 }
                 isExecuting = false
@@ -277,12 +286,12 @@ fun ConsoleScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(quickCommands) { item ->
+                items(quickCommands) { (label, cmd) ->
                     SuggestionChip(
-                        onClick = { command = item.cmd },
+                        onClick = { command = cmd },
                         label = { 
                             Text(
-                                item.label, 
+                                label, 
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             ) 

@@ -23,6 +23,19 @@ class JavaRuntimeEnvironment(private val context: Context) {
     val rootfsDir: File
         get() = File(context.filesDir.parentFile, "files/rootfs")
 
+    private val javaBinaryPaths = arrayOf(
+        "bin/java",
+        "usr/lib/jvm/java-17-openjdk/bin/java",
+        "usr/lib/jvm/openjdk-17/bin/java",
+        "usr/bin/java"
+    )
+
+    private val javaHomePaths = arrayOf(
+        "lib/jvm/java-17-openjdk",
+        "usr/lib/jvm/java-17-openjdk",
+        "usr/lib/jvm/openjdk-17"
+    )
+
     /**
      * Extracts the rootfs from assets. Emits progress (0 to 100).
      */
@@ -47,6 +60,7 @@ class JavaRuntimeEnvironment(private val context: Context) {
             assetManager.open(ROOTFS_ZIP).use { inputStream ->
                 ZipInputStream(inputStream).use { zis ->
                     val buffer = ByteArray(65536)
+                    val rootfsCanonicalPath = rootfsDir.canonicalPath
                     var extractedEntries = 0
                     val estimatedTotal = 57 // minimal zip has around 57 files
                     var lastReportedProgress = 0
@@ -56,9 +70,8 @@ class JavaRuntimeEnvironment(private val context: Context) {
                         val destFile = File(rootfsDir, entry.name)
                         
                         // Security check for zip slip
-                        val destDirPath = rootfsDir.canonicalPath
                         val destFilePath = destFile.canonicalPath
-                        if (!destFilePath.startsWith(destDirPath + File.separator)) {
+                        if (!destFilePath.startsWith(rootfsCanonicalPath + File.separator)) {
                             continue
                         }
 
@@ -110,13 +123,7 @@ class JavaRuntimeEnvironment(private val context: Context) {
     }
 
     fun findJavaBinary(): File? {
-        val paths = listOf(
-            "bin/java",
-            "usr/lib/jvm/java-17-openjdk/bin/java",
-            "usr/lib/jvm/openjdk-17/bin/java",
-            "usr/bin/java"
-        )
-        for (path in paths) {
+        for (path in javaBinaryPaths) {
             val file = File(rootfsDir, path)
             if (file.exists() && file.length() > 0) {
                 return file
@@ -126,12 +133,7 @@ class JavaRuntimeEnvironment(private val context: Context) {
     }
 
     fun getJavaHome(): String {
-        val paths = listOf(
-            "lib/jvm/java-17-openjdk",
-            "usr/lib/jvm/java-17-openjdk",
-            "usr/lib/jvm/openjdk-17"
-        )
-        for (path in paths) {
+        for (path in javaHomePaths) {
             val file = File(rootfsDir, path)
             if (file.exists()) {
                 return file.absolutePath

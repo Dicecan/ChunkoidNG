@@ -62,6 +62,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private const val MAX_SELF_CHECK_LOG_LINES = 200
+
 @Composable
 fun FeaturesScreen(
     onFeatureClick: (FeatureItem) -> Unit,
@@ -229,7 +231,7 @@ private fun HeroStatusBanner() {
                                     if (rootfsReady) {
                                         terminalLogs = terminalLogs + "[SYSTEM] 环境就绪。正在测试 Java 引擎..."
                                         processManager.runCliJar(File("dummy"), "-version").collect { logLine ->
-                                            terminalLogs = terminalLogs + logLine
+                                             terminalLogs = (terminalLogs + logLine).takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         }
                                         terminalLogs = terminalLogs + "[SYSTEM] 测试完成。"
                                         
