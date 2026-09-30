@@ -248,7 +248,7 @@
     <string name="tutorial_faq_title">公式よくある質問とトラブルシューティング (FAQ)</string>
     <string name="tutorial_wiki_title">Chunkoid 公式オンラインWiki・ドキュメント</string>
     <string name="tutorial_wiki_desc">chunkoid.top · 公式の最新ドキュメントとマニュアルをリアルタイム同期</string>
-    <string name="tutorial_wiki_button">公式Wikiドキュメントへ</string>
+    <string name="tutorial_wiki_button">公式Wikiを見る</string>
     <string name="tutorial_manual_tab">マニュアル</string>
     <string name="tutorial_faq_tab">オンラインFAQ</string>
     <string name="tutorial_step1_title">1. ワールドアーカイブを選択</string>
@@ -329,4 +329,17 @@
     <string name="decrypt_err_create_file">ターゲットファイルを作成できません</string>
     <string name="decrypt_err_output_stream">出力ストリームを開けません</string>
     <string name="feature_card_enter">機能に入る</string>
+    <string name="console_cmd_chunker_help">Chunker ヘルプ</string>
+    <string name="console_cmd_java_version">Java バージョン</string>
+    <string name="console_cmd_list_dir">ディレクトリ一覧</string>
+    <string name="console_cmd_current_path">カレントパス</string>
+    <string name="console_cmd_kernel_info">カーネル情報</string>
+    <string name="console_log_ready">[SYSTEM] OpenJDK 17.0.18 サンドボックスターミナル準備完了</string>
+    <string name="console_log_copy_tip">[SYSTEM] テキストを長押しで選択、右上のアイコンで全文コピー可能</string>
+    <string name="console_log_cleared">[SYSTEM] コンソールをクリアしました</string>
+    <string name="console_status_running">実行中</string>
+    <string name="console_status_idle">待機中</string>
+    <string name="features_date_format">M月d日(E)</string>
+    <string name="feature_selected_toast">選択された機能: %1$s [%2$s]</string>
+    <string name="crypt_duration">所要時間</string>
 </resources>

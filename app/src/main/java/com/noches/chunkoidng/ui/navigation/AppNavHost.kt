@@ -2,6 +2,7 @@ package com.noches.chunkoidng.ui.navigation
 
 import android.content.Intent
 import android.net.Uri
+import com.noches.chunkoidng.R
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -121,7 +122,11 @@ fun MainAppScaffold() {
                             else -> {
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar(
-                                        message = "已选择功能: ${context.getString(feature.titleRes)} [${context.getString(feature.badgeRes)}]"
+                                        message = context.getString(
+                                            R.string.feature_selected_toast,
+                                            context.getString(feature.titleRes),
+                                            context.getString(feature.badgeRes)
+                                        )
                                     )
                                 }
                             }

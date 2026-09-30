@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
@@ -115,10 +116,7 @@ fun TutorialScreen(
 
         item {
             WikiPortalCard(
-                onOpenMainWiki = { openUrl("https://chunkoid.top/docs/index.html") },
-                onOpenInstructions = { openUrl("https://chunkoid.top/docs/index.html?doc=Instructions") },
-                onOpenFaq = { openUrl("https://chunkoid.top/docs/index.html?doc=FAQ") },
-                onOpenWebsite = { openUrl("https://chunkoid.top") }
+                onOpenMainWiki = { openUrl("https://chunkoid.top/docs/index.html") }
             )
         }
 
@@ -173,10 +171,7 @@ fun TutorialScreen(
 
 @Composable
 private fun WikiPortalCard(
-    onOpenMainWiki: () -> Unit,
-    onOpenInstructions: () -> Unit,
-    onOpenFaq: () -> Unit,
-    onOpenWebsite: () -> Unit
+    onOpenMainWiki: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -239,41 +234,11 @@ private fun WikiPortalCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.tutorial_wiki_button))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onOpenInstructions,
-                    modifier = Modifier.weight(1f),
-                    shape = ExpressiveShapes.small
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.MenuBook,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.tutorial_manual_tab), fontSize = 12.sp)
-                }
-                OutlinedButton(
-                    onClick = onOpenFaq,
-                    modifier = Modifier.weight(1f),
-                    shape = ExpressiveShapes.small
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.tutorial_faq_tab), fontSize = 12.sp)
-                }
+                Text(
+                    text = stringResource(R.string.tutorial_wiki_button),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }

@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -344,10 +345,18 @@ private fun Md3ExpressiveClock() {
         }
     }
 
+    val configuration = LocalConfiguration.current
+    val currentLocale = remember(configuration) {
+        val locales = configuration.locales
+        if (!locales.isEmpty) locales[0] else Locale.getDefault()
+    }
     val hourFormat = remember { SimpleDateFormat("HH", Locale.getDefault()) }
     val minuteFormat = remember { SimpleDateFormat("mm", Locale.getDefault()) }
     val secondFormat = remember { SimpleDateFormat("ss", Locale.getDefault()) }
-    val dateFormat = remember { SimpleDateFormat("M月d日 EEEE", Locale.CHINESE) }
+    val datePattern = stringResource(R.string.features_date_format)
+    val dateFormat = remember(datePattern, currentLocale) {
+        SimpleDateFormat(datePattern, currentLocale)
+    }
 
     val hourStr = hourFormat.format(currentTime)
     val minStr = minuteFormat.format(currentTime)

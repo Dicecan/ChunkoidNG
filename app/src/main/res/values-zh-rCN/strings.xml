@@ -248,7 +248,7 @@
     <string name="tutorial_faq_title">官网常见问题排错 (FAQ)</string>
     <string name="tutorial_wiki_title">Chunkoid 官方在线 Wiki 文档站</string>
     <string name="tutorial_wiki_desc">chunkoid.top · 实时同步官方最新文档与操作手册</string>
-    <string name="tutorial_wiki_button">前往官方在线 Wiki 文档站 (Docs)</string>
+    <string name="tutorial_wiki_button">前往官方在线 Wiki</string>
     <string name="tutorial_manual_tab">操作手册</string>
     <string name="tutorial_faq_tab">在线 FAQ</string>
     <string name="tutorial_step1_title">1. 选择世界存档</string>
@@ -329,4 +329,17 @@
     <string name="decrypt_err_create_file">无法创建目标文件</string>
     <string name="decrypt_err_output_stream">无法打开输出流</string>
     <string name="feature_card_enter">进入功能</string>
+    <string name="console_cmd_chunker_help">Chunker 帮助</string>
+    <string name="console_cmd_java_version">Java 版本</string>
+    <string name="console_cmd_list_dir">查看目录</string>
+    <string name="console_cmd_current_path">当前路径</string>
+    <string name="console_cmd_kernel_info">内核信息</string>
+    <string name="console_log_ready">[SYSTEM] OpenJDK 17.0.18 沙箱终端已就绪</string>
+    <string name="console_log_copy_tip">[SYSTEM] 支持长按文本选词复制，或点右上角一键复制完整输出</string>
+    <string name="console_log_cleared">[SYSTEM] 控制台已清空</string>
+    <string name="console_status_running">运行中</string>
+    <string name="console_status_idle">空闲</string>
+    <string name="features_date_format">M月d日 EEEE</string>
+    <string name="feature_selected_toast">已选择功能: %1$s [%2$s]</string>
+    <string name="crypt_duration">耗时</string>
 </resources>

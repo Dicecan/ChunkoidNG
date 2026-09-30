@@ -72,16 +72,22 @@ import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
+import androidx.annotation.StringRes
 import kotlinx.coroutines.launch
 
 private const val MAX_CONSOLE_LOG_LINES = 2000
 
+private data class QuickCommand(
+    @StringRes val labelRes: Int,
+    val command: String
+)
+
 private val quickCommands = listOf(
-    "Chunker 帮助" to "java -jar cli.jar",
-    "Java 版本" to "java -version",
-    "查看目录" to "ls",
-    "当前路径" to "pwd",
-    "内核信息" to "uname -a"
+    QuickCommand(R.string.console_cmd_chunker_help, "java -jar cli.jar"),
+    QuickCommand(R.string.console_cmd_java_version, "java -version"),
+    QuickCommand(R.string.console_cmd_list_dir, "ls"),
+    QuickCommand(R.string.console_cmd_current_path, "pwd"),
+    QuickCommand(R.string.console_cmd_kernel_info, "uname -a")
 )
 
 private fun trimLogs(logs: MutableList<String>) {
@@ -106,8 +112,8 @@ fun ConsoleScreen(
     var command by remember { mutableStateOf("") }
     val logs = remember {
         mutableStateListOf(
-            "[SYSTEM] OpenJDK 17.0.18 沙箱终端已就绪",
-            "[SYSTEM] 支持长按文本选词复制，或点右上角一键复制完整输出"
+            context.getString(R.string.console_log_ready),
+            context.getString(R.string.console_log_copy_tip)
         )
     }
     var isExecuting by remember { mutableStateOf(false) }
@@ -197,7 +203,7 @@ fun ConsoleScreen(
                     IconButton(
                         onClick = {
                             logs.clear()
-                            logs.add("[SYSTEM] Console cleared")
+                            logs.add(context.getString(R.string.console_log_cleared))
                         }
                     ) {
                         Icon(
@@ -264,7 +270,7 @@ fun ConsoleScreen(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = if (isExecuting) "RUNNING" else "IDLE",
+                            text = stringResource(if (isExecuting) R.string.console_status_running else R.string.console_status_idle),
                             fontFamily = FontFamily.Monospace,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
@@ -317,12 +323,12 @@ fun ConsoleScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(quickCommands) { (label, cmd) ->
+                items(quickCommands) { qc ->
                     SuggestionChip(
-                        onClick = { command = cmd },
+                        onClick = { command = qc.command },
                         label = {
                             Text(
-                                label,
+                                stringResource(qc.labelRes),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )

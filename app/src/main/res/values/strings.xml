@@ -248,7 +248,7 @@
     <string name="tutorial_faq_title">Official FAQ &amp; Troubleshooting</string>
     <string name="tutorial_wiki_title">Chunkoid Official Wiki &amp; Docs</string>
     <string name="tutorial_wiki_desc">chunkoid.top · Real-time synchronization of the latest official documentation and manual</string>
-    <string name="tutorial_wiki_button">Go to Official Wiki Docs</string>
+    <string name="tutorial_wiki_button">Visit Official Wiki</string>
     <string name="tutorial_manual_tab">User Manual</string>
     <string name="tutorial_faq_tab">Online FAQ</string>
     <string name="tutorial_step1_title">1. Select World Archive</string>
@@ -329,4 +329,17 @@
     <string name="decrypt_err_create_file">Cannot create target file</string>
     <string name="decrypt_err_output_stream">Cannot open output stream</string>
     <string name="feature_card_enter">Enter</string>
+    <string name="console_cmd_chunker_help">Chunker Help</string>
+    <string name="console_cmd_java_version">Java Version</string>
+    <string name="console_cmd_list_dir">List Directory</string>
+    <string name="console_cmd_current_path">Current Path</string>
+    <string name="console_cmd_kernel_info">Kernel Info</string>
+    <string name="console_log_ready">[SYSTEM] OpenJDK 17.0.18 sandbox terminal ready</string>
+    <string name="console_log_copy_tip">[SYSTEM] Long-press text to select, or tap top-right icon to copy full output</string>
+    <string name="console_log_cleared">[SYSTEM] Console cleared</string>
+    <string name="console_status_running">RUNNING</string>
+    <string name="console_status_idle">IDLE</string>
+    <string name="features_date_format">EEE, MMM d</string>
+    <string name="feature_selected_toast">Selected: %1$s [%2$s]</string>
+    <string name="crypt_duration">Duration</string>
 </resources>
