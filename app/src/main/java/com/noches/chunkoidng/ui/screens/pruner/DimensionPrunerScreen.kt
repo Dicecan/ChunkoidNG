@@ -382,9 +382,9 @@ private fun ConfigurePruningView(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        val platformText = worldInfo?.platform?.let { stringResource(it.nameRes) } ?: ""
                         Text(
-                            text = "${worldInfo?.platform?.displayName ?: ""} ${worldInfo?.versionName ?: ""}",
+                            text = "$platformText ${worldInfo?.versionName ?: ""}".trim(),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

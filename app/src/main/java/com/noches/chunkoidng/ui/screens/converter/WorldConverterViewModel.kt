@@ -1,6 +1,7 @@
 package com.noches.chunkoidng.ui.screens.converter
 
 import android.app.Application
+import com.noches.chunkoidng.R
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -142,7 +143,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                                     it.copy(
                                         stage = ConverterStage.COMPLETED,
                                         conversionProgress = 100,
-                                        conversionStageText = "转换完成！",
+                                        conversionStageText = getApplication<Application>().getString(R.string.converter_stage_completed),
                                         latestHistoryId = historyId
                                     )
                                 }
@@ -188,7 +189,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                 it.copy(
                     stage = ConverterStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = "正在准备归档文件..."
+                    stagingMessage = getApplication<Application>().getString(R.string.converter_staging_archive)
                 )
             }
 
@@ -212,7 +213,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                     _uiState.update {
                         it.copy(
                             stage = ConverterStage.ERROR,
-                            errorMessage = "归档加载失败: ${error.message}"
+                            errorMessage = getApplication<Application>().getString(R.string.converter_error_archive_load, error.message ?: "")
                         )
                     }
                 }
@@ -226,7 +227,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                 it.copy(
                     stage = ConverterStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = "正在读取世界目录..."
+                    stagingMessage = getApplication<Application>().getString(R.string.converter_staging_directory)
                 )
             }
 
@@ -250,7 +251,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                     _uiState.update {
                         it.copy(
                             stage = ConverterStage.ERROR,
-                            errorMessage = "目录导入失败: ${error.message}"
+                            errorMessage = getApplication<Application>().getString(R.string.converter_error_dir_import, error.message ?: "")
                         )
                     }
                 }
@@ -354,7 +355,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             it.copy(
                 stage = ConverterStage.CONVERTING,
                 conversionProgress = 0,
-                conversionStageText = "正在启动转换...",
+                conversionStageText = getApplication<Application>().getString(R.string.converter_stage_starting),
                 conversionLogs = emptyList(),
                 startTimestamp = System.currentTimeMillis()
             )
@@ -376,7 +377,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             it.copy(
                 stage = ConverterStage.CONFIGURE,
                 conversionProgress = 0,
-                conversionStageText = "已取消"
+                conversionStageText = getApplication<Application>().getString(R.string.converter_stage_cancelled)
             )
         }
     }
@@ -399,7 +400,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                 _uiState.update { it.copy(exportedUri = exportedUri) }
                 onDone(exportedUri)
             }.onFailure { error ->
-                _uiState.update { it.copy(errorMessage = "导出失败: ${error.message}") }
+                _uiState.update { it.copy(errorMessage = getApplication<Application>().getString(R.string.converter_error_export, error.message ?: "")) }
             }
         }
     }

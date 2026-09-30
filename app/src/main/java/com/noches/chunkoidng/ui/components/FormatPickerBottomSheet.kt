@@ -356,8 +356,9 @@ fun FormatPickerBottomSheet(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
+                                    val formatTitle = if (format.id == "INPUT") stringResource(R.string.version_keep_input) else format.displayName
                                     Text(
-                                        text = format.displayName,
+                                        text = formatTitle,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold,
                                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface

@@ -4,10 +4,10 @@ import java.io.File
 import java.util.UUID
 
 enum class PruningProfile(val displayName: String, val subtitle: String) {
-    FULL("全维度保留", "保留主世界、下界与末地所有数据"),
-    OVERWORLD_ONLY("仅保留主世界", "剔除下界与末地，缩减 40%~60% 体积 (推荐)"),
-    SPEED("极速构建模式", "仅保留主世界核心，耗时缩减一半以上"),
-    CUSTOM("自定义维度", "自主勾选需要保留或裁剪的维度")
+    FULL("Full Dimension Retention", "Keep Overworld, Nether, and The End"),
+    OVERWORLD_ONLY("Overworld Only", "Prune Nether and The End (Recommended)"),
+    SPEED("Speed Build Mode", "Retain Overworld core only"),
+    CUSTOM("Custom Dimensions", "Select dimensions manually")
 }
 
 data class ConversionConfig(

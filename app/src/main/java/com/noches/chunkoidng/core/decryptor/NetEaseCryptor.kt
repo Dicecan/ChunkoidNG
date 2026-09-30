@@ -71,7 +71,7 @@ object NetEaseCryptor {
             }
             if (decoded.contentEquals(expected)) return candidate
         }
-        throw IllegalArgumentException("无法从 CURRENT 验证网易存档密钥")
+        throw IllegalArgumentException("Cannot verify Netease world key from CURRENT")
     }
 
     fun decryptData(data: ByteArray, key: ByteArray = DEFAULT_KEY): ByteArray {
@@ -118,7 +118,7 @@ object NetEaseCryptor {
     }
 
     fun processFile(input: InputStream, output: OutputStream, decrypt: Boolean, key: ByteArray): Boolean {
-        require(key.isNotEmpty()) { "密钥不能为空" }
+        require(key.isNotEmpty()) { "Key cannot be empty" }
         val source = BufferedInputStream(input, BUFFER_SIZE)
         val target = BufferedOutputStream(output, BUFFER_SIZE)
         val header = ByteArray(HEADER_SIZE)

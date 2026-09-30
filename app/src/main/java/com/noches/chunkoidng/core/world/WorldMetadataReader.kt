@@ -199,10 +199,10 @@ object WorldMetadataReader {
 
     private fun mapGameType(type: Int?): String? {
         return when (type) {
-            0 -> "生存模式"
-            1 -> "创造模式"
-            2 -> "冒险模式"
-            3 -> "旁观模式"
+            0 -> "Survival"
+            1 -> "Creative"
+            2 -> "Adventure"
+            3 -> "Spectator"
             else -> null
         }
     }

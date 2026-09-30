@@ -1,6 +1,7 @@
 package com.noches.chunkoidng.core.conversion
 
 import android.content.Context
+import com.noches.chunkoidng.R
 import android.util.Log
 import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
@@ -40,7 +41,7 @@ class ConversionEngine(
         val startTime = System.currentTimeMillis()
 
         if (!config.inputDir.exists()) {
-            emit(ConversionEvent.Failure(config.taskId, "输入目录不存在: ${config.inputDir.absolutePath}"))
+            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_input_not_exist, config.inputDir.absolutePath)))
             return@flow
         }
 
@@ -50,16 +51,16 @@ class ConversionEngine(
 
         if (!runtimeEnv.ensureCliJar()) {
             tempOutput.deleteRecursively()
-            emit(ConversionEvent.Failure(config.taskId, "无法准备核心转换库 cli.jar"))
+            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_prep_cli)))
             return@flow
         }
         val cliJar = File(context.filesDir, "cli.jar")
         if (!cliJar.exists()) {
-            emit(ConversionEvent.Failure(config.taskId, "核心转换库 cli.jar 缺失"))
+            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_cli_missing)))
             return@flow
         }
 
-        emit(ConversionEvent.Progress(config.taskId, 5, "正在初始化转换引擎...", "准备 Java 运行环境"))
+        emit(ConversionEvent.Progress(config.taskId, 5, context.getString(R.string.engine_status_init), context.getString(R.string.engine_status_prep_jre)))
 
         processManager.setMaxMemory(config.maxMemoryMB)
         val jvmOpts = mutableListOf<String>()
@@ -92,7 +93,7 @@ class ConversionEngine(
             cliArgs.add(worldSettingsJson)
         }
 
-        emit(ConversionEvent.Progress(config.taskId, 15, "正在启动 Chunker 进程...", "指令参数: ${cliArgs.joinToString(" ")}"))
+        emit(ConversionEvent.Progress(config.taskId, 15, context.getString(R.string.engine_status_starting_chunker), context.getString(R.string.engine_status_args, cliArgs.joinToString(" "))))
 
         var lastPercent = 15
         var exitCode: Int? = null
@@ -121,14 +122,14 @@ class ConversionEngine(
                     val calculated = (15 + (rawNum * 0.70)).toInt().coerceIn(15, 85)
                     if (calculated > lastPercent) {
                         lastPercent = calculated
-                        emit(ConversionEvent.Progress(config.taskId, calculated, "正在处理区块与维度...", line.trim()))
+                        emit(ConversionEvent.Progress(config.taskId, calculated, context.getString(R.string.engine_status_processing_chunks), line.trim()))
                     }
                 } else if (line.contains("Writing", ignoreCase = true) || line.contains("Writing world", ignoreCase = true)) {
                     if (lastPercent < 85) lastPercent = 85
-                    emit(ConversionEvent.Progress(config.taskId, 88, "正在写入目标世界数据...", line.trim()))
+                    emit(ConversionEvent.Progress(config.taskId, 88, context.getString(R.string.engine_status_writing_target), line.trim()))
                 } else if (line.contains("Finished converting", ignoreCase = true) || line.contains("Conversion complete", ignoreCase = true)) {
                     lastPercent = 95
-                    emit(ConversionEvent.Progress(config.taskId, 95, "正在整理并刷新输出...", line.trim()))
+                    emit(ConversionEvent.Progress(config.taskId, 95, context.getString(R.string.engine_status_finishing_output), line.trim()))
                 }
 
                 if (line.startsWith("[SYSTEM] Process exited with code:")) {
@@ -140,7 +141,7 @@ class ConversionEngine(
             }
         } catch (e: Exception) {
             tempOutput.deleteRecursively()
-            emit(ConversionEvent.Failure(config.taskId, "转换异常中止: ${e.message}"))
+            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_aborted, e.message ?: "")))
             return@flow
         } finally {
             activeProcess = null
@@ -151,15 +152,15 @@ class ConversionEngine(
                 (File(tempOutput, "level.dat").isFile || File(tempOutput, "db").isDirectory)
         if (isSuccess && exitCode == 0 && outputValid) {
             if (config.outputDir.exists()) config.outputDir.deleteRecursively()
-            check(tempOutput.renameTo(config.outputDir)) { "无法提交转换输出" }
-            emit(ConversionEvent.Progress(config.taskId, 100, "转换完成！", "耗时 ${totalTime / 1000} 秒"))
+            check(tempOutput.renameTo(config.outputDir)) { context.getString(R.string.engine_error_commit_output) }
+            emit(ConversionEvent.Progress(config.taskId, 100, context.getString(R.string.engine_status_completed), context.getString(R.string.engine_status_time_elapsed, totalTime / 1000)))
             emit(ConversionEvent.Success(config.taskId, config.outputDir, totalTime))
         } else {
             tempOutput.deleteRecursively()
             val errorMsg = if (exitCode != null && exitCode != 0) {
-                "Chunker 进程异常退出 (错误码: $exitCode)"
+                context.getString(R.string.engine_error_exit_code, exitCode)
             } else {
-                "转换未完成，未检测到输出世界"
+                context.getString(R.string.engine_error_no_output)
             }
             emit(ConversionEvent.Failure(config.taskId, errorMsg, exitCode))
         }

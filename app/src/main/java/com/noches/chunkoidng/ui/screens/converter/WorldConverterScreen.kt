@@ -387,7 +387,8 @@ private fun ConfigureView(
                         Text(worldInfo?.name ?: stringResource(R.string.common_unknown), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
                             Badge(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
-                                Text(worldInfo?.platform?.displayName ?: "", modifier = Modifier.padding(horizontal = 4.dp))
+                                val platformBadge = worldInfo?.platform?.let { stringResource(it.nameRes) } ?: ""
+                                Text(platformBadge, modifier = Modifier.padding(horizontal = 4.dp))
                             }
                             Badge(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
                                 Text(worldInfo?.displayVersion ?: "", modifier = Modifier.padding(horizontal = 4.dp))

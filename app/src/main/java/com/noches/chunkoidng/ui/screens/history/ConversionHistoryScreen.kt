@@ -158,8 +158,10 @@ fun HistoryItemCard(
             Column {
                 Text(record.worldName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
+                val sourceText = resolvePlatformText(record.sourcePlatform)
+                val targetText = resolvePlatformText(record.targetPlatform)
                 Text(
-                    text = "${record.sourcePlatform} → ${record.targetPlatform}",
+                    text = "$sourceText → $targetText",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -175,14 +177,16 @@ fun HistoryItemCard(
     }
 
     if (showDialog) {
+        val sourceText = resolvePlatformText(record.sourcePlatform)
+        val targetText = resolvePlatformText(record.targetPlatform)
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text(stringResource(R.string.history_detail_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.history_detail_name, record.worldName))
-                    Text(stringResource(R.string.history_detail_source, record.sourcePlatform))
-                    Text(stringResource(R.string.history_detail_target, record.targetPlatform))
+                    Text(stringResource(R.string.history_detail_source, sourceText))
+                    Text(stringResource(R.string.history_detail_target, targetText))
                     Text(stringResource(R.string.history_detail_duration, record.durationMs / 1000.0))
                     if (record.exportedUri != null) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -213,3 +217,11 @@ fun HistoryItemCard(
     }
 }
 
+@Composable
+private fun resolvePlatformText(raw: String): String {
+    return when {
+        raw.contains("JAVA", ignoreCase = true) || raw.contains("JE", ignoreCase = true) -> stringResource(R.string.platform_java)
+        raw.contains("BEDROCK", ignoreCase = true) || raw.contains("BE", ignoreCase = true) || raw.contains("基岩", ignoreCase = true) || raw.contains("統合", ignoreCase = true) -> stringResource(R.string.platform_bedrock)
+        else -> raw
+    }
+}

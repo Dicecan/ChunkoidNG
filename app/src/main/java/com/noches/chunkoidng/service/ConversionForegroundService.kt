@@ -47,7 +47,7 @@ class ConversionForegroundService : Service() {
     private val _progressPercent = MutableStateFlow(0)
     val progressPercent: StateFlow<Int> = _progressPercent.asStateFlow()
 
-    private val _statusMessage = MutableStateFlow("准备就绪")
+    private val _statusMessage = MutableStateFlow("")
     val statusMessage: StateFlow<String> = _statusMessage.asStateFlow()
 
     private val _isRunning = MutableStateFlow(false)
@@ -62,6 +62,7 @@ class ConversionForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        _statusMessage.value = getString(R.string.service_ready)
         val runtimeEnv = JavaRuntimeEnvironment(this)
         val processManager = JavaProcessManager(this, runtimeEnv)
         engine = ConversionEngine(this, runtimeEnv, processManager)
@@ -72,7 +73,7 @@ class ConversionForegroundService : Service() {
 
     fun startConversion(config: ConversionConfig) {
         if (_isRunning.value) {
-            serviceScope.launch { _events.emit(ConversionEvent.Failure(config.taskId, "已有转换任务正在运行")) }
+            serviceScope.launch { _events.emit(ConversionEvent.Failure(config.taskId, getString(R.string.service_task_running))) }
             return
         }
         startConversionInternal(config)
@@ -82,10 +83,10 @@ class ConversionForegroundService : Service() {
 
         _isRunning.value = true
         _progressPercent.value = 0
-        _statusMessage.value = "正在初始化..."
+        _statusMessage.value = getString(R.string.service_initializing)
         acquireWakeLock()
 
-        val notification = buildNotification("正在启动转换引擎...", 0, indeterminate = true)
+        val notification = buildNotification(getString(R.string.service_starting_engine), 0, indeterminate = true)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -109,13 +110,13 @@ class ConversionForegroundService : Service() {
                         }
                         is ConversionEvent.Success -> {
                             _progressPercent.value = 100
-                            _statusMessage.value = "转换成功"
-                            updateNotification("转换已圆满完成！", 100, false)
+                            _statusMessage.value = getString(R.string.service_completed_status)
+                            updateNotification(getString(R.string.service_completed_notif), 100, false)
                             finishService(success = true)
                         }
                         is ConversionEvent.Failure -> {
-                            _statusMessage.value = "转换失败: ${event.error}"
-                            updateNotification("转换遇到错误", 0, false)
+                            _statusMessage.value = getString(R.string.service_failed_status, event.error)
+                            updateNotification(getString(R.string.service_failed_notif), 0, false)
                             finishService(success = false)
                         }
                         is ConversionEvent.LogOutput -> {}
@@ -123,7 +124,7 @@ class ConversionForegroundService : Service() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Conversion job threw exception", e)
-                _events.emit(ConversionEvent.Failure(config.taskId, "转换异常: ${e.message}"))
+                _events.emit(ConversionEvent.Failure(config.taskId, getString(R.string.service_exception, e.message ?: "")))
                 finishService(success = false)
             }
         }
@@ -132,7 +133,7 @@ class ConversionForegroundService : Service() {
     fun cancelConversion() {
         engine?.cancel()
         conversionJob?.cancel()
-        _statusMessage.value = "用户已取消转换"
+        _statusMessage.value = getString(R.string.service_cancelled)
         _isRunning.value = false
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -148,10 +149,10 @@ class ConversionForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "世界转换后台服务",
+                getString(R.string.service_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "保持 Minecraft 存档转换在后台持续运行"
+                description = getString(R.string.service_channel_desc)
                 setShowBadge(false)
             }
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
@@ -168,7 +169,7 @@ class ConversionForegroundService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Chunkoid - 世界存档转换中")
+            .setContentTitle(getString(R.string.service_notif_title))
             .setContentText(statusText)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentIntent(pendingIntent)

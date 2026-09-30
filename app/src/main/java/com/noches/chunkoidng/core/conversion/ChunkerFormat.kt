@@ -13,8 +13,8 @@ data class ChunkerFormat(
         val FORMAT_INPUT = ChunkerFormat(
             id = "INPUT",
             platform = Platform.BEDROCK,
-            group = "原格式",
-            displayName = "保持原版本 (INPUT)",
+            group = "Original",
+            displayName = "Original Format (INPUT)",
             isPopular = true
         )
 

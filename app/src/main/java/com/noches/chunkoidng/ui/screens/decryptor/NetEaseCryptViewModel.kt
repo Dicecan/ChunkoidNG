@@ -83,7 +83,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                 it.copy(
                     stage = CryptUiStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = "正在读取存档目录结构..."
+                    stagingMessage = getApplication<Application>().getString(R.string.crypt_staging_reading_dir)
                 )
             }
 
@@ -93,11 +93,11 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                     stagingInputDir.mkdirs()
 
                     val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(getApplication(), treeUri)
-                        ?: return@withContext Result.failure(Exception("无法访问所选目录"))
+                        ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.archive_error_access_dir)))
 
                     val failures = copyDocumentDir(docFile, stagingInputDir)
                     if (failures.isNotEmpty()) {
-                        return@withContext Result.failure(Exception("读取文件失败: ${failures.take(3).joinToString()}"))
+                        return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.decrypt_err_export_fail, failures.take(3).joinToString())))
                     }
                     Result.success(Unit)
                 } catch (e: Exception) {
@@ -113,7 +113,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                     _uiState.update {
                         it.copy(
                             stage = CryptUiStage.ERROR,
-                            errorMessage = "读取目录失败: ${err.message}"
+                            errorMessage = getApplication<Application>().getString(R.string.crypt_error_dir_read, err.message ?: "")
                         )
                     }
                 }
@@ -127,7 +127,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                 it.copy(
                     stage = CryptUiStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = "正在解压待处理归档文件..."
+                    stagingMessage = getApplication<Application>().getString(R.string.crypt_staging_extracting)
                 )
             }
 
@@ -147,7 +147,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                     _uiState.update {
                         it.copy(
                             stage = CryptUiStage.ERROR,
-                            errorMessage = "归档加载失败: ${err.message}"
+                            errorMessage = getApplication<Application>().getString(R.string.crypt_error_archive_load, err.message ?: "")
                         )
                     }
                 }
@@ -157,13 +157,14 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
 
     private fun startProcessing() {
         val s = _uiState.value
+        val modeTitle = getApplication<Application>().getString(s.mode.nameRes)
         _uiState.update {
             it.copy(
                 stage = CryptUiStage.PROCESSING,
                 processProgress = 0,
                 currentFileText = "",
-                statusText = "正在初始化加解密引擎...",
-                logs = listOf("[INIT] 准备执行${s.mode.displayName}任务...")
+                statusText = getApplication<Application>().getString(R.string.crypt_status_init_engine),
+                logs = listOf(getApplication<Application>().getString(R.string.crypt_log_init_task, modeTitle))
             )
         }
 
@@ -199,7 +200,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                                 keyHex = "",
                                 filesProcessed = event.filesProcessed,
                                 ldbVerified = event.ldbVerified,
-                                statusText = "${s.mode.displayName}成功！"
+                                statusText = getApplication<Application>().getString(R.string.crypt_status_success, modeTitle)
                             )
                         }
                     }
@@ -214,7 +215,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                 }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(stage = CryptUiStage.ERROR, errorMessage = "加解密失败: ${e.message}") }
+                _uiState.update { it.copy(stage = CryptUiStage.ERROR, errorMessage = getApplication<Application>().getString(R.string.crypt_error_failed, e.message ?: "")) }
             }
         }
     }
@@ -249,17 +250,17 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
             val result = withContext(Dispatchers.IO) {
                 try {
                     val treeDoc = androidx.documentfile.provider.DocumentFile.fromTreeUri(getApplication(), targetTreeUri)
-                        ?: return@withContext Result.failure(Exception("无法访问导出位置"))
+                        ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.archive_error_access_dir)))
 
                     val outputDir = cryptManager.workspaceCryptDir
                     if (!outputDir.isDirectory || outputDir.listFiles().isNullOrEmpty()) {
-                        return@withContext Result.failure(Exception("加解密输出为空"))
+                        return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.crypt_error_output_empty)))
                     }
                     if (packAsArchive) {
                         val extension = if (s.mode == CryptMode.PASSIVE_ENCRYPT) ".zip" else ".mcworld"
                         val tempName = ".${safeName}.${System.currentTimeMillis()}.tmp"
                         val docFile = treeDoc.createFile("application/zip", tempName)
-                            ?: return@withContext Result.failure(Exception("无法创建目标归档"))
+                            ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.crypt_error_create_archive)))
 
                         getApplication<Application>().contentResolver.openOutputStream(docFile.uri)?.use { out ->
                             ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->

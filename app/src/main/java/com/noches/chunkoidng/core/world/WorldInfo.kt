@@ -19,7 +19,7 @@ data class WorldInfo(
 ) {
     val formattedSize: String
         get() {
-            if (sizeBytes <= 0) return "未知大小"
+            if (sizeBytes <= 0) return "--"
             val kb = sizeBytes / 1024.0
             val mb = kb / 1024.0
             val gb = mb / 1024.0
@@ -34,6 +34,6 @@ data class WorldInfo(
         get() = when {
             !versionName.isNullOrBlank() -> versionName
             versionId != null -> "Build $versionId"
-            else -> "未知版本"
+            else -> "--"
         }
 }

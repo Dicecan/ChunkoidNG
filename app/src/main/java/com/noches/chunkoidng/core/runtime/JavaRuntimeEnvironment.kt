@@ -65,7 +65,7 @@ class JavaRuntimeEnvironment(private val context: Context) {
                         val destFilePath = destFile.canonicalPath
                         if (destFilePath != rootfsCanonicalPath &&
                             !destFilePath.startsWith(rootfsCanonicalPath + File.separator)) {
-                            throw SecurityException("RootFS 压缩包包含非法路径: ${entry.name}")
+                            throw SecurityException("RootFS archive contains invalid path: ${entry.name}")
                         }
 
                         if (entry.isDirectory) {

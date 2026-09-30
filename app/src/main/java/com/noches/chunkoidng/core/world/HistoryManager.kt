@@ -132,7 +132,7 @@ class HistoryManager(private val context: Context) {
 
             if (!tempFile.renameTo(historyFile)) {
                 tempFile.delete()
-                throw IllegalStateException("无法保存转换历史")
+                throw IllegalStateException("Failed to save conversion history")
             }
         }
     }
