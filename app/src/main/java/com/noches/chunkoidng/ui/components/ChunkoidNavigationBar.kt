@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.noches.chunkoidng.ui.navigation.Screen
 
@@ -39,6 +40,9 @@ fun ChunkoidNavigationBar(
                 label = {
                     Text(
                         text = title,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                     )
                 },

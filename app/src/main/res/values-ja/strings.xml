@@ -31,7 +31,7 @@
     <string name="nav_about">アプリ情報</string>
     <string name="nav_history">変換履歴</string>
     <string name="nav_features">機能ハブ</string>
-    <string name="nav_tutorial">ガイドとWiki</string>
+    <string name="nav_tutorial">チュートリアル</string>
 
     <string name="source_picker_folder_title">ワールドフォルダを選択</string>
     <string name="source_picker_folder_desc">解凍済みディレクトリをインポート</string>

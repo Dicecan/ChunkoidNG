@@ -31,7 +31,7 @@
     <string name="nav_about">关于应用</string>
     <string name="nav_history">转换历史</string>
     <string name="nav_features">功能总览</string>
-    <string name="nav_tutorial">指南与 Wiki</string>
+    <string name="nav_tutorial">教程指南</string>
 
     <string name="source_picker_folder_title">选择世界文件夹</string>
     <string name="source_picker_folder_desc">导入已解压的世界目录</string>
