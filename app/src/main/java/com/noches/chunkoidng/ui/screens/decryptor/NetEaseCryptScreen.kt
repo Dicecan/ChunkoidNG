@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.noches.chunkoidng.core.decryptor.CryptMode
+import com.noches.chunkoidng.ui.components.SourcePickerCard
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -264,81 +265,25 @@ private fun SelectSourceView(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Input Actions
-        Card(
-            onClick = onSelectFolder,
-            modifier = Modifier.fillMaxWidth().height(96.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            shape = ExpressiveShapes.large
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Outlined.Folder,
-                        contentDescription = null,
-                        modifier = Modifier.size(26.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        "选择存档文件夹",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "包含 level.dat 与 db/ 目录的根文件夹",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        SourcePickerCard(
+            title = "选择存档文件夹",
+            subtitle = "包含 level.dat 与 db/ 目录的根文件夹",
+            icon = Icons.Outlined.Folder,
+            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            onClick = onSelectFolder
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Card(
-            onClick = onSelectArchive,
-            modifier = Modifier.fillMaxWidth().height(96.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            shape = ExpressiveShapes.large
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Outlined.FolderZip,
-                        contentDescription = null,
-                        modifier = Modifier.size(26.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        "选择压缩包文件",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "支持 .zip 或 .mcworld 格式",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        SourcePickerCard(
+            title = "选择压缩包文件",
+            subtitle = "支持 .zip 或 .mcworld 格式",
+            icon = Icons.Outlined.FolderZip,
+            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            onClick = onSelectArchive
+        )
     }
 }
 

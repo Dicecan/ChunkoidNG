@@ -46,7 +46,9 @@ import com.noches.chunkoidng.core.conversion.ChunkerFormat
 import com.noches.chunkoidng.core.conversion.PruningProfile
 import com.noches.chunkoidng.core.world.Platform
 import com.noches.chunkoidng.core.world.WorldInfo
+import com.noches.chunkoidng.ui.components.SourcePickerCard
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
+import com.noches.chunkoidng.ui.theme.SquircleIconShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,7 +206,7 @@ fun WorldConverterScreen(
             }
 
             if (showFormatPicker) {
-                FormatPickerDialog(
+                FormatPickerBottomSheet(
                     sourcePlatform = uiState.worldInfo?.platform ?: Platform.BEDROCK,
                     currentFormat = uiState.targetFormat,
                     onSelectFormat = {
@@ -244,55 +246,26 @@ private fun SelectSourceView(
         
         Spacer(modifier = Modifier.height(48.dp))
 
-        Card(
-            onClick = onSelectFolder,
-            modifier = Modifier.fillMaxWidth().height(100.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            shape = ExpressiveShapes.large
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Outlined.Folder, 
-                    contentDescription = null, 
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text("选择文件夹", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                    Text("Minecraft 存档根目录 (含 level.dat)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
+        SourcePickerCard(
+            title = "选择存档文件夹",
+            subtitle = "Minecraft 存档根目录 (含 level.dat)",
+            icon = Icons.Outlined.Folder,
+            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            badge = "推荐",
+            onClick = onSelectFolder
+        )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Card(
-            onClick = onSelectArchive,
-            modifier = Modifier.fillMaxWidth().height(100.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            shape = ExpressiveShapes.large
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Outlined.FolderZip, 
-                    contentDescription = null, 
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text("选择压缩包", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                    Text(".zip 或 .mcworld 格式", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
+        SourcePickerCard(
+            title = "选择压缩包文件",
+            subtitle = "支持 .zip 或 .mcworld 格式",
+            icon = Icons.Outlined.FolderZip,
+            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            onClick = onSelectArchive
+        )
     }
 }
 
@@ -763,88 +736,250 @@ private fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FormatPickerDialog(
+private fun FormatPickerBottomSheet(
     sourcePlatform: Platform,
     currentFormat: ChunkerFormat,
     onSelectFormat: (ChunkerFormat) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(if (sourcePlatform == Platform.BEDROCK) 1 else 0) }
+    var searchQuery by remember { mutableStateOf("") }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = {
-            Column {
-                Text("选择目标版本与格式", fontWeight = FontWeight.Bold)
-                Text("支持跨版本升级、降级或双端格式互转", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        sheetState = sheetState,
+        shape = ExpressiveShapes.extraLarge,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(SquircleIconShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.SwapHoriz,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "选择目标版本与格式",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "支持双端格式互转、同平台版本升级与降级",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Outlined.Close, contentDescription = "关闭")
+                }
             }
-        },
-        text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    SegmentedButton(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
-                    ) {
-                        Text("基岩版 (BE)", fontSize = 12.sp)
-                    }
-                    SegmentedButton(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
-                    ) {
-                        Text("Java 版 (JE)", fontSize = 12.sp)
-                    }
-                    SegmentedButton(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
-                    ) {
-                        Text("保持原版本", fontSize = 12.sp)
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                val formats = when (selectedTab) {
-                    0 -> ChunkerFormat.BEDROCK_FORMATS
-                    1 -> ChunkerFormat.JAVA_FORMATS
-                    else -> listOf(ChunkerFormat.FORMAT_INPUT)
-                }
-
-                LazyColumn(modifier = Modifier.heightIn(max = 340.dp)) {
-                    items(formats) { format ->
-                        val isSelected = format.id == currentFormat.id
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    format.displayName,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    if (format.id == "INPUT") "不转换格式，仅应用维度裁剪与规则覆盖" else format.group,
-                                    fontSize = 11.sp
-                                )
-                            },
-                            trailingContent = {
-                                if (isSelected) {
-                                    Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                }
-                            },
-                            modifier = Modifier.clickable { onSelectFormat(format) }
+            // Tab selector (MD3E Segmented control with ample width & icons)
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            ) {
+                SegmentedButton(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
+                    icon = {
+                        Icon(
+                            Icons.Outlined.PhoneAndroid,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
+                ) {
+                    Text("基岩版 (BE)", maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                SegmentedButton(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
+                    icon = {
+                        Icon(
+                            Icons.Outlined.Computer,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                ) {
+                    Text("Java版 (JE)", maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                SegmentedButton(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+                    icon = {
+                        Icon(
+                            Icons.Outlined.Tune,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                ) {
+                    Text("保持原版本", maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
+
+            // Search filter
+            if (selectedTab != 2) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("搜索版本号 (如 1.21, 1.20)...", fontSize = 13.sp) },
+                    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Outlined.Clear, contentDescription = "清除", modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                    shape = ExpressiveShapes.medium,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    singleLine = true
+                )
+            }
+
+            val allFormats = when (selectedTab) {
+                0 -> ChunkerFormat.BEDROCK_FORMATS
+                1 -> ChunkerFormat.JAVA_FORMATS
+                else -> listOf(ChunkerFormat.FORMAT_INPUT)
+            }
+
+            val filteredFormats = if (searchQuery.isBlank()) {
+                allFormats
+            } else {
+                allFormats.filter {
+                    it.displayName.contains(searchQuery, ignoreCase = true) ||
+                    it.id.contains(searchQuery, ignoreCase = true) ||
+                    it.group.contains(searchQuery, ignoreCase = true)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(filteredFormats, key = { it.id }) { format ->
+                    val isSelected = format.id == currentFormat.id
+                    Card(
+                        onClick = {
+                            onSelectFormat(format)
+                        },
+                        shape = ExpressiveShapes.medium,
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                            }
+                        ),
+                        border = if (isSelected) {
+                            androidx.compose.foundation.BorderStroke(1.8.dp, MaterialTheme.colorScheme.primary)
+                        } else null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isSelected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceContainerHighest
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (format.id == "INPUT") Icons.Outlined.Tune
+                                    else if (format.platform == Platform.BEDROCK) Icons.Outlined.PhoneAndroid
+                                    else Icons.Outlined.Computer,
+                                    contentDescription = null,
+                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = format.displayName,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (format.id == "INPUT") "保持原世界版本不变，仅应用维度裁剪与属性设置" else "适配版本系列: ${format.group}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp
+                                )
+                            }
+
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Check,
+                                        contentDescription = "已选择",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-    )
+    }
 }

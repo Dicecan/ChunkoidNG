@@ -29,6 +29,7 @@ import com.noches.chunkoidng.ui.components.ChunkoidTopAppBar
 import com.noches.chunkoidng.ui.screens.about.AboutScreen
 import com.noches.chunkoidng.ui.screens.decryptor.NetEaseCryptScreen
 import com.noches.chunkoidng.ui.screens.features.FeaturesScreen
+import com.noches.chunkoidng.ui.screens.pruner.DimensionPrunerScreen
 import com.noches.chunkoidng.ui.screens.settings.SettingsScreen
 import com.noches.chunkoidng.ui.screens.tutorial.TutorialScreen
 import kotlinx.coroutines.launch
@@ -114,7 +115,7 @@ fun MainAppScaffold() {
                         when (feature.id) {
                             "world_converter" -> navController.navigate("world_converter")
                             "netease_decryptor" -> navController.navigate("netease_crypt")
-                            "dimension_pruner" -> navController.navigate("world_converter")
+                            "dimension_pruner" -> navController.navigate("dimension_pruner")
                             "sandbox_terminal" -> navController.navigate("console")
                             else -> {
                                 coroutineScope.launch {
@@ -130,6 +131,13 @@ fun MainAppScaffold() {
 
             composable("world_converter") {
                 com.noches.chunkoidng.ui.screens.converter.WorldConverterScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToHistory = { navController.navigate("conversion_history") }
+                )
+            }
+
+            composable("dimension_pruner") {
+                DimensionPrunerScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToHistory = { navController.navigate("conversion_history") }
                 )
