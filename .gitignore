@@ -12,3 +12,4 @@
 local.properties
 *.apk
 /app/debug/
+/app/release/

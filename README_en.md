@@ -1,6 +1,22 @@
-# Chunkoid NG (Next-Generation) English Documentation
+<div align="center">
+  <h1>Chunkoid NG (Next-Generation)</h1>
+  <p><strong>EncoreTeam's Modern Architectural Recode of Chunkoid</strong></p>
 
-[简体中文 (Chinese)](README_zh.md) | [Home](README.md) | [Official Website](https://chunkoid.top)
+  <p>
+    <a href="README_zh.md"><strong>简体中文 (Chinese)</strong></a> | 
+    <a href="README_en.md"><strong>English (英文)</strong></a> | 
+    <a href="https://chunkoid.top"><strong>Official Website</strong></a>
+  </p>
+
+  <p>
+    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.2-2ea043">
+    <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
+    <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
+    <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
+    <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-3DDC84">
+    <img alt="Minecraft" src="https://img.shields.io/badge/Minecraft-Bedrock%2FJava-62B47A">
+  </p>
+</div>
 
 ---
 
@@ -15,28 +31,31 @@
 ---
 
 > [!WARNING]
-> ### 🚧 Early Canary Preview Phase
-> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, and full bidirectional Minecraft world conversion & export features have been implemented.
+> ### 🚧 Early Canary 0.2 Preview Phase
+> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, NetEase world decryption & passive encryption, and a standalone dimension pruning workbench have been fully implemented.
 
 ---
 
 ## 🌟 NG (Next-Generation) Highlights
 
-* **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards.
+* **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards, featuring unified Squircle container interactions, bottom sheet target pickers, and responsive non-wrapping typography.
 * **Ultra-Slim RootFS**: Heavily pruned payload down to 57 binaries with 50% storage savings.
 * **Interactive Sandbox Console**: Built-in environment self-check and terminal for debugging OpenJDK 17 and Chunker CLI.
 * **Full-Featured World Converter**: Supports Java/Bedrock bidirectional conversion, multi-version targets, foreground service persistence, history logs, and custom SAF export.
+* **Standalone Dimension Pruning & Slimming**: Dedicated slimming workbench with Overworld-only, Speed, Full-dimension presets, per-dimension pruning, and `-k` keep original NBT rules.
+* **NetEase Decryption & Passive Encryption**: Streaming LevelDB XOR algorithm with magic byte verification, passive encryption, and direct pipeline into world converter.
+* **Standardized UTF-8 Encoding**: Full-stack UTF-8 character encoding to eliminate garbled text across multi-language preferences and runtime diagnostics.
 
 ---
 
 ## 🚀 Core Features Roadmap (Canary Status)
 
 * ✅ **Interactive Sandbox Console**: `Implemented` (Supports OpenJDK 17 and Shell commands)
-* ✅ **Bidirectional World Conversion**: `Implemented` (Supports Java/Bedrock conversion, version targets, history logs, and remedy export)
-* ⏳ **Version Upgrading & Dimension Pruning**: `In Development` (Advanced conversion options)
-* ⏳ **NetEase World Decryption**: `In Development` (Pending LevelDB XOR algorithm migration)
-* ⏳ **NBT / LevelDB Visual Explorer**: `In Development`
-* ⏳ **Resource Pack Converter**: `In Development`
+* ✅ **Bidirectional World Conversion**: `Implemented` (Supports Java/Bedrock conversion, version targets, foreground service, history logs, and remedy export)
+* ✅ **Dimension Pruning & World Slimming**: `Implemented` (Standalone workbench, Overworld-only/Speed presets, per-dimension toggles, and `-k` raw NBT retention)
+* ✅ **NetEase Decryption & Passive Encryption**: `Implemented` (LevelDB XOR stream decryptor, magic byte check, passive encryption, and pipeline integration)
+* ⏳ **NBT / LevelDB Visual Explorer**: `In Development` (Pending migration)
+* ⏳ **Resource Pack Converter**: `In Development` (Pending migration)
 
 ---
 
@@ -45,7 +64,7 @@
 ### Prerequisites
 * **Android Studio**: Ladybug (2024.2.1) or newer
 * **JDK**: OpenJDK 17 or JDK 21
-* **Android SDK**: Min SDK 26 (Android 8.0), Target SDK 34 (Android 14)
+* **Android SDK**: Min SDK 27 (Android 8.1), Target SDK 35 (Android 15)
 * **Gradle**: 8.9+
 
 ### Building Release APK
@@ -67,8 +86,9 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 * **Original Author & Founder**: Dozener (DozenesStudio) (<dozener@outlook.com>)
 * **Current Maintainer**: DICECAN (EncoreTeam)
 * **Core Contributors**: Ryan Steven, Dozener
-* **Open Source Dependencies**:
+* **Open Source Dependencies & Algorithmic References**:
   * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT License)
+  * [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
   * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT License)
   * [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
   * [Dicecan - NetEaseDecryptorSDK](https://github.com/Dicecan/NetEaseDecryptorSDK) (GPL-3.0)

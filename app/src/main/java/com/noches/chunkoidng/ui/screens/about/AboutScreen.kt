@@ -105,7 +105,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Next-Generation · v2.2.0-NG (Compose MD3)",
+                        text = "Next-Generation · CANARY 0.2 (Compose MD3E)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
@@ -117,6 +117,61 @@ fun AboutScreen(
                         text = "首个专为安卓打造的开源 Minecraft 世界转换工具",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = ExpressiveShapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.SwapHoriz,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "CANARY 0.2 实装功能与特性",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FeatureHighlightRow(
+                        title = "世界存档双向互转与导出",
+                        desc = "全功能支持 Java / 基岩版互转、跨版本升降级、前台服务保活转换、转换历史管理与 SAF 自定义导出"
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    FeatureHighlightRow(
+                        title = "网易版存档还原与被动加密",
+                        desc = "集成 LevelDB 异或算法流式解密与魔数完整性校验，支持网易版被动加密，并与世界转换器无缝流转"
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    FeatureHighlightRow(
+                        title = "独立存档瘦身与维度裁剪",
+                        desc = "提供仅保留主世界、极速轻量化、全维度保留等预设策略，支持各维度独立裁剪与原始 NBT 规则保留"
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    FeatureHighlightRow(
+                        title = "Material Design 3 Expressive (MD3E)",
+                        desc = "统一 Squircle 导入卡片、全新底栏目标版本选择器、自适应防折行排版与动态取色"
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    FeatureHighlightRow(
+                        title = "全链路 UTF-8 字符编码",
+                        desc = "全面规范 UTF-8 字符集标准，根治多语言配置项与运行日志中的中文字符乱码问题"
                     )
                 }
             }
@@ -234,6 +289,10 @@ fun AboutScreen(
                         openUrl("https://github.com/Dicecan/NetEaseDecryptorSDK")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    DependencyRow("XOR-MC-Archive-Decrypt", "HTMonkeyG", "GPLv3", "网易版 LevelDB 异或加解密算法参考") {
+                        openUrl("https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt")
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     DependencyRow("NBT-Manipulator", "PowerNukkit", "MIT License", "Minecraft NBT 数据解析") {
                         openUrl("https://github.com/PowerNukkit/NBT-Manipulator")
                     }
@@ -255,7 +314,7 @@ fun AboutScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = { openUrl("https://github.com/Dicecan/Chunkoid") },
+                    onClick = { openUrl("https://github.com/Dicecan/ChunkoidNG") },
                     modifier = Modifier.weight(1f),
                     shape = ExpressiveShapes.medium
                 ) {
@@ -362,6 +421,25 @@ private fun DependencyRow(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+@Composable
+private fun FeatureHighlightRow(title: String, desc: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = desc,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 16.sp
         )
     }
 }

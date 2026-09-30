@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-2.2.0--NG-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.2-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -32,18 +32,20 @@
 ---
 
 > [!WARNING]
-> ### 🚧 当前处于 Canary 早期开发预览阶段
-> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台、Minecraft 世界存档双向转换与导出管理，以及网易版存档加解密与维度裁剪。
+> ### 🚧 当前处于 Canary 0.2 早期开发预览阶段
+> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台、Minecraft 世界存档双向转换与导出管理、网易版存档加解密与被动加密、以及独立维度裁剪与存档瘦身工作台。
 
 ---
 
 ## 🌟 NG (Next-Generation) 重构特性
 
-* 🎨 **Jetpack Compose (MD3E)**：全盘基于 Material Design 3 Expressive 规范构建。
+* 🎨 **Jetpack Compose (MD3E)**：全盘基于 Material Design 3 Expressive 规范构建，统一 Squircle 交互容器与自适应防折行排版。
 * ⚡ **极简 RootFS 沙箱**：大幅精简无用依赖，部署文件减少至 57 个，解压体积减半。
 * 🖥️ **沙箱终端控制台**：内置环境自检与交互终端，支持调试 OpenJDK 17 与 Chunker CLI。
-* 🌍 **全功能世界转换器**：支持 Java/基岩版双向转换、跨版本升降级、维度智能裁剪、前台服务防杀保活、转换历史管理与自定义路径导出。
+* 🌍 **全功能世界转换器**：支持 Java/基岩版双向转换、跨版本升降级、前台服务防杀保活、转换历史管理与自定义路径导出。
+* ✂️ **独立存档瘦身与维度裁剪**：提供仅保留主世界、极速轻量化、全维度保留等预设策略，支持各维度独立裁剪与 `-k` 原始 NBT 保留。
 * 🔐 **网易版存档还原与被动加密**：基于 LevelDB 异或算法流式解密，支持魔数完整性校验，并提供网易版被动加密与一键流转世界转换。
+* 🔤 **全局字符编码规范**：全链路采用标准 UTF-8 字符集，根治多语言设置项与运行日志中的中文字符乱码隐患。
 
 ---
 
@@ -51,7 +53,7 @@
 
 * ✅ **沙箱终端控制台**：`已实装`（支持 OpenJDK 17 与 Shell 命令执行）
 * ✅ **世界存档双向互转**：`已实装`（支持 Java/基岩版互转、跨版本选择、前台服务转换、历史记录与补救导出）
-* ✅ **版本升降级与维度裁剪**：`已实装`（支持全维度/仅主世界/极速预设、各维度自定义开关、规则覆盖与 `-k` 原始 NBT 保留）
+* ✅ **版本升降级与维度裁剪**：`已实装`（独立存档瘦身页面，提供全维度/仅主世界/极速轻量化预设、各维度自定义开关与 `-k` 原始 NBT 保留）
 * ✅ **网易版存档还原与被动加密**：`已实装`（集成 LevelDB 异或流式解密、魔数校验与被动加密，支持无缝流转至世界转换器）
 * ⏳ **专业 NBT / LevelDB 编辑**：`待开发`（待移植）
 * ⏳ **材质资源包互转**：`待开发`（待移植）
@@ -79,9 +81,9 @@
 * **原作者与奠基人**：Dozener (DozenesStudio)
 * **当前维护与重构团队**：DICECAN (EncoreTeam)
 * **核心贡献者**：Ryan Steven、Dozener
-* **第三方开源组件**：
+* **第三方开源组件与算法参考**：
   * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT License)
-  * [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt)
+  * [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
   * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT License)
   * [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
   * [Dicecan - NetEaseDecryptorSDK](https://github.com/Dicecan/NetEaseDecryptorSDK) (GPL-3.0)
