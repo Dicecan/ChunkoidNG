@@ -2,6 +2,13 @@ package com.noches.chunkoidng.core.conversion
 
 import java.io.File
 
+enum class PruningProfile(val displayName: String, val subtitle: String) {
+    FULL("全维度保留", "保留主世界、下界与末地所有数据"),
+    OVERWORLD_ONLY("仅保留主世界", "剔除下界与末地，缩减 40%~60% 体积 (推荐)"),
+    SPEED("极速构建模式", "仅保留主世界核心，耗时缩减一半以上"),
+    CUSTOM("自定义维度", "自主勾选需要保留或裁剪的维度")
+}
+
 /**
  * Configuration options for world conversion.
  */
@@ -13,6 +20,7 @@ data class ConversionConfig(
     val lowMemoryMode: Boolean = false,
     val maxMemoryMB: Int = 2048,
     // Pruning
+    val pruningProfile: PruningProfile = PruningProfile.FULL,
     val includeOverworld: Boolean = true,
     val includeNether: Boolean = true,
     val includeTheEnd: Boolean = true,

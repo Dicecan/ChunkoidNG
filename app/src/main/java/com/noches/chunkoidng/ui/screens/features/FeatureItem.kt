@@ -43,27 +43,15 @@ val chunkoidFeatures = listOf(
     ),
     FeatureItem(
         id = "netease_decryptor",
-        title = "网易存档解密",
-        subtitle = "通过 LevelDB 指针异或算法自动提取并还原网易版加密存档",
+        title = "网易存档解密与加密",
+        subtitle = "LevelDB 异或算法流式解密，并支持网易版被动加密",
         badge = "独家黑科技",
-        tags = listOf("流式解密", "LevelDB", "全自动"),
+        tags = listOf("流式解密", "被动加密", "全自动"),
         icon = Icons.Outlined.LockOpen,
         accentLight = FeatureColors.DecryptorLight,
         accentContainerLight = FeatureColors.DecryptorContainerLight,
         accentDark = FeatureColors.DecryptorDark,
         accentContainerDark = FeatureColors.DecryptorContainerDark
-    ),
-    FeatureItem(
-        id = "nbt_editor",
-        title = "NBT / LevelDB 编辑",
-        subtitle = "层级树形可视化查看，实时增删改查 NBT 与 LevelDB 键值",
-        badge = "专业工具",
-        tags = listOf("树形折叠", "Hex 预览", "免解压"),
-        icon = Icons.Outlined.Dataset,
-        accentLight = FeatureColors.NbtEditorLight,
-        accentContainerLight = FeatureColors.NbtEditorContainerLight,
-        accentDark = FeatureColors.NbtEditorDark,
-        accentContainerDark = FeatureColors.NbtEditorContainerDark
     ),
     FeatureItem(
         id = "dimension_pruner",
@@ -76,6 +64,18 @@ val chunkoidFeatures = listOf(
         accentContainerLight = FeatureColors.PrunerContainerLight,
         accentDark = FeatureColors.PrunerDark,
         accentContainerDark = FeatureColors.PrunerContainerDark
+    ),
+    FeatureItem(
+        id = "nbt_editor",
+        title = "NBT / LevelDB 编辑",
+        subtitle = "层级树形可视化查看，实时增删改查 NBT 与 LevelDB 键值",
+        badge = "专业工具",
+        tags = listOf("树形折叠", "Hex 预览", "免解压"),
+        icon = Icons.Outlined.Dataset,
+        accentLight = FeatureColors.NbtEditorLight,
+        accentContainerLight = FeatureColors.NbtEditorContainerLight,
+        accentDark = FeatureColors.NbtEditorDark,
+        accentContainerDark = FeatureColors.NbtEditorContainerDark
     ),
     FeatureItem(
         id = "pack_converter",

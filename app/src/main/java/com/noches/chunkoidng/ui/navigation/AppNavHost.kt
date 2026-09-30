@@ -2,7 +2,6 @@ package com.noches.chunkoidng.ui.navigation
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.noches.chunkoidng.ui.components.ChunkoidNavigationBar
 import com.noches.chunkoidng.ui.components.ChunkoidTopAppBar
 import com.noches.chunkoidng.ui.screens.about.AboutScreen
+import com.noches.chunkoidng.ui.screens.decryptor.NetEaseCryptScreen
 import com.noches.chunkoidng.ui.screens.features.FeaturesScreen
 import com.noches.chunkoidng.ui.screens.settings.SettingsScreen
 import com.noches.chunkoidng.ui.screens.tutorial.TutorialScreen
@@ -113,6 +113,8 @@ fun MainAppScaffold() {
                     onFeatureClick = { feature ->
                         when (feature.id) {
                             "world_converter" -> navController.navigate("world_converter")
+                            "netease_decryptor" -> navController.navigate("netease_crypt")
+                            "dimension_pruner" -> navController.navigate("world_converter")
                             "sandbox_terminal" -> navController.navigate("console")
                             else -> {
                                 coroutineScope.launch {
@@ -130,6 +132,17 @@ fun MainAppScaffold() {
                 com.noches.chunkoidng.ui.screens.converter.WorldConverterScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToHistory = { navController.navigate("conversion_history") }
+                )
+            }
+
+            composable("netease_crypt") {
+                NetEaseCryptScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToConverter = {
+                        navController.navigate("world_converter") {
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
             

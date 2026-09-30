@@ -33,7 +33,7 @@
 
 > [!WARNING]
 > ### 🚧 当前处于 Canary 早期开发预览阶段
-> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台以及核心的 Minecraft 世界存档双向转换与导出管理功能。
+> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台、Minecraft 世界存档双向转换与导出管理，以及网易版存档加解密与维度裁剪。
 
 ---
 
@@ -42,16 +42,17 @@
 * 🎨 **Jetpack Compose (MD3E)**：全盘基于 Material Design 3 Expressive 规范构建。
 * ⚡ **极简 RootFS 沙箱**：大幅精简无用依赖，部署文件减少至 57 个，解压体积减半。
 * 🖥️ **沙箱终端控制台**：内置环境自检与交互终端，支持调试 OpenJDK 17 与 Chunker CLI。
-* 🌍 **全功能世界转换器**：支持 Java/基岩版双向转换、多版本格式选择、前台服务防杀保活、转换历史管理与自定义路径导出。
+* 🌍 **全功能世界转换器**：支持 Java/基岩版双向转换、跨版本升降级、维度智能裁剪、前台服务防杀保活、转换历史管理与自定义路径导出。
+* 🔐 **网易版存档还原与被动加密**：基于 LevelDB 异或算法流式解密，支持魔数完整性校验，并提供网易版被动加密与一键流转世界转换。
 
 ---
 
 ## 🚀 核心功能规划 (Canary 进度)
 
 * ✅ **沙箱终端控制台**：`已实装`（支持 OpenJDK 17 与 Shell 命令执行）
-* ✅ **世界存档双向互转**：`已实装`（支持 Java/基岩版互转、多版本选择、前台服务转换、历史记录与补救导出）
-* ⏳ **版本升降级与维度裁剪**：`待开发`（待拓展高级转换参数）
-* ⏳ **网易版加密存档还原**：`待开发`（待移植 LevelDB 异或算法）
+* ✅ **世界存档双向互转**：`已实装`（支持 Java/基岩版互转、跨版本选择、前台服务转换、历史记录与补救导出）
+* ✅ **版本升降级与维度裁剪**：`已实装`（支持全维度/仅主世界/极速预设、各维度自定义开关、规则覆盖与 `-k` 原始 NBT 保留）
+* ✅ **网易版存档还原与被动加密**：`已实装`（集成 LevelDB 异或流式解密、魔数校验与被动加密，支持无缝流转至世界转换器）
 * ⏳ **专业 NBT / LevelDB 编辑**：`待开发`（待移植）
 * ⏳ **材质资源包互转**：`待开发`（待移植）
 
@@ -80,6 +81,7 @@
 * **核心贡献者**：Ryan Steven、Dozener
 * **第三方开源组件**：
   * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT License)
+  * [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt)
   * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT License)
   * [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
   * [Dicecan - NetEaseDecryptorSDK](https://github.com/Dicecan/NetEaseDecryptorSDK) (GPL-3.0)

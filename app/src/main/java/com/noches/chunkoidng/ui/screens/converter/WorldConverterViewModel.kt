@@ -12,10 +12,12 @@ import androidx.lifecycle.viewModelScope
 import com.noches.chunkoidng.core.conversion.ChunkerFormat
 import com.noches.chunkoidng.core.conversion.ConversionConfig
 import com.noches.chunkoidng.core.conversion.ConversionEvent
+import com.noches.chunkoidng.core.conversion.PruningProfile
 import com.noches.chunkoidng.core.settings.AppPreferences
 import com.noches.chunkoidng.core.world.ArchiveManager
 import com.noches.chunkoidng.core.world.HistoryManager
 import com.noches.chunkoidng.core.world.WorldInfo
+import com.noches.chunkoidng.core.world.WorldMetadataReader
 import com.noches.chunkoidng.service.ConversionForegroundService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
@@ -41,10 +43,12 @@ data class ConverterUiState(
     val stagingMessage: String = "",
     val worldInfo: WorldInfo? = null,
     val targetFormat: ChunkerFormat = ChunkerFormat.BEDROCK_FORMATS.first { it.id == "BEDROCK_1_21_50" },
-    // Advanced settings
+    // Advanced & Pruning settings
+    val pruningProfile: PruningProfile = PruningProfile.FULL,
     val includeOverworld: Boolean = true,
     val includeNether: Boolean = true,
     val includeTheEnd: Boolean = true,
+    val keepOriginalNbt: Boolean = false,
     val overrideWorldName: String = "",
     val overrideGameMode: String = "DEFAULT",
     val overrideDifficulty: String = "DEFAULT",
@@ -90,6 +94,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
     }
 
     init {
+        _uiState.update { it.copy(keepOriginalNbt = prefs.keepOriginalNbt) }
         val intent = Intent(application, ConversionForegroundService::class.java)
         application.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
@@ -242,19 +247,63 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun loadPreStagedWorld() {
+        val stagedDir = archiveManager.inputDir
+        if (stagedDir.exists() && stagedDir.listFiles()?.isNotEmpty() == true) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val world = WorldMetadataReader.inspectWorld(stagedDir)
+                val defaultTarget = ChunkerFormat.getDefaultFormatForOpposite(world.platform)
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            stage = ConverterStage.CONFIGURE,
+                            worldInfo = world,
+                            targetFormat = defaultTarget,
+                            overrideWorldName = world.name
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun selectTargetFormat(format: ChunkerFormat) {
         _uiState.update { it.copy(targetFormat = format) }
     }
 
+    fun setPruningProfile(profile: PruningProfile) {
+        _uiState.update {
+            when (profile) {
+                PruningProfile.FULL ->
+                    it.copy(pruningProfile = profile, includeOverworld = true, includeNether = true, includeTheEnd = true)
+                PruningProfile.OVERWORLD_ONLY,
+                PruningProfile.SPEED ->
+                    it.copy(pruningProfile = profile, includeOverworld = true, includeNether = false, includeTheEnd = false)
+                PruningProfile.CUSTOM ->
+                    it.copy(pruningProfile = profile)
+            }
+        }
+    }
+
     fun toggleDimension(dim: String, include: Boolean) {
         _uiState.update {
-            when (dim.uppercase()) {
+            val updated = when (dim.uppercase()) {
                 "OVERWORLD" -> it.copy(includeOverworld = include)
                 "NETHER" -> it.copy(includeNether = include)
                 "THE_END", "END" -> it.copy(includeTheEnd = include)
                 else -> it
             }
+            val matchedProfile = when {
+                updated.includeOverworld && updated.includeNether && updated.includeTheEnd -> PruningProfile.FULL
+                updated.includeOverworld && !updated.includeNether && !updated.includeTheEnd -> PruningProfile.OVERWORLD_ONLY
+                else -> PruningProfile.CUSTOM
+            }
+            updated.copy(pruningProfile = matchedProfile)
         }
+    }
+
+    fun setKeepOriginalNbt(keep: Boolean) {
+        _uiState.update { it.copy(keepOriginalNbt = keep) }
     }
 
     fun setOverrideWorldName(name: String) {
@@ -277,9 +326,10 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             inputDir = archiveManager.inputDir,
             outputDir = archiveManager.outputDir,
             targetFormat = s.targetFormat,
-            keepOriginalNbt = prefs.keepOriginalNbt,
+            keepOriginalNbt = s.keepOriginalNbt,
             lowMemoryMode = prefs.lowRamModeEnabled,
             maxMemoryMB = prefs.maxMemoryMb.toInt(),
+            pruningProfile = s.pruningProfile,
             includeOverworld = s.includeOverworld,
             includeNether = s.includeNether,
             includeTheEnd = s.includeTheEnd,
@@ -362,4 +412,3 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         const val MAX_UI_LOG_LINES = 500
     }
 }
-

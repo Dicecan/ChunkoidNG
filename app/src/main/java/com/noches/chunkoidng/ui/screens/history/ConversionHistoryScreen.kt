@@ -1,4 +1,4 @@
-﻿package com.noches.chunkoidng.ui.screens.history
+package com.noches.chunkoidng.ui.screens.history
 
 import android.graphics.BitmapFactory
 import android.widget.Toast
