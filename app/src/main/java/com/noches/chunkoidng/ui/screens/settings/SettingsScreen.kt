@@ -125,9 +125,10 @@ fun SettingsScreen(
                             SegmentedButton(
                                 selected = uiState.appLanguage == langCode,
                                 onClick = { viewModel.updateAppLanguage(langCode) },
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = languages.size)
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = languages.size),
+                                icon = {}
                             ) {
-                                Text(langName, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                Text(langName, fontSize = 11.5.sp, maxLines = 1, softWrap = false)
                             }
                         }
                     }

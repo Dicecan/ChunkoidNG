@@ -2,12 +2,14 @@ package com.noches.chunkoidng
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,8 +27,13 @@ class MainActivity : ComponentActivity() {
             val uiState by settingsViewModel.uiState.collectAsState()
             val baseContext = LocalContext.current
             val localizedContext = LocaleHelper.applyLocale(baseContext, uiState.appLanguage)
+            val activity = this@MainActivity
 
-            CompositionLocalProvider(LocalContext provides localizedContext) {
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalActivityResultRegistryOwner provides activity,
+                LocalConfiguration provides localizedContext.resources.configuration
+            ) {
                 ChunkoidNGTheme(dynamicColor = uiState.dynamicColorEnabled) {
                     MainAppScaffold()
                 }

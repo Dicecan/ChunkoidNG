@@ -43,10 +43,11 @@
     <string name="source_picker_platform">Platform</string>
     <string name="source_picker_version">Version</string>
 
-    <string name="platform_bedrock">Bedrock Edition (BE)</string>
-    <string name="platform_java">Java Edition (JE)</string>
-    <string name="version_keep_input">Keep Original Version (INPUT)</string>
+    <string name="platform_bedrock">Bedrock</string>
+    <string name="platform_java">Java</string>
+    <string name="version_keep_input">Original</string>
     <string name="version_keep_input_desc">Keep world version, only apply pruning and settings</string>
+    <string name="version_series_format">Series: %1$s</string>
     <string name="version_picker_title">Select Target Format &amp; Version</string>
     <string name="version_picker_desc">Support bidirectional conversion, version upgrades &amp; downgrades</string>
     <string name="version_search_placeholder">Search version (e.g. 1.21, 1.20)...</string>
@@ -78,11 +79,11 @@
     <string name="converter_pruning_card_title">Dimension &amp; Chunk Pruning</string>
     <string name="converter_pruning_card_desc">Prune unused dimensions to reduce world size and prevent crashes</string>
     <string name="converter_pruning_presets">Quick Pruning Presets</string>
-    <string name="converter_dim_overworld">Overworld (Overworld)</string>
+    <string name="converter_dim_overworld">Overworld</string>
     <string name="converter_dim_overworld_desc">Primary world dimension and building core</string>
-    <string name="converter_dim_nether">The Nether (The Nether)</string>
+    <string name="converter_dim_nether">The Nether</string>
     <string name="converter_dim_nether_desc" formatted="false">Nether dimension; disabling can save 30%-50% space</string>
-    <string name="converter_dim_the_end">The End (The End)</string>
+    <string name="converter_dim_the_end">The End</string>
     <string name="converter_dim_the_end_desc">End dimension and End Cities; disabling speeds up conversion</string>
     <string name="converter_world_settings_title">World Settings &amp; Overrides</string>
     <string name="converter_world_settings_desc">World name, default game mode, and difficulty</string>
@@ -116,7 +117,7 @@
     <string name="pruner_presets_title">Slimming Strategy Presets</string>
     <string name="pruner_profile_overworld_title">Overworld Only</string>
     <string name="pruner_profile_overworld_desc" formatted="false">Prune Nether &amp; The End, saving 40%-60% size (Recommended)</string>
-    <string name="pruner_profile_speed_title">Speed Lightweight (Speed)</string>
+    <string name="pruner_profile_speed_title">Speed Lightweight</string>
     <string name="pruner_profile_speed_desc">Core Overworld only, fastest processing</string>
     <string name="pruner_profile_full_title">Retain All Dimensions</string>
     <string name="pruner_profile_full_desc">Retain Overworld, Nether, and The End</string>
@@ -142,27 +143,27 @@
     <string name="decryptor_action_encrypt">Start Passive Encryption</string>
     <string name="decryptor_action_to_converter">Pass to World Converter</string>
 
-    <string name="settings_category_appearance">Interface &amp; Appearance (Appearance)</string>
-    <string name="settings_language_title">App Language (Language)</string>
+    <string name="settings_category_appearance">Interface &amp; Appearance</string>
+    <string name="settings_language_title">App Language</string>
     <string name="settings_language_desc">Switch between Follow System, Chinese, English, and Japanese</string>
     <string name="settings_language_system">Follow System</string>
     <string name="settings_language_zh">简体中文</string>
     <string name="settings_language_en">English</string>
     <string name="settings_language_ja">日本語</string>
-    <string name="settings_dynamic_color_title">Dynamic Color (Monet / Dynamic Color)</string>
+    <string name="settings_dynamic_color_title">Dynamic Color (Monet)</string>
     <string name="settings_dynamic_color_desc">Adapt theme colors to system wallpaper</string>
     <string name="settings_dark_mode_title">Dark Mode Follows System</string>
     <string name="settings_dark_mode_desc">Automatically switch between light and dark themes</string>
-    <string name="settings_category_engine">Conversion Engine &amp; Performance (Engine &amp; Performance)</string>
+    <string name="settings_category_engine">Engine &amp; Performance</string>
     <string name="settings_jvm_heap_title">JVM Max Heap Allocation</string>
     <string name="settings_jvm_heap_current">Current: %1$d MB</string>
     <string name="settings_low_ram_title">Low RAM Optimization</string>
     <string name="settings_low_ram_desc">Restrict GC heap ratio and use single-thread to prevent OOM</string>
-    <string name="settings_wakelock_title">Background WakeLock (WakeLock)</string>
+    <string name="settings_wakelock_title">Background WakeLock</string>
     <string name="settings_wakelock_desc">Hold CPU wake lock during conversion to prevent sleep kills</string>
     <string name="settings_keep_nbt_title">Preserve Unmodified NBT</string>
     <string name="settings_keep_nbt_desc">Inherit unknown tags from the source world when compatible</string>
-    <string name="settings_category_sandbox">Sandbox Maintenance (Sandbox)</string>
+    <string name="settings_category_sandbox">Sandbox Maintenance</string>
     <string name="settings_vibration_title">Completion Vibration</string>
     <string name="settings_vibration_desc">Provide subtle tactile feedback when conversion finishes</string>
     <string name="settings_reset_rootfs">Reset RootFS</string>
@@ -186,6 +187,13 @@
     <string name="about_feature_prune">Standalone Dimension Pruning Workbench</string>
     <string name="about_feature_prune_desc">Overworld-only, Speed, Full-dimension presets, per-dimension pruning, and -k original NBT retention</string>
     <string name="about_deps_title">Open Source Credits &amp; Dependencies</string>
+    <string name="about_dep_chunker_desc">Core world conversion engine</string>
+    <string name="about_dep_openjdk_desc">Mobile Linux runtime sandbox</string>
+    <string name="about_dep_netease_desc">NetEase encrypted world restoration algorithm</string>
+    <string name="about_dep_xor_desc">NetEase LevelDB XOR cipher algorithm reference</string>
+    <string name="about_dep_nbt_desc">Minecraft NBT data parser library</string>
+    <string name="about_dep_leveldb_desc">Bedrock chunk and entity database engine</string>
+    <string name="about_dep_compose_desc">Modern MD3E UI design framework</string>
     <string name="about_repo_btn">GitHub Repository</string>
     <string name="about_website_btn">Official Website</string>
 

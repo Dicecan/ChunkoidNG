@@ -276,31 +276,31 @@ fun AboutScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    DependencyRow("chunker-cli", "The Hive", "MIT License", "核心世界转换引擎") {
+                    DependencyRow("chunker-cli", "The Hive", "MIT License", stringResource(R.string.about_dep_chunker_desc)) {
                         openUrl("https://github.com/HiveGamesOSS/Chunker")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    DependencyRow("OpenJDK 17", "Adoptium / OpenJDK", "GPLv2 + CE", "移动端 Linux 运行时沙箱") {
+                    DependencyRow("OpenJDK 17", "Adoptium / OpenJDK", "GPLv2 + CE", stringResource(R.string.about_dep_openjdk_desc)) {
                         openUrl("https://openjdk.org")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    DependencyRow("NetEaseDecryptorSDK", "Dicecan", "GPLv3", "网易加密存档还原算法") {
+                    DependencyRow("NetEaseDecryptorSDK", "Dicecan", "GPLv3", stringResource(R.string.about_dep_netease_desc)) {
                         openUrl("https://github.com/Dicecan/NetEaseDecryptorSDK")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    DependencyRow("XOR-MC-Archive-Decrypt", "HTMonkeyG", "GPLv3", "网易版 LevelDB 异或加解密算法参考") {
+                    DependencyRow("XOR-MC-Archive-Decrypt", "HTMonkeyG", "GPLv3", stringResource(R.string.about_dep_xor_desc)) {
                         openUrl("https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    DependencyRow("NBT-Manipulator", "PowerNukkit", "MIT License", "Minecraft NBT 数据解析") {
+                    DependencyRow("NBT-Manipulator", "PowerNukkit", "MIT License", stringResource(R.string.about_dep_nbt_desc)) {
                         openUrl("https://github.com/PowerNukkit/NBT-Manipulator")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    DependencyRow("leveldb-mcpe-java", "HiveGamesOSS", "Apache 2.0", "基岩版区块与实体数据库引擎") {
+                    DependencyRow("leveldb-mcpe-java", "HiveGamesOSS", "Apache 2.0", stringResource(R.string.about_dep_leveldb_desc)) {
                         openUrl("https://github.com/HiveGamesOSS/leveldb-mcpe-java")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    DependencyRow("Jetpack Compose", "Google / AOSP", "Apache 2.0", "现代化 MD3E UI 界面框架") {
+                    DependencyRow("Jetpack Compose", "Google / AOSP", "Apache 2.0", stringResource(R.string.about_dep_compose_desc)) {
                         openUrl("https://developer.android.com/jetpack/compose")
                     }
                 }

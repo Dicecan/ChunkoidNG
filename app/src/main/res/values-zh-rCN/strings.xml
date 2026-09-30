@@ -43,10 +43,11 @@
     <string name="source_picker_platform">平台</string>
     <string name="source_picker_version">版本</string>
 
-    <string name="platform_bedrock">基岩版 (BE)</string>
-    <string name="platform_java">Java版 (JE)</string>
-    <string name="version_keep_input">保持原版本 (INPUT)</string>
+    <string name="platform_bedrock">基岩版</string>
+    <string name="platform_java">Java版</string>
+    <string name="version_keep_input">保持原版</string>
     <string name="version_keep_input_desc">保持原世界版本不变，仅应用维度裁剪与属性设置</string>
+    <string name="version_series_format">系列：%1$s</string>
     <string name="version_picker_title">选择目标版本与格式</string>
     <string name="version_picker_desc">支持双端格式互转、同平台版本升级与降级</string>
     <string name="version_search_placeholder">搜索版本号 (如 1.21, 1.20)...</string>
@@ -78,11 +79,11 @@
     <string name="converter_pruning_card_title">维度与区块裁剪策略</string>
     <string name="converter_pruning_card_desc">智能剔除无效维度，缩减体积防闪退</string>
     <string name="converter_pruning_presets">快速裁剪预设</string>
-    <string name="converter_dim_overworld">主世界 (Overworld)</string>
+    <string name="converter_dim_overworld">主世界</string>
     <string name="converter_dim_overworld_desc">游戏主维度与建筑核心</string>
-    <string name="converter_dim_nether">下界 / 地狱 (The Nether)</string>
+    <string name="converter_dim_nether">下界 / 地狱</string>
     <string name="converter_dim_nether_desc" formatted="false">地狱维度，关闭可显著降低文件大小</string>
-    <string name="converter_dim_the_end">末路之地 (The End)</string>
+    <string name="converter_dim_the_end">末路之地</string>
     <string name="converter_dim_the_end_desc">末地与末地城，关闭可大幅加速转换</string>
     <string name="converter_world_settings_title">世界参数与规则覆盖</string>
     <string name="converter_world_settings_desc">世界名称、默认游戏模式与难度</string>
@@ -116,7 +117,7 @@
     <string name="pruner_presets_title">瘦身策略预设</string>
     <string name="pruner_profile_overworld_title">仅保留主世界</string>
     <string name="pruner_profile_overworld_desc" formatted="false">剔除下界与末地，缩减 40%~60% 体积 (推荐)</string>
-    <string name="pruner_profile_speed_title">极速轻量化 (Speed)</string>
+    <string name="pruner_profile_speed_title">极速轻量化</string>
     <string name="pruner_profile_speed_desc">仅保留主世界核心，转换耗时缩减一半以上</string>
     <string name="pruner_profile_full_title">全维度完整保留</string>
     <string name="pruner_profile_full_desc">保留主世界、下界与末地所有数据</string>
@@ -142,27 +143,27 @@
     <string name="decryptor_action_encrypt">执行被动加密</string>
     <string name="decryptor_action_to_converter">流转到世界转换器</string>
 
-    <string name="settings_category_appearance">界面与外观 (Appearance)</string>
-    <string name="settings_language_title">界面语言 (Language)</string>
+    <string name="settings_category_appearance">界面与外观</string>
+    <string name="settings_language_title">界面语言</string>
     <string name="settings_language_desc">支持自动跟随系统、简体中文、English、日本語</string>
     <string name="settings_language_system">跟随系统</string>
     <string name="settings_language_zh">简体中文</string>
     <string name="settings_language_en">English</string>
     <string name="settings_language_ja">日本語</string>
-    <string name="settings_dynamic_color_title">动态取色 (Monet / Dynamic Color)</string>
+    <string name="settings_dynamic_color_title">动态取色 (Monet)</string>
     <string name="settings_dynamic_color_desc">跟随系统壁纸色调自动适配 MD3 主题容器颜色</string>
     <string name="settings_dark_mode_title">深色模式跟随系统</string>
     <string name="settings_dark_mode_desc">依据 Android 系统的深浅色模式自动切换界面</string>
-    <string name="settings_category_engine">转换引擎与性能 (Engine &amp; Performance)</string>
+    <string name="settings_category_engine">引擎与性能</string>
     <string name="settings_jvm_heap_title">JVM 最大堆内存分配</string>
     <string name="settings_jvm_heap_current">当前设定：%1$d MB</string>
     <string name="settings_low_ram_title">防闪退模式 (低运存优化)</string>
     <string name="settings_low_ram_desc">限制 GC 堆内存比例与单线程并发，防止小运存手机 OOM</string>
-    <string name="settings_wakelock_title">后台唤醒锁 (WakeLock)</string>
+    <string name="settings_wakelock_title">后台唤醒锁</string>
     <string name="settings_wakelock_desc">转换过程中持有 CPU 唤醒锁，防止系统息屏杀后台</string>
     <string name="settings_keep_nbt_title">保留未修改的原始 NBT</string>
     <string name="settings_keep_nbt_desc">在格式兼容前提下，尽可能继承原世界的未知标签</string>
-    <string name="settings_category_sandbox">沙箱管理与维护 (Sandbox)</string>
+    <string name="settings_category_sandbox">沙箱管理与维护</string>
     <string name="settings_vibration_title">转换完成震动提示</string>
     <string name="settings_vibration_desc">在后台或前台转换任务完成时触发轻微触感震动</string>
     <string name="settings_reset_rootfs">重置 RootFS</string>
@@ -186,6 +187,13 @@
     <string name="about_feature_prune">独立存档瘦身与维度裁剪</string>
     <string name="about_feature_prune_desc">提供仅保留主世界、极速轻量化、全维度保留等预设策略，支持各维度独立裁剪与原始 NBT 规则保留</string>
     <string name="about_deps_title">开源致谢与依赖</string>
+    <string name="about_dep_chunker_desc">核心世界转换引擎</string>
+    <string name="about_dep_openjdk_desc">移动端 Linux 运行时沙箱</string>
+    <string name="about_dep_netease_desc">网易加密存档还原算法</string>
+    <string name="about_dep_xor_desc">网易版 LevelDB 异或加解密算法参考</string>
+    <string name="about_dep_nbt_desc">Minecraft NBT 数据解析库</string>
+    <string name="about_dep_leveldb_desc">基岩版区块与实体数据库引擎</string>
+    <string name="about_dep_compose_desc">现代化 MD3E UI 界面框架</string>
     <string name="about_repo_btn">GitHub 仓库</string>
     <string name="about_website_btn">官方网站</string>
 

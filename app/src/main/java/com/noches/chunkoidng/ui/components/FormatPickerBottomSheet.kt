@@ -151,45 +151,27 @@ fun FormatPickerBottomSheet(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0; selectedFilterIndex = 0 },
                     shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-                    icon = {
-                        Icon(
-                            Icons.Outlined.PhoneAndroid,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                    icon = {}
                 ) {
-                    Text(stringResource(R.string.platform_bedrock), maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.platform_bedrock), maxLines = 1, softWrap = false, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
                 }
 
                 SegmentedButton(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1; selectedFilterIndex = 0 },
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
-                    icon = {
-                        Icon(
-                            Icons.Outlined.Computer,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                    icon = {}
                 ) {
-                    Text(stringResource(R.string.platform_java), maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.platform_java), maxLines = 1, softWrap = false, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
                 }
 
                 SegmentedButton(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2; selectedFilterIndex = 0 },
                     shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
-                    icon = {
-                        Icon(
-                            Icons.Outlined.Tune,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                    icon = {}
                 ) {
-                    Text(stringResource(R.string.version_keep_input), maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.version_keep_input), maxLines = 1, softWrap = false, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -440,7 +422,7 @@ fun FormatPickerBottomSheet(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = if (format.id == "INPUT") stringResource(R.string.version_keep_input_desc)
-                                    else "系列: ${format.group}",
+                                    else stringResource(R.string.version_series_format, format.group),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 11.sp
