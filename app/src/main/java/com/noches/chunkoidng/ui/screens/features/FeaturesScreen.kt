@@ -76,12 +76,11 @@ fun FeaturesScreen(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalItemSpacing = 12.dp
     ) {
-        // Full width Hero Banner
+
         item(span = StaggeredGridItemSpan.FullLine) {
             HeroStatusBanner()
         }
 
-        // Full width Section Title
         item(span = StaggeredGridItemSpan.FullLine) {
             Column(
                 modifier = Modifier
@@ -119,7 +118,6 @@ fun FeaturesScreen(
             }
         }
 
-        // Waterfall Feature Cards
         items(chunkoidFeatures, key = { it.id }, span = { it.span }) { feature ->
             FeatureCard(
                 feature = feature,
@@ -141,10 +139,9 @@ private fun HeroStatusBanner() {
     var extractionProgress by remember { mutableStateOf(0) }
     var terminalLogs by remember { mutableStateOf(listOf<String>()) }
     var showTerminal by remember { mutableStateOf(false) }
-    
+
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
-    // Auto-scroll terminal to bottom
     LaunchedEffect(terminalLogs.size) {
         if (terminalLogs.isNotEmpty() && showTerminal) {
             listState.animateScrollToItem(terminalLogs.size - 1)
@@ -165,7 +162,7 @@ private fun HeroStatusBanner() {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // Top Section: Beautiful Minimalist MD3E Clock
+
             Md3ExpressiveClock()
 
             HorizontalDivider(
@@ -173,7 +170,6 @@ private fun HeroStatusBanner() {
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
             )
 
-            // Bottom Section: Core Engine Check
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -215,7 +211,7 @@ private fun HeroStatusBanner() {
                                 isChecking = true
                                 showTerminal = true
                                 terminalLogs = listOf("[SYSTEM] 初始化终端会话...")
-                                
+
                                 coroutineScope.launch {
                                     if (!runtimeEnv.isRootfsReady()) {
                                         terminalLogs = terminalLogs + "[SYSTEM] 正在释放 RootFS 环境..."
@@ -234,8 +230,7 @@ private fun HeroStatusBanner() {
                                              terminalLogs = (terminalLogs + logLine).takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         }
                                         terminalLogs = terminalLogs + "[SYSTEM] 测试完成。"
-                                        
-                                        // Auto-collapse after 2 seconds
+
                                         delay(2000)
                                         showTerminal = false
                                     } else {
@@ -282,7 +277,6 @@ private fun HeroStatusBanner() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Single Row with 2 chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -303,7 +297,6 @@ private fun HeroStatusBanner() {
                     )
                 }
 
-                // Expandable Terminal View
                 if (showTerminal) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Box(
@@ -326,7 +319,7 @@ private fun HeroStatusBanner() {
                                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                         fontSize = 11.sp
                                     ),
-                                    color = Color(0xFF4AF626) // Classic Terminal Green
+                                    color = Color(0xFF4AF626)
                                 )
                             }
                         }
@@ -363,7 +356,7 @@ private fun Md3ExpressiveClock() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left: Clean Typographic Expressive Time
+
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -395,7 +388,7 @@ private fun Md3ExpressiveClock() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = colonAlpha),
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
-                    .offset(y = (-3).dp) // Visually center the colon with digits
+                    .offset(y = (-3).dp)
             )
 
             Text(
@@ -408,7 +401,6 @@ private fun Md3ExpressiveClock() {
             )
         }
 
-        // Right: Elegant Date & Seconds badge
         Column(
             horizontalAlignment = Alignment.End
         ) {

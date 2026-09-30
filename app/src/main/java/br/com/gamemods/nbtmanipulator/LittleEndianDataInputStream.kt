@@ -5,12 +5,6 @@ import java.lang.Double.longBitsToDouble
 import java.lang.Float.intBitsToFloat
 import java.lang.UnsupportedOperationException
 
-/**
- * Implementation of [DataInput] that reads data from an [InputStream] using little endian byte order.
- * @param in the underlying input stream.
- * @author joserobjr
- * @since 2020-10-20
- */
 public class LittleEndianDataInputStream(`in`: InputStream) : FilterInputStream(`in`), DataInput {
     override fun readFully(b: ByteArray) {
         readFully(b, 0, b.size)
@@ -34,9 +28,9 @@ public class LittleEndianDataInputStream(`in`: InputStream) : FilterInputStream(
         if (n <= 0) {
             return 0
         }
-        
+
         val toSkip = n.toLong()
-        
+
         var total = 0L
         var cur: Long
 
@@ -107,7 +101,7 @@ public class LittleEndianDataInputStream(`in`: InputStream) : FilterInputStream(
         if (b1 or b2 or b3 or b4 or b5 or b6 or b7 or b8 < 0) {
             throw EOFException()
         }
-        return (b8 shl 56) or (b7 shl 48) or (b6 shl 40) or (b5 shl 32) or 
+        return (b8 shl 56) or (b7 shl 48) or (b6 shl 40) or (b5 shl 32) or
                 (b4 shl 24) or (b3 shl 16) or (b2 shl 8) or b1
     }
 

@@ -79,7 +79,7 @@ fun ConversionHistoryScreen(onNavigateBack: () -> Unit) {
                 },
                 actions = {
                     if (records.isNotEmpty()) {
-                        IconButton(onClick = { 
+                        IconButton(onClick = {
                             historyManager.clearHistory()
                             records = emptyList()
                         }) {
@@ -150,9 +150,9 @@ fun HistoryItemCard(
                     Icon(Icons.Outlined.Public, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column {
                 Text(record.worldName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))

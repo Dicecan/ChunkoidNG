@@ -153,7 +153,7 @@ fun MainAppScaffold() {
                     }
                 )
             }
-            
+
             composable("conversion_history") {
                 com.noches.chunkoidng.ui.screens.history.ConversionHistoryScreen(
                     onNavigateBack = { navController.popBackStack() }

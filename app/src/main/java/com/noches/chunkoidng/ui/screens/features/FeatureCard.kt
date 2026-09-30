@@ -65,7 +65,7 @@ fun FeatureCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Top Row: Icon + Badge
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -103,7 +103,6 @@ fun FeatureCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Title
             Text(
                 text = feature.title,
                 style = MaterialTheme.typography.titleMedium,
@@ -113,7 +112,6 @@ fun FeatureCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Subtitle Description
             Text(
                 text = feature.subtitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -123,11 +121,8 @@ fun FeatureCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-
-
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Enter Arrow Hint
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,

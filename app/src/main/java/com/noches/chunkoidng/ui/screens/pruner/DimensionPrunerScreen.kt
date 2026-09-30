@@ -202,7 +202,6 @@ private fun SelectSourceView(
 
         Spacer(modifier = Modifier.height(36.dp))
 
-        // Unified MD3E SourcePickerCard
         SourcePickerCard(
             title = "选择存档文件夹",
             subtitle = "Minecraft 存档根目录 (含 level.dat 与 db/ 或 region/)",
@@ -288,7 +287,7 @@ private fun ConfigurePruningView(
     ) {
         item {
             Spacer(modifier = Modifier.height(4.dp))
-            // World Info Card
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = ExpressiveShapes.large,
@@ -351,7 +350,6 @@ private fun ConfigurePruningView(
             }
         }
 
-        // Slimming Presets (瘦身策略预设)
         item {
             Text(
                 text = "选择瘦身策略",
@@ -396,7 +394,6 @@ private fun ConfigurePruningView(
             }
         }
 
-        // Custom dimension checkboxes
         if (pruningProfile == PruningProfile.CUSTOM) {
             item {
                 Card(
@@ -433,7 +430,6 @@ private fun ConfigurePruningView(
             }
         }
 
-        // Advanced Options Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -470,7 +466,6 @@ private fun ConfigurePruningView(
             }
         }
 
-        // Start Pruning Button
         item {
             Button(
                 onClick = onStartPruning,
@@ -627,7 +622,6 @@ private fun PruningRunningView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Logs Terminal
         Card(
             modifier = Modifier.fillMaxWidth().weight(1f),
             shape = ExpressiveShapes.large,
@@ -722,7 +716,6 @@ private fun PruningCompletedView(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Space Saved Stats Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = ExpressiveShapes.large,
@@ -757,7 +750,6 @@ private fun PruningCompletedView(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Export Options
         Button(
             onClick = onExportDirectory,
             enabled = !isExporting,

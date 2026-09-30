@@ -37,7 +37,6 @@ class ConversionUnitTest {
         val dummyOut = File("out")
         val targetFormat = ChunkerFormat.BEDROCK_FORMATS.first()
 
-        // When all dimensions are included, pruning JSON should be null
         val configAll = ConversionConfig(
             inputDir = dummyIn,
             outputDir = dummyOut,
@@ -48,7 +47,6 @@ class ConversionUnitTest {
         )
         assertNull(configAll.buildPruningJson())
 
-        // When Nether and End are excluded
         val configExcludes = ConversionConfig(
             inputDir = dummyIn,
             outputDir = dummyOut,

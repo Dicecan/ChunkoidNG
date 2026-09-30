@@ -64,7 +64,7 @@ fun AboutScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // App Identity Header
+
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -122,7 +122,6 @@ fun AboutScreen(
             }
         }
 
-        // Tribute to Dozener Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -160,7 +159,6 @@ fun AboutScreen(
             }
         }
 
-        // Team & Community Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -197,7 +195,6 @@ fun AboutScreen(
             }
         }
 
-        // Open Source Acknowledgements Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -252,7 +249,6 @@ fun AboutScreen(
             }
         }
 
-        // Links & External Resources
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),

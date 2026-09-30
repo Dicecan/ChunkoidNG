@@ -12,9 +12,6 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 
-/**
- * Manages the execution of Java processes in the sandbox.
- */
 class JavaProcessManager(private val context: Context, private val runtimeEnv: JavaRuntimeEnvironment) {
     private val TAG = "JavaProcessManager"
     private var maxMemoryMB = 2048
@@ -25,7 +22,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         val deviceLimitMb = if (activityManager != null) {
             activityManager.getMemoryInfo(memInfo)
             val totalPhysicalRamMb = (memInfo.totalMem / (1024 * 1024)).toInt()
-            // Leave room for Android OS, Chunkoid foreground app and system services.
+
             val reservedRamMb = (totalPhysicalRamMb * 0.25f).toInt().coerceAtLeast(1024)
             (totalPhysicalRamMb - reservedRamMb).coerceAtLeast(512)
         } else {
@@ -34,17 +31,10 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         this.maxMemoryMB = mb.coerceIn(256, deviceLimitMb)
     }
 
-    /**
-     * Executes the CLI jar with arguments and streams the output log in real-time.
-     */
     fun runCliJar(jarFile: File, vararg arguments: String): Flow<String> {
         return runCliJarAdvanced(jarFile, emptyList(), arguments.toList())
     }
 
-    /**
-     * Executes the CLI jar with custom JVM options and CLI arguments.
-     * Supports cooperative coroutine cancellation and process handles.
-     */
     fun runCliJarAdvanced(
         jarFile: File,
         jvmOptions: List<String> = emptyList(),
@@ -87,7 +77,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
             process = pb.start()
             onProcessCreated?.invoke(process)
         } catch (e: Exception) {
-            // If linker call fails directly, try direct binary execution as fallback
+
             try {
                 val directCmd = mutableListOf(javaBin.absolutePath)
                 directCmd.addAll(args)
@@ -120,10 +110,6 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         }
     }.flowOn(Dispatchers.IO)
 
-    /**
-     * Executes commands in the sandbox terminal.
-     * Ported faithfully from old Chunkoid's TerminalActivity.kt & JavaCommandExecutor.java.
-     */
     fun executeShellCommand(rawCommand: String): Flow<String> = flow {
         if (!runtimeEnv.isRootfsReady()) {
             emit("Error: Termux environment not initialized")
@@ -134,7 +120,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         val appFilesDir = context.filesDir.absolutePath
 
         when {
-            // Ported from old Chunkoid executeLs()
+
             command.equals("ls", ignoreCase = true) -> {
                 val files = context.filesDir.listFiles()
                 if (files != null && files.isNotEmpty()) {
@@ -144,12 +130,10 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 }
             }
 
-            // Ported from old Chunkoid executePwd()
             command.equals("pwd", ignoreCase = true) -> {
                 emit(appFilesDir)
             }
 
-            // Ported from old Chunkoid executeJavaCommand()
             command.startsWith("java") -> {
                 runtimeEnv.ensureCliJar()
                 val cliJarPath = File(context.filesDir, "cli.jar").absolutePath
@@ -174,7 +158,6 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 )
                 jvmArgs.addAll(rawArgs)
 
-                // Execute with linker directly (same as old Chunkoid executeJavaWithLinker)
                 val directCmd = mutableListOf(linker, javaBin.absolutePath)
                 directCmd.addAll(jvmArgs)
 
@@ -203,7 +186,6 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 }
             }
 
-            // Fallback to native shell command
             else -> {
                 val pb = ProcessBuilder("/system/bin/sh", "-c", command)
                 setupEnvironment(pb.environment())
@@ -237,9 +219,9 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         env["JAVA_HOME"] = runtimeEnv.getJavaHome()
         env["PROOT_TMP_DIR"] = context.cacheDir.absolutePath
         env["TMPDIR"] = context.cacheDir.absolutePath
-        
+
         env["PATH"] = "$rootfsDir/bin:$rootfsDir/sbin:$rootfsDir/usr/bin:$rootfsDir/usr/sbin:/system/bin:/system/sbin:/vendor/bin"
-        
+
         env["LD_LIBRARY_PATH"] = listOf(
             "$rootfsDir/lib",
             "$rootfsDir/lib/aarch64-linux-gnu",
@@ -251,7 +233,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
             "/vendor/lib64",
             "/vendor/lib"
         ).joinToString(":")
-        
+
         env.remove("LD_PRELOAD")
         env["ANDROID_ROOT"] = "/system"
         env["ANDROID_DATA"] = "/data"

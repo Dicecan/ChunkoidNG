@@ -8,12 +8,14 @@ import com.noches.chunkoidng.core.decryptor.CryptEvent
 import com.noches.chunkoidng.core.decryptor.CryptMode
 import com.noches.chunkoidng.core.decryptor.WorldCryptManager
 import com.noches.chunkoidng.core.world.ArchiveManager
+import com.noches.chunkoidng.core.world.HistoryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.File
@@ -35,12 +37,12 @@ data class CryptUiState(
     val stagingProgress: Int = 0,
     val stagingMessage: String = "",
     val customKey: String = "",
-    // In progress
+
     val processProgress: Int = 0,
     val currentFileText: String = "",
     val statusText: String = "",
     val logs: List<String> = emptyList(),
-    // Result
+
     val worldName: String = "",
     val durationMs: Long = 0,
     val keyHex: String = "",
@@ -54,6 +56,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
 
     private val cryptManager = WorldCryptManager(application)
     private val archiveManager = ArchiveManager(application)
+    private val historyManager = HistoryManager(application)
 
     private val stagingInputDir: File
         get() = File(getApplication<Application>().filesDir, "workspace/crypt_input").apply { mkdirs() }
@@ -89,7 +92,10 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                     val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(getApplication(), treeUri)
                         ?: return@withContext Result.failure(Exception("无法访问所选目录"))
 
-                    copyDocumentDir(docFile, stagingInputDir)
+                    val failures = copyDocumentDir(docFile, stagingInputDir)
+                    if (failures.isNotEmpty()) {
+                        return@withContext Result.failure(Exception("读取文件失败: ${failures.take(3).joinToString()}"))
+                    }
                     Result.success(Unit)
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -128,7 +134,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
 
             result.fold(
                 onSuccess = { worldInfo ->
-                    // archiveManager extracts into archiveManager.inputDir
+
                     if (stagingInputDir.exists()) stagingInputDir.deleteRecursively()
                     stagingInputDir.mkdirs()
                     archiveManager.inputDir.copyRecursively(stagingInputDir, overwrite = true)
@@ -159,11 +165,12 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
         }
 
         viewModelScope.launch {
-            cryptManager.processWorldDirectory(
-                sourceDir = stagingInputDir,
-                mode = s.mode,
-                customKey = s.customKey.ifBlank { null }
-            ).collect { event ->
+            try {
+                cryptManager.processWorldDirectory(
+                    sourceDir = stagingInputDir,
+                    mode = s.mode,
+                    customKey = s.customKey.ifBlank { null }
+                ).collect { event ->
                 when (event) {
                     is CryptEvent.Progress -> {
                         _uiState.update {
@@ -186,7 +193,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                                 processProgress = 100,
                                 worldName = event.worldName,
                                 durationMs = event.durationMs,
-                                keyHex = event.keyHex,
+                                keyHex = "",
                                 filesProcessed = event.filesProcessed,
                                 ldbVerified = event.ldbVerified,
                                 statusText = "${s.mode.displayName}成功！"
@@ -202,6 +209,9 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                         }
                     }
                 }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(stage = CryptUiStage.ERROR, errorMessage = "加解密失败: ${e.message}") }
             }
         }
     }
@@ -239,9 +249,13 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                         ?: return@withContext Result.failure(Exception("无法访问导出位置"))
 
                     val outputDir = cryptManager.workspaceCryptDir
+                    if (!outputDir.isDirectory || outputDir.listFiles().isNullOrEmpty()) {
+                        return@withContext Result.failure(Exception("加解密输出为空"))
+                    }
                     if (packAsArchive) {
                         val extension = if (s.mode == CryptMode.PASSIVE_ENCRYPT) ".zip" else ".mcworld"
-                        val docFile = treeDoc.createFile("application/zip", "$safeName$extension")
+                        val tempName = ".${safeName}.${System.currentTimeMillis()}.tmp"
+                        val docFile = treeDoc.createFile("application/zip", tempName)
                             ?: return@withContext Result.failure(Exception("无法创建目标归档"))
 
                         getApplication<Application>().contentResolver.openOutputStream(docFile.uri)?.use { out ->
@@ -249,11 +263,16 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                                 zipDirectory(outputDir, outputDir, zos)
                             }
                         }
+                        check(docFile.renameTo("$safeName$extension")) { "无法完成归档导出" }
                         Result.success(docFile.uri)
                     } else {
                         val destDir = treeDoc.createDirectory(safeName)
                             ?: return@withContext Result.failure(Exception("无法创建目标目录"))
-                        copyToDocumentDir(outputDir, destDir)
+                        val failures = copyToDocumentDir(outputDir, destDir)
+                        if (failures.isNotEmpty()) {
+                            destDir.delete()
+                            return@withContext Result.failure(Exception("导出文件失败: ${failures.take(3).joinToString()}"))
+                        }
                         Result.success(destDir.uri)
                     }
                 } catch (e: Exception) {
@@ -262,9 +281,22 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
             }
 
             _uiState.update { it.copy(isExporting = false) }
-            result.onSuccess { uri ->
+            if (result.isSuccess) {
+                val uri = result.getOrThrow()
+                val state = _uiState.value
+                val historyId = withContext(Dispatchers.IO) {
+                    historyManager.addRecord(
+                        worldName = state.worldName.ifBlank { "Minecraft_World" },
+                        sourcePlatform = "网易存档",
+                        targetPlatform = if (state.mode == CryptMode.DECRYPT) "已解密" else "已加密",
+                        durationMs = state.durationMs,
+                        icon = null
+                    )
+                }
+                withContext(Dispatchers.IO) { historyManager.updateExportLocation(historyId, uri.toString()) }
                 onDone(uri)
-            }.onFailure { err ->
+            } else {
+                val err = result.exceptionOrNull() ?: Exception("未知导出错误")
                 _uiState.update { it.copy(errorMessage = "导出失败: ${err.message}") }
             }
         }
@@ -276,37 +308,51 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private fun copyDocumentDir(source: androidx.documentfile.provider.DocumentFile, target: File) {
+    private fun copyDocumentDir(source: androidx.documentfile.provider.DocumentFile, target: File): List<String> {
+        val failures = mutableListOf<String>()
         target.mkdirs()
         source.listFiles().forEach { child ->
             val destChild = File(target, child.name ?: "unknown")
             if (child.isDirectory) {
-                copyDocumentDir(child, destChild)
+                failures += copyDocumentDir(child, destChild)
             } else if (child.isFile) {
-                getApplication<Application>().contentResolver.openInputStream(child.uri)?.use { inStream ->
-                    FileOutputStream(destChild).use { outStream ->
-                        inStream.copyTo(outStream)
+                try {
+                    val input = getApplication<Application>().contentResolver.openInputStream(child.uri)
+                        ?: throw java.io.IOException("无法打开输入流")
+                    input.use { inStream ->
+                        FileOutputStream(destChild).use { outStream ->
+                            inStream.copyTo(outStream)
+                        }
                     }
+                } catch (e: Exception) {
+                    destChild.delete()
+                    failures += child.uri.toString()
                 }
             }
         }
+        return failures
     }
 
-    private fun copyToDocumentDir(source: File, targetDoc: androidx.documentfile.provider.DocumentFile) {
-        val files = source.listFiles() ?: return
+    private fun copyToDocumentDir(source: File, targetDoc: androidx.documentfile.provider.DocumentFile): List<String> {
+        val failures = mutableListOf<String>()
+        val files = source.listFiles() ?: return listOf(source.absolutePath)
         for (file in files) {
             if (file.isDirectory) {
-                val subDirDoc = targetDoc.createDirectory(file.name) ?: continue
-                copyToDocumentDir(file, subDirDoc)
+                val subDirDoc = targetDoc.createDirectory(file.name)
+                if (subDirDoc == null) failures += file.absolutePath else failures += copyToDocumentDir(file, subDirDoc)
             } else {
-                val newFile = targetDoc.createFile("application/octet-stream", file.name) ?: continue
-                getApplication<Application>().contentResolver.openOutputStream(newFile.uri)?.use { out ->
-                    file.inputStream().use { input ->
-                        input.copyTo(out)
+                try {
+                    val newFile = targetDoc.createFile("application/octet-stream", file.name)
+                        ?: throw java.io.IOException("无法创建目标文件")
+                    val out = getApplication<Application>().contentResolver.openOutputStream(newFile.uri)
+                        ?: throw java.io.IOException("无法打开输出流")
+                    out.use { stream ->
+                        file.inputStream().use { input -> input.copyTo(stream) }
                     }
-                }
+                } catch (e: Exception) { failures += file.absolutePath }
             }
         }
+        return failures
     }
 
     private fun zipDirectory(rootDir: File, currentDir: File, zos: ZipOutputStream) {

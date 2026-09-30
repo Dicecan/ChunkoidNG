@@ -5,9 +5,6 @@ import android.net.Uri
 import java.io.File
 import java.util.Locale
 
-/**
- * Data model describing an inspected Minecraft world.
- */
 data class WorldInfo(
     val name: String,
     val platform: Platform,

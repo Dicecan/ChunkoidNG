@@ -59,7 +59,7 @@ fun SettingsScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. UI Appearance
+
         item {
             SettingsCategoryHeader(title = "界面与外观 (Appearance)")
             Spacer(modifier = Modifier.height(6.dp))
@@ -85,13 +85,13 @@ fun SettingsScreen(
                         title = "深色模式跟随系统",
                         subtitle = "依据 Android 系统的深浅色模式自动切换界面",
                         checked = true,
-                        onCheckedChange = {}
+                        onCheckedChange = {},
+                        enabled = false
                     )
                 }
             }
         }
 
-        // 2. Conversion Engine & Performance
         item {
             SettingsCategoryHeader(title = "转换引擎与性能 (Engine & Performance)")
             Spacer(modifier = Modifier.height(6.dp))
@@ -101,7 +101,7 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // Memory Slider
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -186,7 +186,6 @@ fun SettingsScreen(
             }
         }
 
-        // 3. System & Sandbox Management
         item {
             SettingsCategoryHeader(title = "沙箱管理与维护 (Sandbox)")
             Spacer(modifier = Modifier.height(6.dp))
@@ -214,7 +213,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = {},
+                            onClick = { viewModel.resetRootFs() },
                             modifier = Modifier.weight(1f),
                             shape = ExpressiveShapes.small
                         ) {
@@ -228,7 +227,7 @@ fun SettingsScreen(
                         }
 
                         OutlinedButton(
-                            onClick = {},
+                            onClick = { viewModel.clearCache() },
                             modifier = Modifier.weight(1f),
                             shape = ExpressiveShapes.small
                         ) {
@@ -264,7 +263,8 @@ private fun SettingsSwitchRow(
     title: String,
     subtitle: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -302,7 +302,8 @@ private fun SettingsSwitchRow(
         Spacer(modifier = Modifier.width(8.dp))
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            enabled = enabled
         )
     }
 }

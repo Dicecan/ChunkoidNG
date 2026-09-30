@@ -43,7 +43,7 @@ data class ConverterUiState(
     val stagingMessage: String = "",
     val worldInfo: WorldInfo? = null,
     val targetFormat: ChunkerFormat = ChunkerFormat.BEDROCK_FORMATS.first { it.id == "BEDROCK_1_21_50" },
-    // Advanced & Pruning settings
+
     val pruningProfile: PruningProfile = PruningProfile.FULL,
     val includeOverworld: Boolean = true,
     val includeNether: Boolean = true,
@@ -52,12 +52,12 @@ data class ConverterUiState(
     val overrideWorldName: String = "",
     val overrideGameMode: String = "DEFAULT",
     val overrideDifficulty: String = "DEFAULT",
-    // Converting state
+
     val conversionProgress: Int = 0,
     val conversionStageText: String = "",
     val conversionLogs: List<String> = emptyList(),
-    val startTimestamp: Long = 0, // For duration calculation
-    // Result
+    val startTimestamp: Long = 0,
+
     val exportedUri: Uri? = null,
     val isExporting: Boolean = false,
     val errorMessage: String? = null,
@@ -69,13 +69,14 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
     private val archiveManager = ArchiveManager(application)
     private val historyManager = HistoryManager(application)
     private val prefs = AppPreferences(application)
-    
+
     private val _uiState = MutableStateFlow(ConverterUiState())
     val uiState: StateFlow<ConverterUiState> = _uiState.asStateFlow()
 
     private var boundService: ConversionForegroundService? = null
     private var serviceJob: Job? = null
     private var pendingConfig: ConversionConfig? = null
+    private var activeTaskId: String? = null
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -104,6 +105,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         serviceJob?.cancel()
         serviceJob = viewModelScope.launch {
             s.events.collect { event ->
+                if (event.taskId != activeTaskId) return@collect
                 when (event) {
                     is ConversionEvent.Progress -> {
                         _uiState.update {
@@ -337,6 +339,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             overrideGameMode = s.overrideGameMode,
             overrideDifficulty = s.overrideDifficulty
         )
+        activeTaskId = config.taskId
 
         _uiState.update {
             it.copy(
@@ -348,7 +351,6 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             )
         }
 
-        // Start Foreground Service
         val serviceIntent = Intent(getApplication(), ConversionForegroundService::class.java)
         getApplication<Application>().startService(serviceIntent)
         val service = boundService
@@ -387,6 +389,8 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                     }
                 }
                 onDone(targetUri)
+            }.onFailure { error ->
+                _uiState.update { it.copy(errorMessage = "导出失败: ${error.message}") }
             }
         }
     }

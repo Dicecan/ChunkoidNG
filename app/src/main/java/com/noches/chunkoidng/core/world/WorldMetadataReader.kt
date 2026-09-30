@@ -9,9 +9,6 @@ import br.com.gamemods.nbtmanipulator.NbtList
 import java.io.File
 import java.io.InputStream
 
-/**
- * Reads Minecraft world metadata (version, world name, platform, icon) from level.dat and auxiliary files.
- */
 object WorldMetadataReader {
 
     data class ParsedMetadata(
@@ -22,9 +19,6 @@ object WorldMetadataReader {
         val gameType: String?
     )
 
-    /**
-     * Inspects a local world directory and extracts all available metadata.
-     */
     fun inspectWorld(worldDir: File, fallbackName: String = worldDir.name): WorldInfo {
         val platform = detectPlatform(worldDir)
         val levelDatFile = File(worldDir, "level.dat")
@@ -32,7 +26,6 @@ object WorldMetadataReader {
             readLevelDat(levelDatFile)
         } else null
 
-        // Determine name: levelname.txt > NBT LevelName > fallback
         val nameFromTxt = readLevelNameTxt(worldDir)
         val resolvedName = nameFromTxt ?: parsed?.worldName ?: fallbackName
 
@@ -52,9 +45,6 @@ object WorldMetadataReader {
         )
     }
 
-    /**
-     * Detects whether a world directory is Bedrock or Java based on file structure.
-     */
     fun detectPlatform(worldDir: File): Platform {
         val dbDir = File(worldDir, "db")
         val regionDir = File(worldDir, "region")
@@ -119,8 +109,7 @@ object WorldMetadataReader {
     }
 
     private fun readLevelDatBytes(bytes: ByteArray): ParsedMetadata? {
-        // Java and Bedrock have distinctive headers. Try the common format first and
-        // retain the fallback combinations only for unusual legacy files.
+
         val looksGzip = bytes.size >= 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()
         val attempts = if (looksGzip) {
             listOf(
@@ -154,7 +143,6 @@ object WorldMetadataReader {
     private fun parseRootTag(root: NbtCompound?): ParsedMetadata? {
         if (root == null) return null
 
-        // 1. Check for Java Edition
         val javaData = root.getNullableCompound("Data")
         if (javaData != null) {
             val javaVersion = javaData.getNullableCompound("Version")
@@ -172,7 +160,6 @@ object WorldMetadataReader {
             }
         }
 
-        // 2. Check for Bedrock Edition
         val bedrockWorldName = root.getNullableString("LevelName")
         val gameType = mapGameType(root.getNullableInt("GameType"))
 

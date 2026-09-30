@@ -5,14 +5,8 @@ import java.lang.Double.doubleToLongBits
 import java.lang.Float.floatToIntBits
 import java.lang.Long.reverseBytes
 
-/**
- * Implementation of [DataOutput] that writes data to an [OutputStream] using little endian byte order.
- * @param out the underlying output stream.
- * @author joserobjr
- * @since 2020-10-20
- */
 public class LittleEndianDataOutputStream(out: OutputStream) : FilterOutputStream(DataOutputStream(out)), DataOutput {
-    private val data = out as DataOutputStream 
+    private val data = out as DataOutputStream
     override fun writeBoolean(v: Boolean) {
         data.writeBoolean(v)
     }

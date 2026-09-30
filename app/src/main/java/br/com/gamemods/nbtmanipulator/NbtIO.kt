@@ -8,32 +8,17 @@ import java.util.zip.GZIPOutputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-/**
- * Contains useful methods do read and write [NbtFile] from [File] and [InputStream]/[OutputStream].
- */
 public object NbtIO {
-    /**
-     * Calls [writeNbtFile] using the information stored in the [NbtFile], uses the method's default when the information
-     * is missing (null).  This method does not write the Bedrock Edition version and length headers.
-     * @param outputStream The stream that the file will be written
-     * @param file The file that will be written to the stream
-     */
+
     @JvmStatic
     @Throws(IOException::class)
     public fun writeNbtFileAsOriginal(outputStream: OutputStream, file: NbtFile) {
-        writeNbtFile(outputStream, file, 
+        writeNbtFile(outputStream, file,
             compressed = file.isCompressed ?: true,
             littleEndian = file.isLittleEndian ?: false
         )
     }
-    
-    /**
-     * Writes the [NbtFile] in the stream. This method does not write the Bedrock Edition version and length headers.
-     * @param outputStream The stream that the file will be written
-     * @param file The file that will be written to the stream
-     * @param compressed If the file will be compressed by [GZIPOutputStream].
-     * @param littleEndian Uses little endian to write to the stream as in Bedrock Edition
-     */
+
     @JvmStatic
     @Throws(IOException::class)
     @JvmOverloads
@@ -47,11 +32,6 @@ public object NbtIO {
         }
     }
 
-    /**
-     * Writes the [NbtFile] to the output. This method does not write the Bedrock Edition version and length headers.
-     * @param output Where the file will be written, needs to handle compression and endianness.
-     * @param file The file that will be written to the output
-     */
     @JvmStatic
     @Throws(IOException::class)
     public fun writeNbtFileDirectly(output: DataOutput, file: NbtFile) {
@@ -64,22 +44,11 @@ public object NbtIO {
         serializer.writeTag(output, tag)
     }
 
-    /**
-     * Writes the [NbtFile] in a [File].
-     * @param file The output file
-     * @param file The NBT file that will be written on the output file
-     * @param compressed If the file will be compressed by [GZIPOutputStream]
-     * @param littleEndian Uses little endian to write to the stream as in Bedrock Edition
-     * @param writeHeaders Writes the [NbtFile.version] and content size headers to the file.
-     * The [NbtFile.length] property will be updated when this flag is set to true.
-     * If [NbtFile.version] is null when this flag is true, `0` is assumed.
-     * The header is always written in little endian regardless of the [littleEndian] param.
-     */
     @JvmStatic
     @Throws(IOException::class)
     @JvmOverloads
     public fun writeNbtFile(
-        file: File, tag: NbtFile, compressed: Boolean = true, 
+        file: File, tag: NbtFile, compressed: Boolean = true,
         littleEndian: Boolean = false, writeHeaders: Boolean = false
     ) {
         if (!writeHeaders) {
@@ -99,11 +68,11 @@ public object NbtIO {
                     writeNbtFile(stream, tag, compressed, littleEndian)
                     stream.flush()
                 }
-                
+
                 val fileLength = openFile.length() - 8L
                 val intLength = if (fileLength > Int.MAX_VALUE) Int.MAX_VALUE else fileLength.toInt()
                 tag.length = intLength
-                
+
                 openFile.seek(8)
                 with(LittleEndianDataOutputStream(FileOutputStream(openFile.fd))) {
                     writeInt(intLength)
@@ -113,19 +82,11 @@ public object NbtIO {
         }
     }
 
-    /**
-     * Read a [NbtFile] from the [InputStream].
-     * @param inputStream The input stream that will be read
-     * @param compressed If the file needs to be decompressed by [GZIPInputStream]
-     * @param littleEndian Reads the NBT file using little endian byte order
-     * @param readHeaders Reads the NBT version and length headers before the content
-     * These data are read in little endian byte order regardless of the [littleEndian] parameter.
-     */
     @JvmStatic
     @Throws(IOException::class)
     @JvmOverloads
     public fun readNbtFile(
-        inputStream: InputStream, compressed: Boolean = true, 
+        inputStream: InputStream, compressed: Boolean = true,
         littleEndian: Boolean = false, readHeaders: Boolean = false
     ): NbtFile {
         var version: Int? = null
@@ -148,10 +109,6 @@ public object NbtIO {
         return nbtFile
     }
 
-    /**
-     * Reads a [NbtFile] from the input. This method does not read the Bedrock Edition version and length headers.
-     * @param input Where the file will be read, needs to handle compression and endianness.
-     */
     @JvmStatic
     @Throws(IOException::class)
     public fun readNbtFileDirectly(input: DataInput): NbtFile {
@@ -163,29 +120,17 @@ public object NbtIO {
         return NbtFile(name, serializer.readTag(input))
     }
 
-    /**
-     * Read a [NbtFile] from a [File].
-     * @param file The input file that will be read
-     * @param compressed If the file needs to be decompressed by [GZIPInputStream]
-     * @param littleEndian
-     * @param readHeaders
-     */
     @JvmStatic
     @Throws(IOException::class)
     @JvmOverloads
     public fun readNbtFile(
         file: File, compressed: Boolean = true,
-        littleEndian: Boolean = false, 
+        littleEndian: Boolean = false,
         readHeaders: Boolean = false
     ): NbtFile {
         return file.inputStream().buffered().use { readNbtFile(it, compressed, littleEndian, readHeaders) }
     }
 
-    
-    /**
-     * Does an exhaustive attempts to load the NBT file, returning it if any of the attempts is successful. 
-     * @param file
-     */
     @JvmStatic
     @Throws(IOException::class)
     public fun readNbtFileDetectingSettings(file: File): NbtFile {
@@ -205,9 +150,9 @@ public object NbtIO {
                     null
                 }
             }
-            return retry(compressed = true, littleEndian = false, readHeaders = false)  // Java's level.dat
-                ?: retry(compressed = false, littleEndian = true, readHeaders = true)   // Bedrock's level.dat
-                ?: retry(compressed = true, littleEndian = false, readHeaders = true)   // Trying all possibilities
+            return retry(compressed = true, littleEndian = false, readHeaders = false)
+                ?: retry(compressed = false, littleEndian = true, readHeaders = true)
+                ?: retry(compressed = true, littleEndian = false, readHeaders = true)
                 ?: retry(compressed = true, littleEndian = true, readHeaders = false)
                 ?: retry(compressed = true, littleEndian = true, readHeaders = true)
                 ?: retry(compressed = false, littleEndian = false, readHeaders = false)
@@ -218,12 +163,6 @@ public object NbtIO {
         }
     }
 
-    /**
-     * Writes the [NbtTag] directly, without name and optionally without type id.
-     * @param output Where the file will be written, needs to handle compression and endianness.
-     * @param tag The tag that will be written to the output
-     * @param writeTypeId If the first byte written should be the NBT tag type id.
-     */
     @JvmStatic
     @Throws(IOException::class)
     public fun writeNbtTagDirectly(output: DataOutput, tag: NbtTag, writeTypeId: Boolean = true) {
@@ -233,12 +172,6 @@ public object NbtIO {
         serializer.writeTag(output, tag)
     }
 
-    /**
-     * Reads a [NbtTag] of type [T] from the input directly, this is a reader for [writeNbtTagDirectly].
-     * @param input Where the file will be read, needs to handle compression and endianness.
-     * @param tagType The type of the tag that will be read, use `null` if the tag was written with `writeTypeId` enabled
-     * @throws IllegalArgumentException If [T] is exactly [NbtTag].
-     */
     @JvmStatic
     @Throws(IOException::class, IllegalArgumentException::class)
     public fun <T: NbtTag> readNbtTagDirectly(input: DataInput, tagType: Class<T>? = null): T {
@@ -253,12 +186,6 @@ public object NbtIO {
         }
     }
 
-    /**
-     * Reads a [NbtTag] of type [T] from the input directly, this is a reader for [writeNbtTagDirectly].
-     * @param input Where the file will be read, needs to handle compression and endianness.
-     * @param tagType The type of the tag that will be read.
-     * @throws IllegalArgumentException If [T] is exactly [NbtTag].
-     */
     @PublishedApi
     @Throws(IOException::class, IllegalArgumentException::class)
     internal fun <T: NbtTag> readNbtTagDirectly(input: DataInput, tagType: KClass<T>): T {
@@ -269,22 +196,11 @@ public object NbtIO {
         return tagType.cast(serializer.readTag(input))
     }
 
-    /**
-     * Reads a [NbtTag] of type [T] from the input directly, this is a reader for [writeNbtTagDirectly].
-     * @param input Where the file will be read, needs to handle compression and endianness.
-     * @param T The type of the tag that will be read.
-     * @throws IllegalArgumentException If [T] is exactly [NbtTag].
-     */
     @JvmStatic
     @Throws(IOException::class, IllegalArgumentException::class)
     public inline fun <reified T: NbtTag> readNbtTagDirectly(input: DataInput): T {
         return readNbtTagDirectly(input, T::class)
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///  PRIVATE AREA  //  PRIVATE AREA  //  PRIVATE AREA  //  PRIVATE AREA  //  PRIVATE AREA  //  PRIVATE AREA  ///
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     private val serializers = listOf(
         NbtEndSerial,

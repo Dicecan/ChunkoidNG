@@ -2,7 +2,6 @@ package com.noches.chunkoidng.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Material Design 3 Expressive Palette - Primary & Core Tonal Roles
 val PrimaryLight = Color(0xFF1E6F5C)
 val OnPrimaryLight = Color(0xFFFFFFFF)
 val PrimaryContainerLight = Color(0xFFA7F3D0)
@@ -33,7 +32,6 @@ val SurfaceContainerLight = Color(0xFFEBEFECE)
 val SurfaceContainerHighLight = Color(0xFFE5EAE7)
 val SurfaceContainerHighestLight = Color(0xFFDFE4E1)
 
-// Dark Theme Roles
 val PrimaryDark = Color(0xFF8CE5C2)
 val OnPrimaryDark = Color(0xFF003828)
 val PrimaryContainerDark = Color(0xFF00513B)
@@ -64,39 +62,33 @@ val SurfaceContainerDark = Color(0xFF1D201F)
 val SurfaceContainerHighDark = Color(0xFF272B2A)
 val SurfaceContainerHighestDark = Color(0xFF323634)
 
-// Feature Identity Accent Colors (Used in Expressive Cards)
 object FeatureColors {
-    // 1. World Converter - Emerald Green
+
     val ConverterLight = Color(0xFF1B8A5A)
     val ConverterContainerLight = Color(0xFFD1F2E2)
     val ConverterDark = Color(0xFF6EE7B7)
     val ConverterContainerDark = Color(0xFF064E3B)
 
-    // 2. NetEase Decryptor - Vibrant Cyan / Turquoise
     val DecryptorLight = Color(0xFF0284C7)
     val DecryptorContainerLight = Color(0xFFE0F2FE)
     val DecryptorDark = Color(0xFF38BDF8)
     val DecryptorContainerDark = Color(0xFF0369A1)
 
-    // 3. NBT & LevelDB Editor - Indigo / Deep Blue
     val NbtEditorLight = Color(0xFF4F46E5)
     val NbtEditorContainerLight = Color(0xFFEEF2FF)
     val NbtEditorDark = Color(0xFF818CF8)
     val NbtEditorContainerDark = Color(0xFF3730A3)
 
-    // 4. Dimension & Chunk Pruner - Warm Amber / Coral
     val PrunerLight = Color(0xFFEA580C)
     val PrunerContainerLight = Color(0xFFFFEDD5)
     val PrunerDark = Color(0xFFFB923C)
     val PrunerContainerDark = Color(0xFF9A3412)
 
-    // 5. Pack Converter - Creative Violet
     val PackConverterLight = Color(0xFF9333EA)
     val PackConverterContainerLight = Color(0xFFF3E8FF)
     val PackConverterDark = Color(0xFFC084FC)
     val PackConverterContainerDark = Color(0xFF6B21A8)
 
-    // 6. Terminal Console - Tech Slate
     val TerminalLight = Color(0xFF475569)
     val TerminalContainerLight = Color(0xFFF1F5F9)
     val TerminalDark = Color(0xFF94A3B8)

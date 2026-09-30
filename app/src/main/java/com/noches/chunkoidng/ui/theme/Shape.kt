@@ -13,7 +13,6 @@ val ExpressiveShapes = Shapes(
     extraLarge = RoundedCornerShape(32.dp)
 )
 
-// Specific MD3 Expressive Component Shapes
 val SquircleIconShape = RoundedCornerShape(16.dp)
 val PillShape = CircleShape
 val StaggeredCardShape = RoundedCornerShape(22.dp)

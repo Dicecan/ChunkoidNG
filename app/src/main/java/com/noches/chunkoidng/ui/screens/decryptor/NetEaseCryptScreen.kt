@@ -188,7 +188,6 @@ private fun SelectSourceView(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Mode Switcher Tabs
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -225,7 +224,6 @@ private fun SelectSourceView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Info Banner
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = ExpressiveShapes.large,
@@ -264,7 +262,6 @@ private fun SelectSourceView(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Input Actions
         SourcePickerCard(
             title = "选择存档文件夹",
             subtitle = "包含 level.dat 与 db/ 目录的根文件夹",
@@ -364,7 +361,6 @@ private fun ProcessingView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Log Console
         Card(
             modifier = Modifier.fillMaxWidth().weight(1f),
             shape = ExpressiveShapes.large,
@@ -468,7 +464,6 @@ private fun CompletedView(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Handoff to Converter if decrypt mode
         if (uiState.mode == CryptMode.DECRYPT) {
             Button(
                 onClick = onGoToConverter,

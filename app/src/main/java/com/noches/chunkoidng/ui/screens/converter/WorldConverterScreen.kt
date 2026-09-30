@@ -60,14 +60,12 @@ fun WorldConverterScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Auto load if pre-staged from Decryptor
     LaunchedEffect(Unit) {
         if (uiState.stage == ConverterStage.SELECT_SOURCE) {
             viewModel.loadPreStagedWorld()
         }
     }
 
-    // SAF Launchers
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -243,7 +241,7 @@ private fun SelectSourceView(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         Spacer(modifier = Modifier.height(48.dp))
 
         SourcePickerCard(
@@ -314,7 +312,6 @@ private fun ConfigureView(
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
 
-        // World Info Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -352,7 +349,6 @@ private fun ConfigureView(
             }
         }
 
-        // Target Format & Version Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -376,7 +372,6 @@ private fun ConfigureView(
             }
         }
 
-        // Dimension Pruning Card (维度与区块裁剪)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -428,7 +423,6 @@ private fun ConfigureView(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Dimension Switches
                             DimensionSwitchItem(
                                 title = "主世界 (Overworld)",
                                 subtitle = "游戏主维度与建筑核心",
@@ -455,7 +449,6 @@ private fun ConfigureView(
             }
         }
 
-        // World Settings Overrides Card (世界规则与元数据)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -496,7 +489,6 @@ private fun ConfigureView(
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            // Game Mode Choice
                             Text("默认游戏模式", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 val modes = listOf("DEFAULT" to "保持原样", "SURVIVAL" to "生存", "CREATIVE" to "创造", "ADVENTURE" to "冒险", "SPECTATOR" to "旁观")
@@ -509,7 +501,6 @@ private fun ConfigureView(
                                 }
                             }
 
-                            // Difficulty Choice
                             Text("默认游戏难度", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 val diffs = listOf("DEFAULT" to "保持原样", "PEACEFUL" to "和平", "EASY" to "简单", "NORMAL" to "普通", "HARD" to "困难")
@@ -537,7 +528,6 @@ private fun ConfigureView(
             }
         }
 
-        // Convert Button
         item {
             Button(
                 onClick = onStartConversion,
@@ -612,7 +602,6 @@ private fun ConvertingView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Logs Terminal
         Card(
             modifier = Modifier.fillMaxWidth().weight(1f),
             shape = ExpressiveShapes.large,
@@ -683,7 +672,7 @@ private fun CompletedView(
         Spacer(modifier = Modifier.height(24.dp))
         Text("转换成功！", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
         Text("已转换为 ${targetFormat.displayName}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        
+
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
@@ -707,7 +696,7 @@ private fun CompletedView(
             Spacer(modifier = Modifier.width(8.dp))
             Text("导出为压缩包 (${if(targetFormat.platform.isBedrock) ".mcworld" else ".zip"})", fontSize = 16.sp)
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
         TextButton(onClick = onNewConversion) {
             Text("转换其他世界")
@@ -759,7 +748,7 @@ private fun FormatPickerBottomSheet(
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
-            // Header
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
@@ -797,7 +786,6 @@ private fun FormatPickerBottomSheet(
                 }
             }
 
-            // Tab selector (MD3E Segmented control with ample width & icons)
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             ) {
@@ -847,7 +835,6 @@ private fun FormatPickerBottomSheet(
                 }
             }
 
-            // Search filter
             if (selectedTab != 2) {
                 OutlinedTextField(
                     value = searchQuery,

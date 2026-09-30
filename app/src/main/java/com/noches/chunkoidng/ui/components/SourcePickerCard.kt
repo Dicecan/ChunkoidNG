@@ -19,11 +19,6 @@ import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 import com.noches.chunkoidng.ui.theme.SquircleIconShape
 
-/**
- * Unified Material Design 3 Expressive source picker card.
- * Shared across WorldConverterScreen, NetEaseCryptScreen, and DimensionPrunerScreen
- * to ensure 100% visual consistency.
- */
 @Composable
 fun SourcePickerCard(
     title: String,

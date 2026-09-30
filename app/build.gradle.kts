@@ -28,7 +28,7 @@ android {
             )
         }
     }
-    
+
     lint {
         checkReleaseBuilds = false
     }

@@ -108,7 +108,7 @@ fun TutorialScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // 1. Official Wiki Connect Banner
+
         item {
             WikiPortalCard(
                 onOpenMainWiki = { openUrl("https://chunkoid.top/docs/index.html") },
@@ -118,7 +118,6 @@ fun TutorialScreen(
             )
         }
 
-        // 2. Section Header: Quick Start
         item {
             Text(
                 text = "世界转换标准流程",
@@ -133,7 +132,6 @@ fun TutorialScreen(
             WorkflowStepsCard()
         }
 
-        // 3. Section Header: Official FAQ
         item {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -159,7 +157,6 @@ fun TutorialScreen(
             ExpandableFaqCard(faq = faq)
         }
 
-        // 4. Community Support Card
         item {
             CommunitySupportCard(
                 onJoinGroup = {

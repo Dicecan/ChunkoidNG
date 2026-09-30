@@ -13,9 +13,6 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 
-/**
- * Manages the installation and initialization of the OpenJDK 17 rootfs environment.
- */
 class JavaRuntimeEnvironment(private val context: Context) {
     private val TAG = "JavaRuntimeEnvironment"
     private val ROOTFS_ZIP = "rootfs.zip"
@@ -36,9 +33,6 @@ class JavaRuntimeEnvironment(private val context: Context) {
         "usr/lib/jvm/openjdk-17"
     )
 
-    /**
-     * Extracts the rootfs from assets. Emits progress (0 to 100).
-     */
     fun extractRootFS(): Flow<Int> = flow {
         emit(0)
         Log.d(TAG, "Starting RootFS extraction...")
@@ -49,7 +43,6 @@ class JavaRuntimeEnvironment(private val context: Context) {
             return@flow
         }
 
-        // Clean up any broken state
         if (rootfsDir.exists()) {
             rootfsDir.deleteRecursively()
         }
@@ -62,17 +55,17 @@ class JavaRuntimeEnvironment(private val context: Context) {
                     val buffer = ByteArray(65536)
                     val rootfsCanonicalPath = rootfsDir.canonicalPath
                     var extractedEntries = 0
-                    val estimatedTotal = 57 // minimal zip has around 57 files
+                    val estimatedTotal = 57
                     var lastReportedProgress = 0
 
                     while (true) {
                         val entry = zis.nextEntry ?: break
                         val destFile = File(rootfsDir, entry.name)
-                        
-                        // Security check for zip slip
+
                         val destFilePath = destFile.canonicalPath
-                        if (!destFilePath.startsWith(rootfsCanonicalPath + File.separator)) {
-                            continue
+                        if (destFilePath != rootfsCanonicalPath &&
+                            !destFilePath.startsWith(rootfsCanonicalPath + File.separator)) {
+                            throw SecurityException("RootFS 压缩包包含非法路径: ${entry.name}")
                         }
 
                         if (entry.isDirectory) {
@@ -85,10 +78,9 @@ class JavaRuntimeEnvironment(private val context: Context) {
                                     fos.write(buffer, 0, len)
                                 }
                             }
-                            
-                            // Set permissions for executables
+
                             val name = entry.name.lowercase()
-                            if (name.contains("bin/") || name.contains("lib/") || 
+                            if (name.contains("bin/") || name.contains("lib/") ||
                                 name.endsWith(".so") || name.endsWith(".elf") || name.endsWith(".sh")) {
                                 destFile.setExecutable(true, false)
                                 destFile.setReadable(true, false)
@@ -142,10 +134,6 @@ class JavaRuntimeEnvironment(private val context: Context) {
         return rootfsDir.absolutePath
     }
 
-    /**
-     * Ensures cli.jar is extracted from assets to filesDir.
-     * Ported directly from old Chunkoid SplashActivity.
-     */
     fun ensureCliJar(): Boolean {
         val targetFile = File(context.filesDir, "cli.jar")
         if (targetFile.exists() && targetFile.length() > 1024 * 1024) {

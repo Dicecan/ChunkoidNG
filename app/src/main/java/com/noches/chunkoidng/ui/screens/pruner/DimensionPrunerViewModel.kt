@@ -43,14 +43,14 @@ data class PrunerUiState(
     val worldInfo: WorldInfo? = null,
     val originalSizeBytes: Long = 0L,
     val prunedSizeBytes: Long = 0L,
-    // Pruning profile & options
+
     val pruningProfile: PruningProfile = PruningProfile.OVERWORLD_ONLY,
     val includeOverworld: Boolean = true,
     val includeNether: Boolean = false,
     val includeTheEnd: Boolean = false,
     val keepOriginalNbt: Boolean = true,
     val overrideWorldName: String = "",
-    // Execution
+
     val pruningProgress: Int = 0,
     val pruningStageText: String = "",
     val pruningLogs: List<String> = emptyList(),
@@ -71,6 +71,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
     private var isServiceBound = false
     private var serviceJob: Job? = null
     private var pendingConfig: ConversionConfig? = null
+    private var activeTaskId: String? = null
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -112,6 +113,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
         serviceJob?.cancel()
         serviceJob = viewModelScope.launch {
             service.events.collect { event ->
+                if (event.taskId != activeTaskId) return@collect
                 when (event) {
                     is ConversionEvent.Progress -> {
                         _uiState.update {
@@ -304,7 +306,6 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
             )
         }
 
-        // Use INPUT format so Chunker preserves original edition/version and only executes dimension pruning
         val config = ConversionConfig(
             inputDir = archiveManager.inputDir,
             outputDir = archiveManager.outputDir,
@@ -316,6 +317,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
             includeTheEnd = currentState.includeTheEnd,
             overrideWorldName = currentState.overrideWorldName.ifBlank { null }
         )
+        activeTaskId = config.taskId
 
         val serviceIntent = Intent(getApplication(), ConversionForegroundService::class.java)
         getApplication<Application>().startService(serviceIntent)

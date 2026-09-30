@@ -56,7 +56,7 @@ class HistoryManager(private val context: Context) {
         )
 
         val records = getRecords().toMutableList()
-        records.add(0, record) // Add to top
+        records.add(0, record)
         saveRecords(records.take(maxRecords))
         return id
     }
@@ -129,7 +129,7 @@ class HistoryManager(private val context: Context) {
                 StandardCopyOption.ATOMIC_MOVE
             )
         } catch (_: Exception) {
-            // Some providers/filesystems do not support atomic moves.
+
             if (!tempFile.renameTo(historyFile)) {
                 tempFile.delete()
                 throw IllegalStateException("无法保存转换历史")

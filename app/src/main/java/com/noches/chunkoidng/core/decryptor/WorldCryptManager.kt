@@ -4,10 +4,11 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -33,9 +34,6 @@ sealed class CryptEvent {
     data class Failure(val error: String) : CryptEvent()
 }
 
-/**
- * Manages full Minecraft world decryption and passive encryption pipelines.
- */
 class WorldCryptManager(private val context: Context) {
 
     val workspaceCryptDir: File
@@ -64,37 +62,40 @@ class WorldCryptManager(private val context: Context) {
 
         val dbFiles = dbDir.listFiles()?.filter { it.isFile } ?: emptyList()
         val currentFile = dbFiles.find { it.name.equals("CURRENT", ignoreCase = true) }
-        val manifestFile = dbFiles.find { it.name.startsWith("MANIFEST", ignoreCase = true) }
+        val manifestFiles = dbFiles.filter { it.name.matches(Regex("MANIFEST-\\d+", RegexOption.IGNORE_CASE)) }
 
-        if (currentFile == null || manifestFile == null) {
+        if (currentFile == null || manifestFiles.isEmpty()) {
             emit(CryptEvent.Failure("db 目录下缺失关键指针文件 (CURRENT 或 MANIFEST-*)"))
             return@flow
         }
 
-        // Determine key
-        val key: ByteArray = if (!customKey.isNullOrBlank()) {
-            customKey.toByteArray(StandardCharsets.US_ASCII)
-        } else if (mode == CryptMode.DECRYPT) {
-            val currentBytes = currentFile.readBytes()
-            val derived = NetEaseCryptor.deriveKey(currentBytes, manifestFile.name)
-            emit(CryptEvent.LogOutput("[INFO] 成功推导解密密钥: 0x${NetEaseCryptor.keyToHexString(derived)}"))
-            derived
-        } else {
-            emit(CryptEvent.LogOutput("[INFO] 采用网易被动标准加密密钥: 88329851"))
-            NetEaseCryptor.DEFAULT_KEY
+        val key = try {
+            if (!customKey.isNullOrBlank()) {
+                customKey.trim().toByteArray(StandardCharsets.US_ASCII).also {
+                    require(it.isNotEmpty() && it.size <= 1024) { "自定义密钥长度无效" }
+                }
+            } else if (mode == CryptMode.DECRYPT) {
+                val currentBytes = currentFile.readBytes()
+                val derived = manifestFiles.asSequence().mapNotNull { manifest ->
+                    runCatching { NetEaseCryptor.deriveKey(currentBytes, manifest.name) }.getOrNull()
+                }.firstOrNull() ?: throw IllegalArgumentException("无法匹配 CURRENT 引用的 MANIFEST")
+                emit(CryptEvent.LogOutput("[INFO] 已成功推导解密密钥（长度 ${derived.size} 字节）"))
+                derived
+            } else {
+                emit(CryptEvent.LogOutput("[INFO] 采用网易被动标准加密密钥: 88329851"))
+                NetEaseCryptor.DEFAULT_KEY
+            }
+        } catch (e: Exception) {
+            emit(CryptEvent.Failure("密钥校验失败: ${e.message}"))
+            return@flow
         }
 
-        // Prepare clean output directory
-        if (workspaceCryptDir.exists()) {
-            workspaceCryptDir.deleteRecursively()
-        }
-        workspaceCryptDir.mkdirs()
-        val targetDbDir = File(workspaceCryptDir, "db").apply { mkdirs() }
+        val taskDir = File(context.filesDir, "workspace/crypt_output.${System.currentTimeMillis()}").apply { mkdirs() }
+        val targetDbDir = File(taskDir, "db").apply { mkdirs() }
 
         emit(CryptEvent.Progress(15, "", "正在转存基本元数据文件..."))
         emit(CryptEvent.LogOutput("[INFO] 正在同步非数据库文件..."))
 
-        // Copy root files (level.dat, world_icon, etc.)
         var worldName = sourceDir.name
         sourceDir.listFiles()?.forEach { file ->
             if (file.isFile) {
@@ -102,10 +103,10 @@ class WorldCryptManager(private val context: Context) {
                     val name = file.readText().trim()
                     if (name.isNotBlank()) worldName = name
                 }
-                val destFile = File(workspaceCryptDir, file.name)
+                val destFile = File(taskDir, file.name)
                 file.copyTo(destFile, overwrite = true)
             } else if (file.isDirectory && !file.name.equals("db", ignoreCase = true)) {
-                file.copyRecursively(File(workspaceCryptDir, file.name), overwrite = true)
+                file.copyRecursively(File(taskDir, file.name), overwrite = true)
             }
         }
 
@@ -117,42 +118,28 @@ class WorldCryptManager(private val context: Context) {
         for ((index, file) in dbFiles.withIndex()) {
             val fileName = file.name
             val destFile = File(targetDbDir, fileName)
-            val fileBytes = file.readBytes()
-
-            val processedBytes = when (mode) {
-                CryptMode.DECRYPT -> {
-                    val isDbTable = fileName.endsWith(".ldb", ignoreCase = true) ||
-                            fileName.equals("CURRENT", ignoreCase = true) ||
-                            fileName.startsWith("MANIFEST", ignoreCase = true) ||
-                            fileName.endsWith(".log", ignoreCase = true)
-
-                    if (isDbTable && NetEaseCryptor.hasMagicHeader(fileBytes)) {
-                        val dec = NetEaseCryptor.decryptData(fileBytes, key)
-                        if (fileName.endsWith(".ldb", ignoreCase = true)) {
-                            if (!NetEaseCryptor.verifyLdbFooter(dec)) {
-                                ldbVerified = false
-                            }
-                        }
-                        dec
-                    } else {
-                        fileBytes
-                    }
-                }
-                CryptMode.PASSIVE_ENCRYPT -> {
-                    val shouldEncrypt = fileName.endsWith(".ldb", ignoreCase = true) ||
-                            fileName.equals("CURRENT", ignoreCase = true) ||
-                            fileName.startsWith("MANIFEST", ignoreCase = true) ||
-                            fileName.endsWith(".log", ignoreCase = true)
-
-                    if (shouldEncrypt && !NetEaseCryptor.hasMagicHeader(fileBytes)) {
-                        NetEaseCryptor.encryptData(fileBytes, key)
-                    } else {
-                        fileBytes
-                    }
-                }
+            if (!currentCoroutineContext().isActive) {
+                taskDir.deleteRecursively()
+                emit(CryptEvent.Failure("加解密任务已取消"))
+                return@flow
             }
-
-            destFile.writeBytes(processedBytes)
+            val isDbTable = fileName.endsWith(".ldb", ignoreCase = true) ||
+                    fileName.equals("CURRENT", ignoreCase = true) ||
+                    fileName.matches(Regex("MANIFEST-\\d+", RegexOption.IGNORE_CASE)) ||
+                    fileName.endsWith(".log", ignoreCase = true)
+            val wasEncrypted = if (isDbTable) {
+                FileOutputStream(destFile).use { out ->
+                    file.inputStream().use { input ->
+                        NetEaseCryptor.processFile(input, out, mode == CryptMode.DECRYPT, key)
+                    }
+                }
+            } else {
+                file.copyTo(destFile, overwrite = true)
+                false
+            }
+            if (mode == CryptMode.DECRYPT && fileName.endsWith(".ldb", ignoreCase = true)) {
+                if (!wasEncrypted || !NetEaseCryptor.verifyLdbFooter(destFile.readBytes())) ldbVerified = false
+            }
             processedCount++
 
             val progressPercent = (25 + ((index + 1).toFloat() / totalDbFiles * 70)).toInt().coerceIn(25, 95)
@@ -162,7 +149,20 @@ class WorldCryptManager(private val context: Context) {
             }
         }
 
+        if (dbFiles.none { it.name.endsWith(".ldb", ignoreCase = true) } || !ldbVerified) {
+            taskDir.deleteRecursively()
+            emit(CryptEvent.Failure("LevelDB 数据校验失败，未生成可用存档"))
+            return@flow
+        }
         val duration = System.currentTimeMillis() - startTime
+        try {
+            if (workspaceCryptDir.exists()) workspaceCryptDir.deleteRecursively()
+            check(taskDir.renameTo(workspaceCryptDir)) { "无法提交加解密输出" }
+        } catch (e: Exception) {
+            taskDir.deleteRecursively()
+            emit(CryptEvent.Failure("无法提交加解密输出: ${e.message}"))
+            return@flow
+        }
         emit(CryptEvent.Progress(100, "", "${mode.displayName} 完成！"))
         emit(CryptEvent.LogOutput("[SUCCESS] 任务完成，耗时 ${duration / 1000.0} 秒，共处理 $processedCount 个数据库文件"))
 

@@ -33,9 +33,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Foreground service ensuring world conversions finish smoothly without being killed in background.
- */
 class ConversionForegroundService : Service() {
     private val TAG = "ConversionService"
     private val binder = LocalBinder()
@@ -74,7 +71,10 @@ class ConversionForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     fun startConversion(config: ConversionConfig) {
-        if (_isRunning.value) return
+        if (_isRunning.value) {
+            serviceScope.launch { _events.emit(ConversionEvent.Failure(config.taskId, "已有转换任务正在运行")) }
+            return
+        }
         startConversionInternal(config)
     }
 
@@ -123,7 +123,7 @@ class ConversionForegroundService : Service() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Conversion job threw exception", e)
-                _events.emit(ConversionEvent.Failure("转换异常: ${e.message}"))
+                _events.emit(ConversionEvent.Failure(config.taskId, "转换异常: ${e.message}"))
                 finishService(success = false)
             }
         }
@@ -200,7 +200,7 @@ class ConversionForegroundService : Service() {
             wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ChunkoidNG::ConversionWakeLock")
         }
         wakeLock?.let {
-            if (!it.isHeld) it.acquire(4 * 60 * 60 * 1000L) // 4 hours limit
+            if (!it.isHeld) it.acquire(4 * 60 * 60 * 1000L)
         }
     }
 

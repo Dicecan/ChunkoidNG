@@ -3,6 +3,8 @@ package com.noches.chunkoidng.ui.screens.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.noches.chunkoidng.core.settings.AppPreferences
+import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
+import com.noches.chunkoidng.core.world.ArchiveManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +53,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun updateMaxMemory(mb: Float) {
         prefs.maxMemoryMb = mb
         _uiState.update { it.copy(maxMemoryMb = mb) }
+    }
+
+    fun resetRootFs() {
+        JavaRuntimeEnvironment(getApplication()).rootfsDir.deleteRecursively()
+    }
+
+    fun clearCache() {
+        ArchiveManager(getApplication()).cleanWorkspace()
     }
 }
 

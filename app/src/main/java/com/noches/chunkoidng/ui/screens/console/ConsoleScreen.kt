@@ -63,29 +63,27 @@ fun ConsoleScreen(
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     val runtimeEnv = remember { JavaRuntimeEnvironment(context) }
     val processManager = remember { JavaProcessManager(context, runtimeEnv) }
-    
+
     var command by remember { mutableStateOf("") }
-    val logs = remember { 
+    val logs = remember {
         mutableStateListOf(
             "[SYSTEM] OpenJDK 17.0.18 沙箱终端已就绪",
             "[SYSTEM] 支持长按文本选词复制，或点右上角一键复制完整输出"
-        ) 
+        )
     }
     var isExecuting by remember { mutableStateOf(false) }
-    
+
     val listState = rememberLazyListState()
 
-    // Auto-scroll to bottom on new log entry
     LaunchedEffect(logs.size) {
         if (logs.isNotEmpty()) {
             listState.scrollToItem(logs.size - 1)
         }
     }
 
-    // Preload cli.jar asynchronously on background thread
     LaunchedEffect(Unit) {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runtimeEnv.ensureCliJar()
@@ -124,10 +122,10 @@ fun ConsoleScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Column {
                         Text(
-                            "沙箱终端控制台", 
+                            "沙箱终端控制台",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -144,7 +142,7 @@ fun ConsoleScreen(
                     }
                 },
                 actions = {
-                    // One-click copy all logs
+
                     IconButton(
                         onClick = {
                             val fullLog = logs.joinToString("\n")
@@ -155,12 +153,12 @@ fun ConsoleScreen(
                         }
                     ) {
                         Icon(
-                            Icons.Outlined.ContentCopy, 
+                            Icons.Outlined.ContentCopy,
                             contentDescription = "复制日志",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    // Clear logs
+
                     IconButton(
                         onClick = {
                             logs.clear()
@@ -168,7 +166,7 @@ fun ConsoleScreen(
                         }
                     ) {
                         Icon(
-                            Icons.Outlined.DeleteOutline, 
+                            Icons.Outlined.DeleteOutline,
                             contentDescription = "清空控制台",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -189,7 +187,7 @@ fun ConsoleScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
-            // Full Terminal Container
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -198,7 +196,7 @@ fun ConsoleScreen(
                     .background(Color(0xFF0F1117))
                     .border(1.dp, Color(0xFF23283B), RoundedCornerShape(18.dp))
             ) {
-                // Terminal Titlebar / Status Dots
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -206,7 +204,7 @@ fun ConsoleScreen(
                         .padding(horizontal = 14.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // macOS-style decorative dots
+
                     Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFF5F56)))
                     Spacer(modifier = Modifier.width(6.dp))
                     Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFFBD2E)))
@@ -224,7 +222,6 @@ fun ConsoleScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Mode Pill
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
@@ -241,7 +238,6 @@ fun ConsoleScreen(
                     }
                 }
 
-                // Terminal Scrollable Viewport
                 SelectionContainer(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -264,15 +260,15 @@ fun ConsoleScreen(
                                     letterSpacing = 0.2.sp
                                 ),
                                 color = when {
-                                    line.startsWith("[SYSTEM]") -> Color(0xFF56B6C2) // Soft cyan
-                                    line.startsWith("$") -> Color(0xFF61AFEF) // Prompt blue
+                                    line.startsWith("[SYSTEM]") -> Color(0xFF56B6C2)
+                                    line.startsWith("$") -> Color(0xFF61AFEF)
                                     line.contains("Missing required options", ignoreCase = true) ||
-                                    line.contains("Error", ignoreCase = true) || 
-                                    line.contains("failed", ignoreCase = true) || 
-                                    line.contains("Permission denied", ignoreCase = true) -> Color(0xFFE06C75) // Soft red
-                                    line.trim().startsWith("-") || line.trim().startsWith("'--") -> Color(0xFFE5C07B) // Gold/Yellow for options
-                                    line.startsWith("Usage:") -> Color(0xFF98C379) // Green
-                                    else -> Color(0xFFABB2BF) // Clean Dracula off-white / light gray
+                                    line.contains("Error", ignoreCase = true) ||
+                                    line.contains("failed", ignoreCase = true) ||
+                                    line.contains("Permission denied", ignoreCase = true) -> Color(0xFFE06C75)
+                                    line.trim().startsWith("-") || line.trim().startsWith("'--") -> Color(0xFFE5C07B)
+                                    line.startsWith("Usage:") -> Color(0xFF98C379)
+                                    else -> Color(0xFFABB2BF)
                                 }
                             )
                         }
@@ -282,7 +278,6 @@ fun ConsoleScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Quick Commands Row with Chips
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -290,12 +285,12 @@ fun ConsoleScreen(
                 items(quickCommands) { (label, cmd) ->
                     SuggestionChip(
                         onClick = { command = cmd },
-                        label = { 
+                        label = {
                             Text(
-                                label, 
+                                label,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
-                            ) 
+                            )
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = SuggestionChipDefaults.suggestionChipColors(
@@ -312,7 +307,6 @@ fun ConsoleScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Modern Command Input Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -1,13 +1,7 @@
 package br.com.gamemods.nbtmanipulator
 
-/**
- * A tag which wraps a [String] value.
- * @property value The wrapped value
- */
 public data class NbtString(var value: String): NbtTag() {
-    /**
-     * Returns a string which is wrapped by this tag.
-     */
+
     override val stringValue: String
         get() = value
 
@@ -22,8 +16,5 @@ public data class NbtString(var value: String): NbtTag() {
         }
     }
 
-    /**
-     * Returns a new wrapper with the current value.
-     */
     override fun deepCopy(): NbtString = copy()
 }
