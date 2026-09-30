@@ -1,5 +1,8 @@
 package com.noches.chunkoidng.ui.screens.features
 
+import com.noches.chunkoidng.R
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -91,7 +94,7 @@ fun FeaturesScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "核心功能库",
+                        text = stringResource(R.string.feature_screen_core_tools),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -104,14 +107,14 @@ fun FeaturesScreen(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "${chunkoidFeatures.size} 项工具",
+                            text = stringResource(R.string.feature_screen_tool_count, chunkoidFeatures.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
                 Text(
-                    text = "点击各卡片即可进入对应转换或编辑工作台",
+                    text = stringResource(R.string.feature_screen_tip),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -196,7 +199,7 @@ private fun HeroStatusBanner() {
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "核心组件状态",
+                            text = stringResource(R.string.feature_screen_status_title),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -210,31 +213,31 @@ private fun HeroStatusBanner() {
                             .clickable(enabled = !isChecking) {
                                 isChecking = true
                                 showTerminal = true
-                                terminalLogs = listOf("[SYSTEM] 初始化终端会话...")
+                                terminalLogs = listOf(context.getString(R.string.cli_log_init))
 
                                 coroutineScope.launch {
                                     if (!runtimeEnv.isRootfsReady()) {
-                                        terminalLogs = terminalLogs + "[SYSTEM] 正在释放 RootFS 环境..."
+                                        terminalLogs = terminalLogs + context.getString(R.string.cli_log_release)
                                         runtimeEnv.extractRootFS().collect { progress ->
                                             extractionProgress = progress
                                             if (progress % 20 == 0 || progress == 100) {
-                                                terminalLogs = terminalLogs + "[SYSTEM] 解压进度: $progress%"
+                                                terminalLogs = terminalLogs + context.getString(R.string.cli_log_progress, progress)
                                             }
                                         }
                                         rootfsReady = runtimeEnv.isRootfsReady()
                                     }
 
                                     if (rootfsReady) {
-                                        terminalLogs = terminalLogs + "[SYSTEM] 环境就绪。正在测试 Java 引擎..."
+                                        terminalLogs = terminalLogs + context.getString(R.string.cli_log_ready)
                                         processManager.runCliJar(File("dummy"), "-version").collect { logLine ->
                                              terminalLogs = (terminalLogs + logLine).takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         }
-                                        terminalLogs = terminalLogs + "[SYSTEM] 测试完成。"
+                                        terminalLogs = terminalLogs + context.getString(R.string.cli_log_test_done)
 
                                         delay(2000)
                                         showTerminal = false
                                     } else {
-                                        terminalLogs = terminalLogs + "[SYSTEM] 错误: RootFS 部署失败！"
+                                        terminalLogs = terminalLogs + context.getString(R.string.cli_log_err)
                                     }
                                     isChecking = false
                                 }
@@ -251,7 +254,7 @@ private fun HeroStatusBanner() {
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (extractionProgress in 1..99) "解压中 $extractionProgress%" else "检查中",
+                                    text = if (extractionProgress in 1..99) stringResource(R.string.cli_status_extracting, extractionProgress) else stringResource(R.string.cli_status_checking),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -259,13 +262,13 @@ private fun HeroStatusBanner() {
                             } else {
                                 Icon(
                                     imageVector = Icons.Outlined.Refresh,
-                                    contentDescription = "环境自检",
+                                    contentDescription = stringResource(R.string.cli_self_test),
                                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                     modifier = Modifier.size(13.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "环境自检",
+                                    text = stringResource(R.string.cli_self_test),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -284,14 +287,14 @@ private fun HeroStatusBanner() {
                     SelfCheckItemChip(
                         icon = Icons.Outlined.Memory,
                         title = "OpenJDK 17",
-                        status = if (isChecking && !rootfsReady) "部署中..." else if (rootfsReady) "沙箱已就绪" else "未部署",
+                        status = if (isChecking && !rootfsReady) stringResource(R.string.cli_status_deploying) else if (rootfsReady) stringResource(R.string.cli_status_ready) else stringResource(R.string.cli_status_not_deploy),
                         isSuccess = rootfsReady,
                         modifier = Modifier.weight(1f)
                     )
                     SelfCheckItemChip(
                         icon = Icons.Outlined.Terminal,
-                        title = "Chunker 引擎",
-                        status = if (isChecking && rootfsReady) "连线测试中..." else if (rootfsReady) "核心可用" else "等待挂载",
+                        title = stringResource(R.string.cli_engine_title),
+                        status = if (isChecking && rootfsReady) stringResource(R.string.cli_engine_testing) else if (rootfsReady) stringResource(R.string.cli_engine_ready) else stringResource(R.string.cli_engine_waiting),
                         isSuccess = rootfsReady && !isChecking,
                         modifier = Modifier.weight(1f)
                     )

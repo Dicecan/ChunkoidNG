@@ -16,6 +16,8 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.noches.chunkoidng.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,9 +62,9 @@ fun ConversionHistoryScreen(onNavigateBack: () -> Unit) {
                 result.onSuccess { _ ->
                     historyManager.updateExportLocation(record.id, it.toString())
                     records = withContext(Dispatchers.IO) { historyManager.getRecords() }
-                    Toast.makeText(context, "导出补救成功！", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.history_export_success), Toast.LENGTH_SHORT).show()
                 }.onFailure { err ->
-                    Toast.makeText(context, "导出失败: ${err.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.history_export_fail, err.message), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -71,10 +73,10 @@ fun ConversionHistoryScreen(onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("转换记录", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.history_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.history_back_desc))
                     }
                 },
                 actions = {
@@ -83,7 +85,7 @@ fun ConversionHistoryScreen(onNavigateBack: () -> Unit) {
                             historyManager.clearHistory()
                             records = emptyList()
                         }) {
-                            Icon(Icons.Outlined.Delete, contentDescription = "清空记录")
+                            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.history_clear_desc))
                         }
                     }
                 },
@@ -93,7 +95,7 @@ fun ConversionHistoryScreen(onNavigateBack: () -> Unit) {
     ) { innerPadding ->
         if (records.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("暂无转换记录", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.history_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(
@@ -163,7 +165,7 @@ fun HistoryItemCard(
                 )
                 val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
                 Text(
-                    text = "时间: ${sdf.format(Date(record.timestamp))}  耗时: ${record.durationMs / 1000}s",
+                    text = stringResource(R.string.history_item_time, sdf.format(Date(record.timestamp)), record.durationMs / 1000),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -175,26 +177,26 @@ fun HistoryItemCard(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("存档详细信息", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.history_detail_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("名称: ${record.worldName}")
-                    Text("来源: ${record.sourcePlatform}")
-                    Text("目标: ${record.targetPlatform}")
-                    Text("耗时: ${record.durationMs / 1000.0} 秒")
+                    Text(stringResource(R.string.history_detail_name, record.worldName))
+                    Text(stringResource(R.string.history_detail_source, record.sourcePlatform))
+                    Text(stringResource(R.string.history_detail_target, record.targetPlatform))
+                    Text(stringResource(R.string.history_detail_duration, record.durationMs / 1000.0))
                     if (record.exportedUri != null) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("导出位置 (URI):", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.history_detail_export_uri_title), fontWeight = FontWeight.Bold)
                         Text(record.exportedUri, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("导出位置: 暂未导出", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.history_detail_not_exported), color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("关闭")
+                    Text(stringResource(R.string.history_close))
                 }
             },
             dismissButton = {
@@ -203,7 +205,7 @@ fun HistoryItemCard(
                         showDialog = false
                         onRemedyExport()
                     }, enabled = !isExporting) {
-                        Text(if (isExporting) "正在导出..." else "补救导出压缩包")
+                        Text(stringResource(if (isExporting) R.string.history_exporting else R.string.history_export_fallback))
                     }
                 }
             }

@@ -1,5 +1,8 @@
 package com.noches.chunkoidng.ui.screens.features
 
+import com.noches.chunkoidng.R
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -80,7 +83,7 @@ fun FeatureCard(
                 ) {
                     Icon(
                         imageVector = feature.icon,
-                        contentDescription = feature.title,
+                        contentDescription = stringResource(feature.titleRes),
                         tint = accentColor,
                         modifier = Modifier.size(24.dp)
                     )
@@ -93,7 +96,7 @@ fun FeatureCard(
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = feature.badge,
+                        text = stringResource(feature.badgeRes),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                         fontWeight = FontWeight.Bold,
                         color = accentColor
@@ -104,7 +107,7 @@ fun FeatureCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = feature.title,
+                text = stringResource(feature.titleRes),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -113,7 +116,7 @@ fun FeatureCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = feature.subtitle,
+                text = stringResource(feature.subtitleRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
@@ -130,7 +133,7 @@ fun FeatureCard(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "进入功能",
+                    contentDescription = stringResource(R.string.feature_card_enter),
                     tint = accentColor.copy(alpha = 0.7f),
                     modifier = Modifier.size(16.dp)
                 )

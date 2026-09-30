@@ -2,6 +2,9 @@ package com.noches.chunkoidng.ui.screens.tutorial
 
 import android.content.Intent
 import android.net.Uri
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.noches.chunkoidng.R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,35 +56,36 @@ import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
 data class FaqItem(
-    val question: String,
-    val answer: String,
-    val category: String = "常见问题"
+    @StringRes
+    val question: Int,
+    val answer: Int,
+    val category: Int = R.string.tutorial_faq_category
 )
 
 private val officialFaqList = listOf(
     FaqItem(
-        question = "打开转换后的文件夹文件很少，游戏无法读取（没有 level.dat/db/region）？",
-        answer = "请重新转换一次，并在转换时观察实时日志流输出。通常是因为输入源的压缩包内存在多层文件夹嵌套，或源世界缺少核心数据库指针文件。建议直接将存档解压为文件夹后再选取导入。"
+        question = R.string.tutorial_faq_q1,
+        answer = R.string.tutorial_faq_a1
     ),
     FaqItem(
-        question = "转换时出现 Termux environment not initialized 错误？",
-        answer = "这表示应用的 RootFS 运行环境未完全解压或被安全清理软件破坏。请到【设置】中心点击【重置并重新初始化沙箱环境】，或重新授予应用完整的存储权限。"
+        question = R.string.tutorial_faq_q2,
+        answer = R.string.tutorial_faq_a2
     ),
     FaqItem(
-        question = "转换大存档时，切到后台或者息屏后软件突然中断退出？",
-        answer = "部分手机厂商系统（如 HyperOS、ColorOS、OriginOS、HarmonyOS）后台策略较激进。请在【设置】中开启【后台唤醒锁 (WakeLock)】，并将 Chunkoid 的电池策略设为【无限制/允许后台高耗电运行】，同时在多任务界面锁定软件卡片。"
+        question = R.string.tutorial_faq_q3,
+        answer = R.string.tutorial_faq_a3
     ),
     FaqItem(
-        question = "手机运存较小（4GB~6GB），转换大世界容易卡顿或闪退？",
-        answer = "请在【设置】中开启【防闪退模式（低运存优化）】，系统会自动向 JVM 注入串行 GC 与单线程并发限制参数，并适当调低 Java 虚拟机最大分配内存。"
+        question = R.string.tutorial_faq_q4,
+        answer = R.string.tutorial_faq_a4
     ),
     FaqItem(
-        question = "提示 Original NBT is not available for this conversion 错误？",
-        answer = "由于跨平台转换时，基岩版与 Java 版的 NBT 结构定义不一致，部分版本无法直接继承未转换的原始标签。请在转换设置中关闭【保留原始 NBT】即可顺利完成转换。"
+        question = R.string.tutorial_faq_q5,
+        answer = R.string.tutorial_faq_a5
     ),
     FaqItem(
-        question = "网易版地图解密失败或者找不到 db 文件夹？",
-        answer = "网易存档解密器依赖 LevelDB 的 CURRENT 指针文件与 MANIFEST 文件。请确保选中的是包含 db/ 文件夹的世界根目录，而非外部的应用备份父级目录。"
+        question = R.string.tutorial_faq_q6,
+        answer = R.string.tutorial_faq_a6
     )
 )
 
@@ -120,7 +124,7 @@ fun TutorialScreen(
 
         item {
             Text(
-                text = "世界转换标准流程",
+                text = stringResource(R.string.tutorial_flow_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -145,7 +149,7 @@ fun TutorialScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "官网常见问题排错 (FAQ)",
+                    text = stringResource(R.string.tutorial_faq_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -206,13 +210,13 @@ private fun WikiPortalCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Chunkoid 官方在线 Wiki 文档站",
+                        text = stringResource(R.string.tutorial_wiki_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "chunkoid.top · 实时同步官方最新文档与操作手册",
+                        text = stringResource(R.string.tutorial_wiki_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )
@@ -235,7 +239,7 @@ private fun WikiPortalCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("前往官方在线 Wiki 文档站 (Docs)")
+                Text(stringResource(R.string.tutorial_wiki_button))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -255,7 +259,7 @@ private fun WikiPortalCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("操作手册", fontSize = 12.sp)
+                    Text(stringResource(R.string.tutorial_manual_tab), fontSize = 12.sp)
                 }
                 OutlinedButton(
                     onClick = onOpenFaq,
@@ -268,7 +272,7 @@ private fun WikiPortalCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("在线 FAQ", fontSize = 12.sp)
+                    Text(stringResource(R.string.tutorial_faq_tab), fontSize = 12.sp)
                 }
             }
         }
@@ -292,26 +296,26 @@ private fun WorkflowStepsCard() {
         ) {
             StepItem(
                 step = 1,
-                title = "选择世界存档",
-                description = "支持直接导入 .zip 压缩包、.mcworld 格式或已解压的目录，内置扫描系统会自动寻找 level.dat 和数据库。"
+                title = stringResource(R.string.tutorial_step1_title),
+                description = stringResource(R.string.tutorial_step1_desc)
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             StepItem(
                 step = 2,
-                title = "选择目标版本与平台",
-                description = "支持 Java 1.8.8 ~ 1.21+ 与基岩版全系列互转，并可按需选择是否开启维度裁剪。"
+                title = stringResource(R.string.tutorial_step2_title),
+                description = stringResource(R.string.tutorial_step2_desc)
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             StepItem(
                 step = 3,
-                title = "开始转换与后台监控",
-                description = "转换由嵌入式 OpenJDK 17 沙箱执行，通知栏与界面实时呈现进度百分比与执行日志。"
+                title = stringResource(R.string.tutorial_step3_title),
+                description = stringResource(R.string.tutorial_step3_desc)
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             StepItem(
                 step = 4,
-                title = "统一输出与管理",
-                description = "转换完毕后文件存放于系统 Documents/chunkoid output 专区，支持一键导出到游戏。"
+                title = stringResource(R.string.tutorial_step4_title),
+                description = stringResource(R.string.tutorial_step4_desc)
             )
         }
     }
@@ -385,7 +389,7 @@ private fun ExpandableFaqCard(faq: FaqItem) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = faq.question,
+                    text = stringResource(faq.question),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -403,7 +407,7 @@ private fun ExpandableFaqCard(faq: FaqItem) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = faq.answer,
+                        text = stringResource(faq.answer),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
@@ -429,14 +433,14 @@ private fun CommunitySupportCard(onJoinGroup: () -> Unit) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "💬 官方交流反馈群",
+                text = stringResource(R.string.tutorial_group_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "遇到未知错误或需特殊格式转换排错，欢迎加入官方交流群交流与反馈：群号 1103983368",
+                text = stringResource(R.string.tutorial_group_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

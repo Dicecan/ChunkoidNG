@@ -1,5 +1,8 @@
 package com.noches.chunkoidng.ui.screens.features
 
+import com.noches.chunkoidng.R
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.Dataset
@@ -14,10 +17,10 @@ import com.noches.chunkoidng.ui.theme.FeatureColors
 
 data class FeatureItem(
     val id: String,
-    val title: String,
-    val subtitle: String,
-    val badge: String,
-    val tags: List<String>,
+    val titleRes: Int,
+    val subtitleRes: Int,
+    val badgeRes: Int,
+    val tagsRes: List<Int>,
     val icon: ImageVector,
     val accentLight: Color,
     val accentContainerLight: Color,
@@ -30,10 +33,10 @@ data class FeatureItem(
 val chunkoidFeatures = listOf(
     FeatureItem(
         id = "world_converter",
-        title = "存档转换",
-        subtitle = "基岩版 (BE) ↔ Java 版 (JE) 双向转换\n支持 1.8.8+ 至 1.21+",
-        badge = "核心",
-        tags = listOf("双向转换", "无损", "跨版本"),
+        titleRes = R.string.feature_conv_title,
+        subtitleRes = R.string.feature_conv_subtitle,
+        badgeRes = R.string.feature_conv_badge,
+        tagsRes = listOf(R.string.feature_conv_tag_1, R.string.feature_conv_tag_2, R.string.feature_conv_tag_3),
         icon = Icons.Outlined.SwapHoriz,
         accentLight = FeatureColors.ConverterLight,
         accentContainerLight = FeatureColors.ConverterContainerLight,
@@ -43,10 +46,10 @@ val chunkoidFeatures = listOf(
     ),
     FeatureItem(
         id = "netease_decryptor",
-        title = "网易存档解密与加密",
-        subtitle = "LevelDB 异或算法流式解密，并支持网易版被动加密",
-        badge = "独家黑科技",
-        tags = listOf("流式解密", "被动加密", "全自动"),
+        titleRes = R.string.feature_decrypt_title,
+        subtitleRes = R.string.feature_decrypt_subtitle,
+        badgeRes = R.string.feature_decrypt_badge,
+        tagsRes = listOf(R.string.feature_decrypt_tag_1, R.string.feature_decrypt_tag_2, R.string.feature_decrypt_tag_3),
         icon = Icons.Outlined.LockOpen,
         accentLight = FeatureColors.DecryptorLight,
         accentContainerLight = FeatureColors.DecryptorContainerLight,
@@ -55,10 +58,10 @@ val chunkoidFeatures = listOf(
     ),
     FeatureItem(
         id = "dimension_pruner",
-        title = "维度与区块裁剪",
-        subtitle = "智能剔除未修改、无效的区块，精简地图体积",
-        badge = "智能瘦身",
-        tags = listOf("建筑师预设", "出生点保护", "防闪退"),
+        titleRes = R.string.feature_prune_title,
+        subtitleRes = R.string.feature_prune_subtitle,
+        badgeRes = R.string.feature_prune_badge,
+        tagsRes = listOf(R.string.feature_prune_tag_1, R.string.feature_prune_tag_2, R.string.feature_prune_tag_3),
         icon = Icons.Outlined.CleaningServices,
         accentLight = FeatureColors.PrunerLight,
         accentContainerLight = FeatureColors.PrunerContainerLight,
@@ -67,10 +70,10 @@ val chunkoidFeatures = listOf(
     ),
     FeatureItem(
         id = "nbt_editor",
-        title = "NBT / LevelDB 编辑",
-        subtitle = "层级树形可视化查看，实时增删改查 NBT 与 LevelDB 键值",
-        badge = "专业工具",
-        tags = listOf("树形折叠", "Hex 预览", "免解压"),
+        titleRes = R.string.feature_nbt_title,
+        subtitleRes = R.string.feature_nbt_subtitle,
+        badgeRes = R.string.feature_nbt_badge,
+        tagsRes = listOf(R.string.feature_nbt_tag_1, R.string.feature_nbt_tag_2, R.string.feature_nbt_tag_3),
         icon = Icons.Outlined.Dataset,
         accentLight = FeatureColors.NbtEditorLight,
         accentContainerLight = FeatureColors.NbtEditorContainerLight,
@@ -79,10 +82,10 @@ val chunkoidFeatures = listOf(
     ),
     FeatureItem(
         id = "pack_converter",
-        title = "材质包双向转换",
-        subtitle = "自动转换双端语言文件、音效配置及 manifest",
-        badge = "资源工具",
-        tags = listOf("贴图映射", "UUID 生成", "自动修复"),
+        titleRes = R.string.feature_res_title,
+        subtitleRes = R.string.feature_res_subtitle,
+        badgeRes = R.string.feature_res_badge,
+        tagsRes = listOf(R.string.feature_res_tag_1, R.string.feature_res_tag_2, R.string.feature_res_tag_3),
         icon = Icons.Outlined.Palette,
         accentLight = FeatureColors.PackConverterLight,
         accentContainerLight = FeatureColors.PackConverterContainerLight,
@@ -91,10 +94,10 @@ val chunkoidFeatures = listOf(
     ),
     FeatureItem(
         id = "sandbox_terminal",
-        title = "沙箱终端控制台",
-        subtitle = "直通底层 Linux 沙箱与 OpenJDK 17，支持自定义 CLI 命令",
-        badge = "极客模式",
-        tags = listOf("OpenJDK 17", "Shell", "手势缩放"),
+        titleRes = R.string.feature_cli_title,
+        subtitleRes = R.string.feature_cli_subtitle,
+        badgeRes = R.string.feature_cli_badge,
+        tagsRes = listOf(R.string.feature_cli_tag_1, R.string.feature_cli_tag_2, R.string.feature_cli_tag_3),
         icon = Icons.Outlined.Terminal,
         accentLight = FeatureColors.TerminalLight,
         accentContainerLight = FeatureColors.TerminalContainerLight,

@@ -1,5 +1,8 @@
 package com.noches.chunkoidng.ui.screens.decryptor
 
+import com.noches.chunkoidng.R
+import androidx.compose.ui.res.stringResource
+
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -263,15 +266,15 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                                 zipDirectory(outputDir, outputDir, zos)
                             }
                         }
-                        check(docFile.renameTo("$safeName$extension")) { "无法完成归档导出" }
+                        check(docFile.renameTo("$safeName$extension")) { getApplication<Application>().getString(R.string.decrypt_err_export) }
                         Result.success(docFile.uri)
                     } else {
                         val destDir = treeDoc.createDirectory(safeName)
-                            ?: return@withContext Result.failure(Exception("无法创建目标目录"))
+                            ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.decrypt_err_target_dir)))
                         val failures = copyToDocumentDir(outputDir, destDir)
                         if (failures.isNotEmpty()) {
                             destDir.delete()
-                            return@withContext Result.failure(Exception("导出文件失败: ${failures.take(3).joinToString()}"))
+                            return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.decrypt_err_export_fail, failures.take(3).joinToString())))
                         }
                         Result.success(destDir.uri)
                     }
@@ -287,8 +290,8 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                 val historyId = withContext(Dispatchers.IO) {
                     historyManager.addRecord(
                         worldName = state.worldName.ifBlank { "Minecraft_World" },
-                        sourcePlatform = "网易存档",
-                        targetPlatform = if (state.mode == CryptMode.DECRYPT) "已解密" else "已加密",
+                        sourcePlatform = getApplication<Application>().getString(R.string.decrypt_platform_source),
+                        targetPlatform = if (state.mode == CryptMode.DECRYPT) getApplication<Application>().getString(R.string.decrypt_platform_decrypted) else getApplication<Application>().getString(R.string.decrypt_platform_encrypted),
                         durationMs = state.durationMs,
                         icon = null
                     )
@@ -296,8 +299,8 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                 withContext(Dispatchers.IO) { historyManager.updateExportLocation(historyId, uri.toString()) }
                 onDone(uri)
             } else {
-                val err = result.exceptionOrNull() ?: Exception("未知导出错误")
-                _uiState.update { it.copy(errorMessage = "导出失败: ${err.message}") }
+                val err = result.exceptionOrNull() ?: Exception(getApplication<Application>().getString(R.string.decrypt_err_unknown))
+                _uiState.update { it.copy(errorMessage = getApplication<Application>().getString(R.string.decrypt_err_export_failed, err.message)) }
             }
         }
     }
@@ -318,7 +321,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
             } else if (child.isFile) {
                 try {
                     val input = getApplication<Application>().contentResolver.openInputStream(child.uri)
-                        ?: throw java.io.IOException("无法打开输入流")
+                        ?: throw java.io.IOException(getApplication<Application>().getString(R.string.decrypt_err_input_stream))
                     input.use { inStream ->
                         FileOutputStream(destChild).use { outStream ->
                             inStream.copyTo(outStream)
@@ -343,9 +346,9 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
             } else {
                 try {
                     val newFile = targetDoc.createFile("application/octet-stream", file.name)
-                        ?: throw java.io.IOException("无法创建目标文件")
+                        ?: throw java.io.IOException(getApplication<Application>().getString(R.string.decrypt_err_create_file))
                     val out = getApplication<Application>().contentResolver.openOutputStream(newFile.uri)
-                        ?: throw java.io.IOException("无法打开输出流")
+                        ?: throw java.io.IOException(getApplication<Application>().getString(R.string.decrypt_err_output_stream))
                     out.use { stream ->
                         file.inputStream().use { input -> input.copyTo(stream) }
                     }

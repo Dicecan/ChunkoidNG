@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.conversion.ChunkerFormat
 import com.noches.chunkoidng.core.conversion.ConversionConfig
 import com.noches.chunkoidng.core.conversion.ConversionEvent
@@ -141,7 +142,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                             historyId = historyManager.addRecord(
                                 worldName = s.overrideWorldName.ifBlank { world.name },
                                 sourcePlatform = world.platform.name,
-                                targetPlatform = "${world.platform.name} (瘦身版)",
+                                targetPlatform = getApplication<Application>().getString(R.string.pruner_pruned_version_suffix, world.platform.name),
                                 durationMs = event.durationMs,
                                 icon = world.iconBitmap
                             )
@@ -153,7 +154,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                                 pruningProgress = 100,
                                 prunedSizeBytes = prunedSize,
                                 latestHistoryId = historyId,
-                                pruningLogs = it.pruningLogs + "[SUCCESS] 地图瘦身裁剪成功！耗时: ${event.durationMs / 1000}s"
+                                pruningLogs = it.pruningLogs + getApplication<Application>().getString(R.string.pruner_log_success, event.durationMs / 1000)
                             )
                         }
                     }
@@ -161,7 +162,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                         _uiState.update {
                             it.copy(
                                 stage = PrunerStage.ERROR,
-                                errorMessage = "瘦身裁剪中断: ${event.error}"
+                                errorMessage = getApplication<Application>().getString(R.string.pruner_log_interrupted, event.error)
                             )
                         }
                     }
@@ -176,7 +177,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                 it.copy(
                     stage = PrunerStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = "正在解压并分析地图..."
+                    stagingMessage = getApplication<Application>().getString(R.string.pruner_staging_unzipping)
                 )
             }
 
@@ -199,7 +200,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                     _uiState.update {
                         it.copy(
                             stage = PrunerStage.ERROR,
-                            errorMessage = "归档加载失败: ${error.message}"
+                            errorMessage = getApplication<Application>().getString(R.string.pruner_error_archive_load, error.message)
                         )
                     }
                 }
@@ -213,7 +214,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                 it.copy(
                     stage = PrunerStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = "正在读取世界数据..."
+                    stagingMessage = getApplication<Application>().getString(R.string.pruner_staging_reading_world)
                 )
             }
 
@@ -236,7 +237,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
                     _uiState.update {
                         it.copy(
                             stage = PrunerStage.ERROR,
-                            errorMessage = "目录导入失败: ${error.message}"
+                            errorMessage = getApplication<Application>().getString(R.string.pruner_error_dir_import, error.message)
                         )
                     }
                 }
@@ -301,8 +302,8 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
             it.copy(
                 stage = PrunerStage.PRUNING,
                 pruningProgress = 0,
-                pruningStageText = "启动瘦身引擎...",
-                pruningLogs = listOf("[SYSTEM] 开始执行存档瘦身与维度裁剪...")
+                pruningStageText = getApplication<Application>().getString(R.string.pruner_stage_starting_engine),
+                pruningLogs = listOf(getApplication<Application>().getString(R.string.pruner_log_starting))
             )
         }
 
@@ -334,7 +335,7 @@ class DimensionPrunerViewModel(application: Application) : AndroidViewModel(appl
         _uiState.update {
             it.copy(
                 stage = PrunerStage.CONFIGURE,
-                pruningLogs = it.pruningLogs + "[CANCEL] 瘦身已被用户主动取消。"
+                pruningLogs = it.pruningLogs + getApplication<Application>().getString(R.string.pruner_log_cancelled)
             )
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -120,7 +121,7 @@ fun MainAppScaffold() {
                             else -> {
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar(
-                                        message = "已选择功能: ${feature.title} [${feature.badge}]"
+                                        message = "已选择功能: ${context.getString(feature.titleRes)} [${context.getString(feature.badgeRes)}]"
                                     )
                                 }
                             }
