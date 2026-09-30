@@ -69,12 +69,18 @@ fun SourcePickerCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (badge != null) {
                         Spacer(modifier = Modifier.width(8.dp))
@@ -82,13 +88,15 @@ fun SourcePickerCard(
                             modifier = Modifier
                                 .clip(ChipBadgeShape)
                                 .background(iconContainerColor.copy(alpha = 0.6f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = badge,
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 fontWeight = FontWeight.Bold,
-                                color = iconColor
+                                color = iconColor,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }

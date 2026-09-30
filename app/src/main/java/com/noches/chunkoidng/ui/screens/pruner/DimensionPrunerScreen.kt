@@ -363,23 +363,23 @@ private fun ConfigurePruningView(
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 PruningPresetCard(
-                    title = "仅保留主世界 (去除下界与末地)",
-                    subtitle = "剔除下界与末地中冗余生成的区块，预计可减小 40%~70% 体积 (推荐)",
+                    title = "仅保留主世界",
+                    subtitle = "剔除下界与末地所有冗余区块，通常可减小 40%~70% 体积",
                     badge = "推荐",
                     isSelected = pruningProfile == PruningProfile.OVERWORLD_ONLY,
                     onClick = { onSelectProfile(PruningProfile.OVERWORLD_ONLY) }
                 )
 
                 PruningPresetCard(
-                    title = "极速轻量化模式 (Speed Mode)",
-                    subtitle = "仅保留主世界核心区域并启用原生 NBT 保护，适合低配置设备与联机地图",
+                    title = "极速轻量化 (Speed)",
+                    subtitle = "仅保留主世界核心区域并保护原生 NBT，适合低配联机",
                     badge = "极速",
                     isSelected = pruningProfile == PruningProfile.SPEED,
                     onClick = { onSelectProfile(PruningProfile.SPEED) }
                 )
 
                 PruningPresetCard(
-                    title = "全维度保留与底层整理",
+                    title = "全维度保留与整理",
                     subtitle = "保留主世界、下界和末地所有维度，仅对损坏与空置区块进行精简",
                     badge = "无损",
                     isSelected = pruningProfile == PruningProfile.FULL,
@@ -510,25 +510,46 @@ private fun PruningPresetCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
                             .clip(ChipBadgeShape)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest)
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            badge,
+                            text = badge,
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
             }
             Spacer(modifier = Modifier.width(12.dp))
             RadioButton(selected = isSelected, onClick = onClick)
