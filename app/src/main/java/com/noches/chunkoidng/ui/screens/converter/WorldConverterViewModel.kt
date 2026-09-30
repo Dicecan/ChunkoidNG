@@ -390,14 +390,14 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             _uiState.update { it.copy(isExporting = true) }
             val result = archiveManager.exportToUri(targetUri, name, packAsArchive, isBedrock)
             _uiState.update { it.copy(isExporting = false) }
-            result.onSuccess {
-                _uiState.update { it.copy(exportedUri = targetUri) }
+            result.onSuccess { exportedUri ->
                 s.latestHistoryId?.let { id ->
                     withContext(Dispatchers.IO) {
-                        historyManager.updateExportLocation(id, targetUri.toString())
+                        historyManager.updateExportLocation(id, exportedUri.toString())
                     }
                 }
-                onDone(targetUri)
+                _uiState.update { it.copy(exportedUri = exportedUri) }
+                onDone(exportedUri)
             }.onFailure { error ->
                 _uiState.update { it.copy(errorMessage = "导出失败: ${error.message}") }
             }

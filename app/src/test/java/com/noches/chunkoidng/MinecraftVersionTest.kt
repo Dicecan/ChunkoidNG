@@ -93,4 +93,18 @@ class MinecraftVersionTest {
         assertEquals(RelationType.RECOMMENDED_MATCH, resultEquivalent.relationType)
         assertTrue(resultEquivalent.isRecommended)
     }
+
+    @Test
+    fun testCrossPlatformRelationUsesEpochOnly() {
+        val source = MinecraftVersion.parse("1.20.4", Platform.JAVA)
+        val target = ChunkerFormat.findById("BEDROCK_1_20_80")!!
+        val result = VersionMappingTable.evaluateRelation(source, target)
+        assertEquals(RelationType.RECOMMENDED_MATCH, result.relationType)
+    }
+
+    @Test
+    fun testMalformedVersionFallsBackSafely() {
+        val parsed = MinecraftVersion.parse("unknown-version", Platform.BEDROCK)
+        assertEquals("unknown-version", parsed.displayString)
+    }
 }

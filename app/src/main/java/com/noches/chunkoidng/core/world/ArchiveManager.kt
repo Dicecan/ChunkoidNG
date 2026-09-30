@@ -279,7 +279,7 @@ class ArchiveManager(private val context: Context) {
         worldName: String,
         packAsArchive: Boolean = false,
         isBedrock: Boolean = false
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Uri> = withContext(Dispatchers.IO) {
         try {
             if (!outputDir.exists() || outputDir.listFiles()?.isEmpty() == true) {
                 return@withContext Result.failure(Exception("转换输出目录为空"))
@@ -304,7 +304,7 @@ class ArchiveManager(private val context: Context) {
                     docFile.delete()
                     return@withContext Result.failure(Exception("无法完成归档导出"))
                 }
-                Result.success(Unit)
+                Result.success(docFile.uri)
             } else {
                 val destDirDoc = treeDoc.createDirectory(safeName)
                     ?: return@withContext Result.failure(Exception("无法在目标位置创建文件夹"))
@@ -314,7 +314,7 @@ class ArchiveManager(private val context: Context) {
                     destDirDoc.delete()
                     return@withContext Result.failure(Exception("导出文件失败: ${failures.take(3).joinToString()}"))
                 }
-                Result.success(Unit)
+                Result.success(destDirDoc.uri)
             }
         } catch (e: Exception) {
             Result.failure(e)

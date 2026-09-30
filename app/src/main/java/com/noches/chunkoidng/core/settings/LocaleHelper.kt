@@ -15,10 +15,12 @@ object LocaleHelper {
     }
 
     fun applyLocale(context: Context, languageCode: String): Context {
-        if (languageCode == "system") return context
+        if (languageCode == "system") {
+            return context
+        }
         val locale = getLocale(languageCode)
-        Locale.setDefault(locale)
         val config = Configuration(context.resources.configuration)
+        config.setLocales(android.os.LocaleList(locale))
         config.setLocale(locale)
         return context.createConfigurationContext(config)
     }

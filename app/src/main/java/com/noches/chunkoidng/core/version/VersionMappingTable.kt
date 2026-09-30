@@ -83,7 +83,7 @@ object VersionMappingTable {
                 val equivalentFormat = findEquivalentFormat(source, target.platform)
                 val isExactRecommended = (equivalentFormat.id == target.id)
                 return VersionRelationResult(RelationType.RECOMMENDED_MATCH, RiskLevel.NONE, isExactRecommended, null)
-            } else if (targetVersion.isNewerThan(source)) {
+            } else if (targetVersion.epoch.minorVersion > source.epoch.minorVersion) {
                 return VersionRelationResult(RelationType.UPGRADE, RiskLevel.NONE, false, null)
             } else {
                 val risk = calculateDowngradeRisk(source, targetVersion)

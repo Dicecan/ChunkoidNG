@@ -34,9 +34,7 @@ data class MinecraftVersion(
         if (this.platform == other.platform) {
             return this.toComparableLong().compareTo(other.toComparableLong())
         }
-        val epochComp = this.epoch.minorVersion.compareTo(other.epoch.minorVersion)
-        if (epochComp != 0) return epochComp
-        return this.toComparableLong().compareTo(other.toComparableLong())
+        return this.epoch.minorVersion.compareTo(other.epoch.minorVersion)
     }
 
     fun isNewerThan(other: MinecraftVersion): Boolean = this > other
@@ -75,14 +73,20 @@ data class MinecraftVersion(
                 .replace(Regex("(?i)^v"), "")
                 .trim()
 
-            val parts = cleaned.split(".").mapNotNull { it.takeWhile { ch -> ch.isDigit() }.toIntOrNull() }
+            val parts = cleaned.split(".").map { token ->
+                token.takeWhile { ch -> ch.isDigit() }.toIntOrNull()
+            }
+            if (parts.isEmpty() || parts.any { it == null }) {
+                return MinecraftVersion(platform, 1, 21, 0, 0, dataVersion, versionStr)
+            }
+            val numericParts = parts.filterNotNull()
 
             return when {
-                parts.isEmpty() -> MinecraftVersion(platform, 1, 21, 0, 0, dataVersion, versionStr)
-                parts.size == 1 -> MinecraftVersion(platform, parts[0], 0, 0, 0, dataVersion, versionStr)
-                parts.size == 2 -> MinecraftVersion(platform, parts[0], parts[1], 0, 0, dataVersion, versionStr)
-                parts.size == 3 -> MinecraftVersion(platform, parts[0], parts[1], parts[2], 0, dataVersion, versionStr)
-                else -> MinecraftVersion(platform, parts[0], parts[1], parts[2], parts[3], dataVersion, versionStr)
+                numericParts.isEmpty() -> MinecraftVersion(platform, 1, 21, 0, 0, dataVersion, versionStr)
+                numericParts.size == 1 -> MinecraftVersion(platform, numericParts[0], 0, 0, 0, dataVersion, versionStr)
+                numericParts.size == 2 -> MinecraftVersion(platform, numericParts[0], numericParts[1], 0, 0, dataVersion, versionStr)
+                numericParts.size == 3 -> MinecraftVersion(platform, numericParts[0], numericParts[1], numericParts[2], 0, dataVersion, versionStr)
+                else -> MinecraftVersion(platform, numericParts[0], numericParts[1], numericParts[2], numericParts[3], dataVersion, versionStr)
             }
         }
 

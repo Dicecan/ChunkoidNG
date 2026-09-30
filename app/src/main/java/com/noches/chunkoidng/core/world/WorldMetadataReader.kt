@@ -207,7 +207,7 @@ object WorldMetadataReader {
         }
     }
 
-    private fun mapBedrockVersionId(versionId: Int): String {
+    private fun mapBedrockVersionId(versionId: Int): String? {
         return when (versionId) {
             1134 -> "1.20.0"
             1143 -> "1.20.10"
@@ -222,7 +222,7 @@ object WorldMetadataReader {
             1270 -> "1.21.30"
             1280 -> "1.21.40"
             1290 -> "1.21.50"
-            else -> "1.$versionId"
+            else -> null
         }
     }
 
