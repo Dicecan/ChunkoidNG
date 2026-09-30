@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Power
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +31,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -40,10 +44,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
@@ -61,7 +67,7 @@ fun SettingsScreen(
     ) {
 
         item {
-            SettingsCategoryHeader(title = "界面与外观 (Appearance)")
+            SettingsCategoryHeader(title = stringResource(R.string.settings_category_appearance))
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -69,10 +75,72 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(ChipBadgeShape)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Translate,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.settings_language_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(R.string.settings_language_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 15.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val languages = listOf(
+                            "system" to stringResource(R.string.settings_language_system),
+                            "zh" to stringResource(R.string.settings_language_zh),
+                            "en" to stringResource(R.string.settings_language_en),
+                            "ja" to stringResource(R.string.settings_language_ja)
+                        )
+                        languages.forEachIndexed { index, (langCode, langName) ->
+                            SegmentedButton(
+                                selected = uiState.appLanguage == langCode,
+                                onClick = { viewModel.updateAppLanguage(langCode) },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = languages.size)
+                            ) {
+                                Text(langName, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                    )
+
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Palette,
-                        title = "动态取色 (Monet / Dynamic Color)",
-                        subtitle = "跟随系统壁纸色调自动适配 MD3 主题容器颜色",
+                        title = stringResource(R.string.settings_dynamic_color_title),
+                        subtitle = stringResource(R.string.settings_dynamic_color_desc),
                         checked = uiState.dynamicColorEnabled,
                         onCheckedChange = { viewModel.updateDynamicColor(it) }
                     )
@@ -82,8 +150,8 @@ fun SettingsScreen(
                     )
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Brightness4,
-                        title = "深色模式跟随系统",
-                        subtitle = "依据 Android 系统的深浅色模式自动切换界面",
+                        title = stringResource(R.string.settings_dark_mode_title),
+                        subtitle = stringResource(R.string.settings_dark_mode_desc),
                         checked = true,
                         onCheckedChange = {},
                         enabled = false
@@ -93,7 +161,7 @@ fun SettingsScreen(
         }
 
         item {
-            SettingsCategoryHeader(title = "转换引擎与性能 (Engine & Performance)")
+            SettingsCategoryHeader(title = stringResource(R.string.settings_category_engine))
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -123,12 +191,12 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "JVM 最大堆内存分配",
+                                text = stringResource(R.string.settings_jvm_heap_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "当前设定：${uiState.maxMemoryMb.toInt()} MB",
+                                text = stringResource(R.string.settings_jvm_heap_current, uiState.maxMemoryMb.toInt()),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
@@ -151,8 +219,8 @@ fun SettingsScreen(
 
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Security,
-                        title = "防闪退模式 (低运存优化)",
-                        subtitle = "限制 GC 堆内存比例与单线程并发，防止小运存手机 OOM",
+                        title = stringResource(R.string.settings_low_ram_title),
+                        subtitle = stringResource(R.string.settings_low_ram_desc),
                         checked = uiState.lowRamModeEnabled,
                         onCheckedChange = { viewModel.updateLowRamMode(it) }
                     )
@@ -164,8 +232,8 @@ fun SettingsScreen(
 
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Power,
-                        title = "后台唤醒锁 (WakeLock)",
-                        subtitle = "转换过程中持有 CPU 唤醒锁，防止系统息屏杀后台",
+                        title = stringResource(R.string.settings_wakelock_title),
+                        subtitle = stringResource(R.string.settings_wakelock_desc),
                         checked = uiState.wakeLockEnabled,
                         onCheckedChange = { viewModel.updateWakeLock(it) }
                     )
@@ -177,8 +245,8 @@ fun SettingsScreen(
 
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Storage,
-                        title = "保留未修改的原始 NBT",
-                        subtitle = "在格式兼容前提下，尽可能继承原世界的未知标签",
+                        title = stringResource(R.string.settings_keep_nbt_title),
+                        subtitle = stringResource(R.string.settings_keep_nbt_desc),
                         checked = uiState.keepOriginalNbt,
                         onCheckedChange = { viewModel.updateKeepOriginalNbt(it) }
                     )
@@ -187,7 +255,7 @@ fun SettingsScreen(
         }
 
         item {
-            SettingsCategoryHeader(title = "沙箱管理与维护 (Sandbox)")
+            SettingsCategoryHeader(title = stringResource(R.string.settings_category_sandbox))
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -197,8 +265,8 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Vibration,
-                        title = "转换完成震动提示",
-                        subtitle = "在后台或前台转换任务完成时触发轻微触感震动",
+                        title = stringResource(R.string.settings_vibration_title),
+                        subtitle = stringResource(R.string.settings_vibration_desc),
                         checked = uiState.vibrationEnabled,
                         onCheckedChange = { viewModel.updateVibration(it) }
                     )
@@ -223,7 +291,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("重置 RootFS", fontSize = 12.sp)
+                            Text(stringResource(R.string.settings_reset_rootfs), fontSize = 12.sp)
                         }
 
                         OutlinedButton(
@@ -237,7 +305,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("清理缓存", fontSize = 12.sp)
+                            Text(stringResource(R.string.settings_clean_cache), fontSize = 12.sp)
                         }
                     }
                 }

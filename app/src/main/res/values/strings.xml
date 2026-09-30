@@ -1,3 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ChunkoidNG</string>
+    <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.3 (Compose MD3E)</string>
+
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_close">Close</string>
+    <string name="common_back">Back</string>
+    <string name="common_copy">Copy</string>
+    <string name="common_copied_toast">Copied to clipboard</string>
+    <string name="common_search">Search</string>
+    <string name="common_search_hint">Search...</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_export">Export</string>
+    <string name="common_save">Save</string>
+    <string name="common_select">Select</string>
+    <string name="common_all">All</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_loading">Loading...</string>
+
+    <string name="nav_converter">Converter</string>
+    <string name="nav_pruner">Slimming</string>
+    <string name="nav_decryptor">Decryptor</string>
+    <string name="nav_terminal">Console</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_about">About</string>
+    <string name="nav_history">History</string>
+    <string name="nav_features">Feature Hub</string>
+    <string name="nav_tutorial">Tutorial &amp; Wiki</string>
+
+    <string name="source_picker_folder_title">Select World Folder</string>
+    <string name="source_picker_folder_desc">Import uncompressed directory</string>
+    <string name="source_picker_zip_title">Select Archive (.zip / .mcworld)</string>
+    <string name="source_picker_zip_desc">Import compressed world archive</string>
+    <string name="source_picker_reselect">Reselect</string>
+    <string name="source_picker_selected_world">Selected World</string>
+    <string name="source_picker_size">Size</string>
+    <string name="source_picker_platform">Platform</string>
+    <string name="source_picker_version">Version</string>
+
+    <string name="platform_bedrock">Bedrock Edition (BE)</string>
+    <string name="platform_java">Java Edition (JE)</string>
+    <string name="version_keep_input">Keep Original Version (INPUT)</string>
+    <string name="version_keep_input_desc">Keep world version, only apply pruning and settings</string>
+    <string name="version_picker_title">Select Target Format &amp; Version</string>
+    <string name="version_picker_desc">Support bidirectional conversion, version upgrades &amp; downgrades</string>
+    <string name="version_search_placeholder">Search version (e.g. 1.21, 1.20)...</string>
+    <string name="version_badge_recommended">Recommended Equivalent</string>
+    <string name="version_badge_upgrade">Upgrade</string>
+    <string name="version_badge_downgrade">Downgrade</string>
+    <string name="version_filter_all">All Versions</string>
+    <string name="version_filter_recommended">Recommended</string>
+    <string name="version_filter_upgrade">Upgrade</string>
+    <string name="version_filter_downgrade">Downgrade</string>
+
+    <string name="risk_title">Downgrade Compatibility Notice</string>
+    <string name="risk_height_truncation">Target version is below 1.18. World height below Y=0 (-64 to 0) will be truncated, and underground builds or ores will be lost!</string>
+    <string name="risk_block_flattening">Target version is below 1.13 (The Flattening). Modern string block states will be converted to legacy numeric IDs; newer blocks may become unknown or air!</string>
+    <string name="risk_general_downgrade">Downgrading may result in the loss of blocks, items, entities, or NBT data exclusive to higher versions.</string>
+
+    <string name="converter_import_title">Import Source World</string>
+    <string name="converter_import_subtitle">Import from device folder or .mcworld / .zip archives</string>
+    <string name="converter_badge_recommended">Recommended</string>
+    <string name="converter_target_badge_same">Version Upgrade/Downgrade</string>
+    <string name="converter_target_badge_cross">Cross-Platform Conversion</string>
+    <string name="toast_export_success">World exported successfully!</string>
+    <string name="toast_export_failed">Export failed, please check storage permissions</string>
+    <string name="toast_logs_copied">Logs copied to clipboard</string>
+
+    <string name="converter_screen_title">World Converter</string>
+    <string name="converter_target_card_title">Target Platform &amp; Version</string>
+    <string name="converter_change_format">Change</string>
+    <string name="converter_pruning_card_title">Dimension &amp; Chunk Pruning</string>
+    <string name="converter_pruning_card_desc">Prune unused dimensions to reduce world size and prevent crashes</string>
+    <string name="converter_pruning_presets">Quick Pruning Presets</string>
+    <string name="converter_dim_overworld">Overworld (Overworld)</string>
+    <string name="converter_dim_overworld_desc">Primary world dimension and building core</string>
+    <string name="converter_dim_nether">The Nether (The Nether)</string>
+    <string name="converter_dim_nether_desc" formatted="false">Nether dimension; disabling can save 30%-50% space</string>
+    <string name="converter_dim_the_end">The End (The End)</string>
+    <string name="converter_dim_the_end_desc">End dimension and End Cities; disabling speeds up conversion</string>
+    <string name="converter_world_settings_title">World Settings &amp; Overrides</string>
+    <string name="converter_world_settings_desc">World name, default game mode, and difficulty</string>
+    <string name="converter_override_name_label">Override World Name</string>
+    <string name="converter_override_gamemode_label">Default Game Mode</string>
+    <string name="converter_override_difficulty_label">Game Difficulty</string>
+    <string name="converter_gamemode_default">Keep Original</string>
+    <string name="converter_gamemode_survival">Survival</string>
+    <string name="converter_gamemode_creative">Creative</string>
+    <string name="converter_gamemode_adventure">Adventure</string>
+    <string name="converter_gamemode_spectator">Spectator</string>
+    <string name="converter_difficulty_peaceful">Peaceful</string>
+    <string name="converter_difficulty_easy">Easy</string>
+    <string name="converter_difficulty_normal">Normal</string>
+    <string name="converter_difficulty_hard">Hard</string>
+    <string name="converter_advanced_options">Advanced Engine Options</string>
+    <string name="converter_keep_nbt">Preserve Unmodified NBT (-k)</string>
+    <string name="converter_keep_nbt_desc">Retain unknown or extra entity and tile entity tags</string>
+    <string name="converter_action_start">Start World Conversion</string>
+    <string name="converter_action_abort">Abort Conversion</string>
+    <string name="converter_converting">Converting...</string>
+    <string name="converter_success">Conversion Successful!</string>
+    <string name="converter_converted_to">Converted to %1$s</string>
+    <string name="converter_export_dir">Export to Folder</string>
+    <string name="converter_export_archive">Export as Archive (%1$s)</string>
+    <string name="converter_convert_another">Convert Another World</string>
+    <string name="converter_failed">Conversion Failed</string>
+
+    <string name="pruner_screen_title">Dimension Pruning Workbench</string>
+    <string name="pruner_screen_subtitle">Standalone tool to remove unused dimensions, prune chunks, and drastically reduce storage</string>
+    <string name="pruner_presets_title">Slimming Strategy Presets</string>
+    <string name="pruner_profile_overworld_title">Overworld Only</string>
+    <string name="pruner_profile_overworld_desc" formatted="false">Prune Nether &amp; The End, saving 40%-60% size (Recommended)</string>
+    <string name="pruner_profile_speed_title">Speed Lightweight (Speed)</string>
+    <string name="pruner_profile_speed_desc">Core Overworld only, fastest processing</string>
+    <string name="pruner_profile_full_title">Retain All Dimensions</string>
+    <string name="pruner_profile_full_desc">Retain Overworld, Nether, and The End</string>
+    <string name="pruner_profile_custom_title">Custom Dimensions</string>
+    <string name="pruner_profile_custom_desc">Manually choose dimensions to retain</string>
+    <string name="pruner_badge_recommended">Recommended</string>
+    <string name="pruner_badge_speed">Speed</string>
+    <string name="pruner_action_start">Start World Slimming</string>
+    <string name="pruner_stat_original">Original Size</string>
+    <string name="pruner_stat_pruned">Pruned Size</string>
+    <string name="pruner_stat_saved">Storage Saved</string>
+
+    <string name="decryptor_screen_title">NetEase World Cryptor</string>
+    <string name="decryptor_screen_subtitle">Stream LevelDB XOR decryption, magic byte verification, passive encryption, and direct pipeline into world converter</string>
+    <string name="decryptor_mode_decrypt">Decrypt World</string>
+    <string name="decryptor_mode_encrypt">Passive Encrypt</string>
+    <string name="decryptor_status_encrypted">Encrypted (LevelDB XOR)</string>
+    <string name="decryptor_status_plain">Plain / Native Bedrock</string>
+    <string name="decryptor_status_unknown">Unknown Format</string>
+    <string name="decryptor_custom_key_label">Custom XOR Key (Optional)</string>
+    <string name="decryptor_custom_key_hint">Default: 88329851</string>
+    <string name="decryptor_action_decrypt">Start Decryption</string>
+    <string name="decryptor_action_encrypt">Start Passive Encryption</string>
+    <string name="decryptor_action_to_converter">Pass to World Converter</string>
+
+    <string name="settings_category_appearance">Interface &amp; Appearance (Appearance)</string>
+    <string name="settings_language_title">App Language (Language)</string>
+    <string name="settings_language_desc">Switch between Follow System, Chinese, English, and Japanese</string>
+    <string name="settings_language_system">Follow System</string>
+    <string name="settings_language_zh">简体中文</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_ja">日本語</string>
+    <string name="settings_dynamic_color_title">Dynamic Color (Monet / Dynamic Color)</string>
+    <string name="settings_dynamic_color_desc">Adapt theme colors to system wallpaper</string>
+    <string name="settings_dark_mode_title">Dark Mode Follows System</string>
+    <string name="settings_dark_mode_desc">Automatically switch between light and dark themes</string>
+    <string name="settings_category_engine">Conversion Engine &amp; Performance (Engine &amp; Performance)</string>
+    <string name="settings_jvm_heap_title">JVM Max Heap Allocation</string>
+    <string name="settings_jvm_heap_current">Current: %1$d MB</string>
+    <string name="settings_low_ram_title">Low RAM Optimization</string>
+    <string name="settings_low_ram_desc">Restrict GC heap ratio and use single-thread to prevent OOM</string>
+    <string name="settings_wakelock_title">Background WakeLock (WakeLock)</string>
+    <string name="settings_wakelock_desc">Hold CPU wake lock during conversion to prevent sleep kills</string>
+    <string name="settings_keep_nbt_title">Preserve Unmodified NBT</string>
+    <string name="settings_keep_nbt_desc">Inherit unknown tags from the source world when compatible</string>
+    <string name="settings_category_sandbox">Sandbox Maintenance (Sandbox)</string>
+    <string name="settings_vibration_title">Completion Vibration</string>
+    <string name="settings_vibration_desc">Provide subtle tactile feedback when conversion finishes</string>
+    <string name="settings_reset_rootfs">Reset RootFS</string>
+    <string name="settings_clean_cache">Clear Cache</string>
+
+    <string name="about_founder_title">Founder &amp; Original Creator Attribution</string>
+    <string name="about_founder_desc">Special thanks to original creator Dozener (DozenesStudio):\nThank you to Dozener for independently exploring and completing the first Android-native Minecraft world converter without PC dependencies. DICECAN (EncoreTeam) has taken over ongoing maintenance, permanently preserving attribution to the founder!</string>
+    <string name="about_team_title">Maintenance Team &amp; Core Contributions</string>
+    <string name="about_team_org">Current Maintainer</string>
+    <string name="about_team_contributors">Core Contributors</string>
+    <string name="about_team_license">Open Source License</string>
+    <string name="about_features_title">CANARY 0.3 Features &amp; Highlights</string>
+    <string name="about_feature_convert">Bidirectional World Conversion</string>
+    <string name="about_feature_convert_desc">Java/Bedrock bidirectional conversion, target version pickers, foreground persistence, history logs, and SAF export</string>
+    <string name="about_feature_mapping">Smart Version Upgrade &amp; Downgrade Mapping</string>
+    <string name="about_feature_mapping_desc">Minecraft semantic version models, cross-platform equivalent baseline auto-recommendations, and 1.18/1.13 downgrade risk alerts</string>
+    <string name="about_feature_i18n">Standardized i18n Architecture (ZH / EN / JA)</string>
+    <string name="about_feature_i18n_desc">Complete English, Simplified Chinese, and Japanese localizations with in-app seamless language switching</string>
+    <string name="about_feature_decrypt">NetEase Decryption &amp; Passive Encryption</string>
+    <string name="about_feature_decrypt_desc">Streaming LevelDB XOR decryption, magic byte verification, passive encryption, and direct conversion flow</string>
+    <string name="about_feature_prune">Standalone Dimension Pruning Workbench</string>
+    <string name="about_feature_prune_desc">Overworld-only, Speed, Full-dimension presets, per-dimension pruning, and -k original NBT retention</string>
+    <string name="about_deps_title">Open Source Credits &amp; Dependencies</string>
+    <string name="about_repo_btn">GitHub Repository</string>
+    <string name="about_website_btn">Official Website</string>
+
+    <string name="console_title">Sandbox Terminal Console</string>
+    <string name="console_selftest_btn">Run Self-Check</string>
+    <string name="console_clear_btn">Clear Output</string>
+    <string name="console_input_hint">Enter shell or java command (e.g. java -version)...</string>
+    <string name="console_run_btn">Run</string>
 </resources>

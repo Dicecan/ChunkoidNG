@@ -20,10 +20,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             wakeLockEnabled = prefs.wakeLockEnabled,
             keepOriginalNbt = prefs.keepOriginalNbt,
             vibrationEnabled = prefs.vibrationEnabled,
-            maxMemoryMb = prefs.maxMemoryMb
+            maxMemoryMb = prefs.maxMemoryMb,
+            appLanguage = prefs.appLanguage
         )
     )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    fun updateAppLanguage(language: String) {
+        prefs.appLanguage = language
+        _uiState.update { it.copy(appLanguage = language) }
+    }
 
     fun updateDynamicColor(enabled: Boolean) {
         prefs.dynamicColorEnabled = enabled
@@ -70,6 +76,7 @@ data class SettingsUiState(
     val wakeLockEnabled: Boolean = true,
     val keepOriginalNbt: Boolean = false,
     val vibrationEnabled: Boolean = true,
-    val maxMemoryMb: Float = 4096f
+    val maxMemoryMb: Float = 4096f,
+    val appLanguage: String = "system"
 )
 

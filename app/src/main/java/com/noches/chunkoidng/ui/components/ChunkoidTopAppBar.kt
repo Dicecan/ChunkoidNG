@@ -14,8 +14,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -23,13 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.ui.navigation.Screen
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
-
-import androidx.compose.material3.MediumTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,10 +46,10 @@ fun ChunkoidTopAppBar(
             ) {
                 Text(
                     text = when (currentScreen) {
-                        Screen.Features -> "Chunkoid NG"
-                        Screen.Tutorial -> "指南与 Wiki"
-                        Screen.Settings -> "偏好与设置"
-                        Screen.About -> "关于与致谢"
+                        Screen.Features -> stringResource(R.string.app_name)
+                        Screen.Tutorial -> stringResource(R.string.nav_tutorial)
+                        Screen.Settings -> stringResource(R.string.nav_settings)
+                        Screen.About -> stringResource(R.string.nav_about)
                     },
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.5).sp
@@ -63,7 +63,7 @@ fun ChunkoidTopAppBar(
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "v2.2-NG",
+                            text = "CANARY 0.3",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -83,7 +83,7 @@ fun ChunkoidTopAppBar(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Terminal,
-                        contentDescription = "终端调试",
+                        contentDescription = stringResource(R.string.nav_terminal),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -97,7 +97,7 @@ fun ChunkoidTopAppBar(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Language,
-                        contentDescription = "官网 Wiki",
+                        contentDescription = stringResource(R.string.nav_tutorial),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.2-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.3-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -32,14 +32,16 @@
 ---
 
 > [!WARNING]
-> ### 🚧 当前处于 Canary 0.2 早期开发预览阶段
-> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台、Minecraft 世界存档双向转换与导出管理、网易版存档加解密与被动加密、以及独立维度裁剪与存档瘦身工作台。
+> ### 🚧 当前处于 Canary 0.3 开发预览阶段
+> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台、Minecraft 世界存档双向转换与导出管理、智能版本升降级基础映射与兼容风险评估、规范化中/英/日多语言架构体系、网易版存档加解密与被动加密、以及独立维度裁剪与存档瘦身工作台。
 
 ---
 
 ## 🌟 NG (Next-Generation) 重构特性
 
-* 🎨 **Jetpack Compose (MD3E)**：全盘基于 Material Design 3 Expressive 规范构建，统一 Squircle 交互容器与自适应防折行排版。
+* 🗺️ **版本升降级基础映射系统**：引入 Minecraft 语义版本模型与跨平台基线映射表（JE ↔ BE），支持对端同版等价智能推荐；内置版本关系分析器与高风险预警（1.18 负高度截断、1.13 方块扁平化兼容提示）。
+* 🌐 **规范化多语言体系 (i18n)**：全盘规范 Android 资源标准（默认英文兜底、简体中文、日本語），UI 全量动态读取，支持应用内免重启即时动态切换语言。
+* 🎨 **Jetpack Compose (MD3E)**：全盘基于 Material Design 3 Expressive 规范构建，统一 Squircle 交互容器、全新版本筛选底栏与自适应防折行排版。
 * ⚡ **极简 RootFS 沙箱**：大幅精简无用依赖，部署文件减少至 57 个，解压体积减半。
 * 🖥️ **沙箱终端控制台**：内置环境自检与交互终端，支持调试 OpenJDK 17 与 Chunker CLI。
 * 🌍 **全功能世界转换器**：支持 Java/基岩版双向转换、跨版本升降级、前台服务防杀保活、转换历史管理与自定义路径导出。
@@ -53,8 +55,10 @@
 
 * ✅ **沙箱终端控制台**：`已实装`（支持 OpenJDK 17 与 Shell 命令执行）
 * ✅ **世界存档双向互转**：`已实装`（支持 Java/基岩版互转、跨版本选择、前台服务转换、历史记录与补救导出）
-* ✅ **版本升降级与维度裁剪**：`已实装`（独立存档瘦身页面，提供全维度/仅主世界/极速轻量化预设、各维度自定义开关与 `-k` 原始 NBT 保留）
+* ✅ **独立维度裁剪与存档瘦身**：`已实装`（独立存档瘦身页面，提供全维度/仅主世界/极速轻量化预设、各维度自定义开关与 `-k` 原始 NBT 保留）
 * ✅ **网易版存档还原与被动加密**：`已实装`（集成 LevelDB 异或流式解密、魔数校验与被动加密，支持无缝流转至世界转换器）
+* ✅ **版本升降级映射与兼容风险评估**：`已实装 (Canary 0.3)`（语义版本模型、等价基线推荐、1.18/1.13 风险告警）
+* ✅ **规范化多语言架构 (ZH / EN / JA)**：`已实装 (Canary 0.3)`（完整中英日文资源、应用内动态语言切换）
 * ⏳ **专业 NBT / LevelDB 编辑**：`待开发`（待移植）
 * ⏳ **材质资源包互转**：`待开发`（待移植）
 

@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +17,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.SwapHoriz
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -38,12 +36,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.noches.chunkoidng.ui.theme.ChipBadgeShape
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
 @Composable
@@ -87,8 +86,8 @@ fun AboutScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.noches.chunkoidng.R.drawable.ic_app_logo),
-                            contentDescription = "App Logo",
+                            painter = painterResource(id = R.drawable.ic_app_logo),
+                            contentDescription = stringResource(R.string.app_name),
                             modifier = Modifier.size(44.dp)
                         )
                     }
@@ -96,7 +95,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "Chunkoid NG",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -105,7 +104,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Next-Generation · CANARY 0.2 (Compose MD3E)",
+                        text = stringResource(R.string.app_version_display),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
@@ -114,7 +113,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "首个专为安卓打造的开源 Minecraft 世界转换工具",
+                        text = stringResource(R.string.app_tagline),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -140,7 +139,7 @@ fun AboutScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "CANARY 0.2 实装功能与特性",
+                            text = stringResource(R.string.about_features_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -150,28 +149,28 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     FeatureHighlightRow(
-                        title = "世界存档双向互转与导出",
-                        desc = "全功能支持 Java / 基岩版互转、跨版本升降级、前台服务保活转换、转换历史管理与 SAF 自定义导出"
+                        title = stringResource(R.string.about_feature_mapping),
+                        desc = stringResource(R.string.about_feature_mapping_desc)
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     FeatureHighlightRow(
-                        title = "网易版存档还原与被动加密",
-                        desc = "集成 LevelDB 异或算法流式解密与魔数完整性校验，支持网易版被动加密，并与世界转换器无缝流转"
+                        title = stringResource(R.string.about_feature_i18n),
+                        desc = stringResource(R.string.about_feature_i18n_desc)
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     FeatureHighlightRow(
-                        title = "独立存档瘦身与维度裁剪",
-                        desc = "提供仅保留主世界、极速轻量化、全维度保留等预设策略，支持各维度独立裁剪与原始 NBT 规则保留"
+                        title = stringResource(R.string.about_feature_convert),
+                        desc = stringResource(R.string.about_feature_convert_desc)
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     FeatureHighlightRow(
-                        title = "Material Design 3 Expressive (MD3E)",
-                        desc = "统一 Squircle 导入卡片、全新底栏目标版本选择器、自适应防折行排版与动态取色"
+                        title = stringResource(R.string.about_feature_decrypt),
+                        desc = stringResource(R.string.about_feature_decrypt_desc)
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     FeatureHighlightRow(
-                        title = "全链路 UTF-8 字符编码",
-                        desc = "全面规范 UTF-8 字符集标准，根治多语言配置项与运行日志中的中文字符乱码问题"
+                        title = stringResource(R.string.about_feature_prune),
+                        desc = stringResource(R.string.about_feature_prune_desc)
                     )
                 }
             }
@@ -195,7 +194,7 @@ fun AboutScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "致谢原作者与奠基人",
+                            text = stringResource(R.string.about_founder_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -205,7 +204,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "特别致谢原作者 Dozener (DozenesStudio)：\n感谢 Dozener 同学在个人业余时间独立探索，完成了首个在 Android 平台无需依赖 PC 即可运行的世界转换器，填补了移动端工具生态的空白。现由 DICECAN (EncoreTeam) 接过接力棒继续演进维护，永久保留原作者署名与致敬！",
+                        text = stringResource(R.string.about_founder_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         lineHeight = 18.sp
@@ -232,7 +231,7 @@ fun AboutScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "维护团队与核心贡献",
+                            text = stringResource(R.string.about_team_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -241,11 +240,11 @@ fun AboutScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    CreditRow(role = "现维护组织", name = "DICECAN (EncoreTeam)")
+                    CreditRow(role = stringResource(R.string.about_team_org), name = "DICECAN (EncoreTeam)")
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    CreditRow(role = "核心贡献者", name = "Ryan Steven、Dozener")
+                    CreditRow(role = stringResource(R.string.about_team_contributors), name = "Ryan Steven、Dozener")
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    CreditRow(role = "开源协议", name = "GNU General Public License v3.0 (GPLv3)")
+                    CreditRow(role = stringResource(R.string.about_team_license), name = "GNU General Public License v3.0 (GPLv3)")
                 }
             }
         }
@@ -268,7 +267,7 @@ fun AboutScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "开源致谢与依赖",
+                            text = stringResource(R.string.about_deps_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -324,7 +323,7 @@ fun AboutScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("GitHub 仓库")
+                    Text(stringResource(R.string.about_repo_btn))
                 }
 
                 OutlinedButton(
@@ -338,7 +337,7 @@ fun AboutScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("官方网站")
+                    Text(stringResource(R.string.about_website_btn))
                 }
             }
         }

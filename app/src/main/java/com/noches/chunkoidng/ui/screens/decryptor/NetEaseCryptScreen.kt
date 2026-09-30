@@ -6,33 +6,73 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderZip
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.decryptor.CryptMode
 import com.noches.chunkoidng.ui.components.SourcePickerCard
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
@@ -78,7 +118,7 @@ fun NetEaseCryptScreen(
                 context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             } catch (e: Exception) { e.printStackTrace() }
             viewModel.exportResultWorld(it, packAsArchiveExport) { _ ->
-                Toast.makeText(context, "导出成功！", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.toast_export_success), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -88,19 +128,19 @@ fun NetEaseCryptScreen(
             TopAppBar(
                 title = {
                     Text(
-                        if (uiState.mode == CryptMode.DECRYPT) "网易存档解密" else "网易存档加密",
+                        if (uiState.mode == CryptMode.DECRYPT) stringResource(R.string.decryptor_mode_decrypt) else stringResource(R.string.decryptor_mode_encrypt),
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     if (uiState.stage == CryptUiStage.COMPLETED || uiState.stage == CryptUiStage.ERROR) {
                         IconButton(onClick = { viewModel.resetState() }) {
-                            Icon(Icons.Outlined.Refresh, contentDescription = "重新处理")
+                            Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.source_picker_reselect))
                         }
                     }
                 },
@@ -127,7 +167,7 @@ fun NetEaseCryptScreen(
                     CryptUiStage.STAGING -> {
                         ProgressView(
                             progress = uiState.stagingProgress,
-                            title = "准备中",
+                            title = stringResource(R.string.common_loading),
                             message = uiState.stagingMessage
                         )
                     }
@@ -161,7 +201,7 @@ fun NetEaseCryptScreen(
                     }
                     CryptUiStage.ERROR -> {
                         ErrorView(
-                            errorMessage = uiState.errorMessage ?: "发生未知错误",
+                            errorMessage = uiState.errorMessage ?: stringResource(R.string.common_unknown),
                             onRetry = { viewModel.resetState() }
                         )
                     }
@@ -203,7 +243,7 @@ private fun SelectSourceView(
                     )
                 }
             ) {
-                Text("被动解密", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.decryptor_mode_decrypt), fontWeight = FontWeight.Bold)
             }
 
             SegmentedButton(
@@ -218,7 +258,7 @@ private fun SelectSourceView(
                     )
                 }
             ) {
-                Text("被动加密", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.decryptor_mode_encrypt), fontWeight = FontWeight.Bold)
             }
         }
 
@@ -241,18 +281,14 @@ private fun SelectSourceView(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        if (currentMode == CryptMode.DECRYPT) "网易版 LevelDB 异或解密" else "网易版 LevelDB 被动加密",
+                        stringResource(R.string.decryptor_screen_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = if (currentMode == CryptMode.DECRYPT) {
-                        "通过解析 CURRENT 指针与 MANIFEST 元数据推导异或密钥，自动脱敏 LevelDB 数据库，还原为国际基岩版标准存档。"
-                    } else {
-                        "采用网易 MC 标准 88329851 密钥与 0x801D3001 魔数头，将标准基岩版存档加密，以便中国版客户端顺利加载运行。"
-                    },
+                    text = stringResource(R.string.decryptor_screen_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 16.sp
@@ -263,8 +299,8 @@ private fun SelectSourceView(
         Spacer(modifier = Modifier.height(24.dp))
 
         SourcePickerCard(
-            title = "选择存档文件夹",
-            subtitle = "包含 level.dat 与 db/ 目录的根文件夹",
+            title = stringResource(R.string.source_picker_folder_title),
+            subtitle = stringResource(R.string.source_picker_folder_desc),
             icon = Icons.Outlined.Folder,
             iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
             iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -274,8 +310,8 @@ private fun SelectSourceView(
         Spacer(modifier = Modifier.height(16.dp))
 
         SourcePickerCard(
-            title = "选择压缩包文件",
-            subtitle = "支持 .zip 或 .mcworld 格式",
+            title = stringResource(R.string.source_picker_zip_title),
+            subtitle = stringResource(R.string.source_picker_zip_desc),
             icon = Icons.Outlined.FolderZip,
             iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
             iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -329,7 +365,7 @@ private fun ProcessingView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = statusText.ifBlank { "正在处理..." },
+                        text = statusText.ifBlank { stringResource(R.string.converter_converting) },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -350,7 +386,7 @@ private fun ProcessingView(
                 if (currentFile.isNotBlank()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "正在处理: $currentFile",
+                        text = currentFile,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1
@@ -422,11 +458,11 @@ private fun CompletedView(
 
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = if (uiState.mode == CryptMode.DECRYPT) "解密完成！" else "加密完成！",
+            text = stringResource(R.string.converter_success),
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
         )
         Text(
-            text = "世界名称: ${uiState.worldName}",
+            text = "${stringResource(R.string.converter_override_name_label)}: ${uiState.worldName}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -440,23 +476,23 @@ private fun CompletedView(
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("耗费时间", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                    Text("${uiState.durationMs / 1000.0} 秒", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("耗时", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    Text("${uiState.durationMs / 1000.0} s", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("已处理数据库文件", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                    Text("${uiState.filesProcessed} 个", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("LevelDB", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    Text("${uiState.filesProcessed}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
                 if (uiState.keyHex.isNotBlank()) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("推导密钥 (Hex)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                        Text("Key (Hex)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                         Text("0x${uiState.keyHex}", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
                 if (uiState.mode == CryptMode.DECRYPT && uiState.ldbVerified) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("LevelDB 结构校验", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                        Text("通过 (0x57FB...)", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text("LevelDB Verified", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                        Text("0x57FB...", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }
@@ -473,7 +509,7 @@ private fun CompletedView(
             ) {
                 Icon(Icons.Outlined.SwapHoriz, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("立即开始世界转换 (转 Java / 跨版本)", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.decryptor_action_to_converter), fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -486,7 +522,7 @@ private fun CompletedView(
         ) {
             Icon(Icons.Outlined.FolderZip, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("导出为归档文件 (.mcworld / .zip)")
+            Text(stringResource(R.string.converter_export_archive, ".mcworld"))
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -499,7 +535,7 @@ private fun CompletedView(
         ) {
             Icon(Icons.Outlined.Folder, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("导出到文件夹")
+            Text(stringResource(R.string.converter_export_dir))
         }
     }
 }
@@ -519,7 +555,7 @@ private fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "处理失败",
+            text = stringResource(R.string.converter_failed),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -534,7 +570,7 @@ private fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
             onClick = onRetry,
             shape = ExpressiveShapes.medium
         ) {
-            Text("重试")
+            Text(stringResource(R.string.common_retry))
         }
     }
 }

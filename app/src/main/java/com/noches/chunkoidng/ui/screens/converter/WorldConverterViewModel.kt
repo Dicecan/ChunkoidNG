@@ -16,6 +16,9 @@ import com.noches.chunkoidng.core.conversion.PruningProfile
 import com.noches.chunkoidng.core.settings.AppPreferences
 import com.noches.chunkoidng.core.world.ArchiveManager
 import com.noches.chunkoidng.core.world.HistoryManager
+import com.noches.chunkoidng.core.version.MinecraftVersion
+import com.noches.chunkoidng.core.version.VersionMappingTable
+import com.noches.chunkoidng.core.world.Platform
 import com.noches.chunkoidng.core.world.WorldInfo
 import com.noches.chunkoidng.core.world.WorldMetadataReader
 import com.noches.chunkoidng.service.ConversionForegroundService
@@ -173,6 +176,12 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    private fun resolveSmartTargetFormat(world: WorldInfo): ChunkerFormat {
+        val parsedVer = MinecraftVersion.parse(world.versionName, world.platform, world.versionId)
+        val targetPlatform = if (world.platform == Platform.BEDROCK) Platform.JAVA else Platform.BEDROCK
+        return VersionMappingTable.findEquivalentFormat(parsedVer, targetPlatform)
+    }
+
     fun handleArchiveSelected(uri: Uri) {
         viewModelScope.launch {
             _uiState.update {
@@ -189,7 +198,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
 
             result.fold(
                 onSuccess = { world ->
-                    val defaultTarget = ChunkerFormat.getDefaultFormatForOpposite(world.platform)
+                    val defaultTarget = resolveSmartTargetFormat(world)
                     _uiState.update {
                         it.copy(
                             stage = ConverterStage.CONFIGURE,
@@ -227,7 +236,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
 
             result.fold(
                 onSuccess = { world ->
-                    val defaultTarget = ChunkerFormat.getDefaultFormatForOpposite(world.platform)
+                    val defaultTarget = resolveSmartTargetFormat(world)
                     _uiState.update {
                         it.copy(
                             stage = ConverterStage.CONFIGURE,
@@ -254,7 +263,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         if (stagedDir.exists() && stagedDir.listFiles()?.isNotEmpty() == true) {
             viewModelScope.launch(Dispatchers.IO) {
                 val world = WorldMetadataReader.inspectWorld(stagedDir)
-                val defaultTarget = ChunkerFormat.getDefaultFormatForOpposite(world.platform)
+                val defaultTarget = resolveSmartTargetFormat(world)
                 withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(

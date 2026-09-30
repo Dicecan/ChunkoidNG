@@ -5,28 +5,79 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.Brightness3
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderZip
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Terrain
+import androidx.compose.material.icons.outlined.Whatshot
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,12 +85,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.conversion.PruningProfile
 import com.noches.chunkoidng.core.world.WorldInfo
 import com.noches.chunkoidng.ui.components.SourcePickerCard
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
-import com.noches.chunkoidng.ui.theme.SquircleIconShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,9 +121,9 @@ fun DimensionPrunerScreen(
         if (uri != null) {
             viewModel.exportPrunedWorld(uri, packAsArchiveExport) { success ->
                 if (success) {
-                    Toast.makeText(context, "导出瘦身存档成功！", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.toast_export_success), Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "导出失败，请检查写入权限", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.toast_export_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -82,20 +133,20 @@ fun DimensionPrunerScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("存档瘦身与维度裁剪", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.pruner_screen_title), fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToHistory) {
-                        Icon(Icons.Outlined.History, contentDescription = "历史记录")
+                        Icon(Icons.Outlined.History, contentDescription = stringResource(R.string.nav_history))
                     }
                     if (uiState.stage == PrunerStage.CONFIGURE || uiState.stage == PrunerStage.COMPLETED || uiState.stage == PrunerStage.ERROR) {
                         IconButton(onClick = { viewModel.reset() }) {
-                            Icon(Icons.Outlined.Refresh, contentDescription = "重新选择")
+                            Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.source_picker_reselect))
                         }
                     }
                 },
@@ -165,7 +216,7 @@ fun DimensionPrunerScreen(
                     }
                     PrunerStage.ERROR -> {
                         PruningErrorView(
-                            errorMessage = uiState.errorMessage ?: "发生未知错误",
+                            errorMessage = uiState.errorMessage ?: stringResource(R.string.common_unknown),
                             onRetry = { viewModel.reset() }
                         )
                     }
@@ -188,13 +239,13 @@ private fun SelectSourceView(
     ) {
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "导入待瘦身世界存档",
+            text = stringResource(R.string.converter_import_title),
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "智能剔除未修改、无效的区块与维度，大幅降低地图体积",
+            text = stringResource(R.string.pruner_screen_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -203,20 +254,20 @@ private fun SelectSourceView(
         Spacer(modifier = Modifier.height(36.dp))
 
         SourcePickerCard(
-            title = "选择存档文件夹",
-            subtitle = "Minecraft 存档根目录 (含 level.dat 与 db/ 或 region/)",
+            title = stringResource(R.string.source_picker_folder_title),
+            subtitle = stringResource(R.string.source_picker_folder_desc),
             icon = Icons.Outlined.Folder,
             iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
             iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            badge = "推荐",
+            badge = stringResource(R.string.pruner_badge_recommended),
             onClick = onSelectFolder
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         SourcePickerCard(
-            title = "选择压缩包文件",
-            subtitle = "支持 .zip 或 .mcworld 格式",
+            title = stringResource(R.string.source_picker_zip_title),
+            subtitle = stringResource(R.string.source_picker_zip_desc),
             icon = Icons.Outlined.FolderZip,
             iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
             iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -324,7 +375,7 @@ private fun ConfigurePruningView(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = worldInfo?.name ?: "Minecraft 世界",
+                            text = worldInfo?.name ?: stringResource(R.string.common_unknown),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -333,14 +384,14 @@ private fun ConfigurePruningView(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "${worldInfo?.platform?.displayName ?: "Bedrock"} ${worldInfo?.versionName ?: ""}",
+                            text = "${worldInfo?.platform?.displayName ?: ""} ${worldInfo?.versionName ?: ""}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         val sizeMb = (worldInfo?.sizeBytes ?: 0L) / (1024.0 * 1024.0)
                         Text(
-                            text = "当前地图体积: %.1f MB".format(sizeMb),
+                            text = "${stringResource(R.string.source_picker_size)}: %.1f MB".format(sizeMb),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -352,7 +403,7 @@ private fun ConfigurePruningView(
 
         item {
             Text(
-                text = "选择瘦身策略",
+                text = stringResource(R.string.pruner_presets_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -361,33 +412,33 @@ private fun ConfigurePruningView(
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 PruningPresetCard(
-                    title = "仅保留主世界",
-                    subtitle = "剔除下界与末地所有冗余区块，通常可减小 40%~70% 体积",
-                    badge = "推荐",
+                    title = stringResource(R.string.pruner_profile_overworld_title),
+                    subtitle = stringResource(R.string.pruner_profile_overworld_desc),
+                    badge = stringResource(R.string.pruner_badge_recommended),
                     isSelected = pruningProfile == PruningProfile.OVERWORLD_ONLY,
                     onClick = { onSelectProfile(PruningProfile.OVERWORLD_ONLY) }
                 )
 
                 PruningPresetCard(
-                    title = "极速轻量化 (Speed)",
-                    subtitle = "仅保留主世界核心区域并保护原生 NBT，适合低配联机",
-                    badge = "极速",
+                    title = stringResource(R.string.pruner_profile_speed_title),
+                    subtitle = stringResource(R.string.pruner_profile_speed_desc),
+                    badge = stringResource(R.string.pruner_badge_speed),
                     isSelected = pruningProfile == PruningProfile.SPEED,
                     onClick = { onSelectProfile(PruningProfile.SPEED) }
                 )
 
                 PruningPresetCard(
-                    title = "全维度保留与整理",
-                    subtitle = "保留主世界、下界和末地所有维度，仅对损坏与空置区块进行精简",
-                    badge = "无损",
+                    title = stringResource(R.string.pruner_profile_full_title),
+                    subtitle = stringResource(R.string.pruner_profile_full_desc),
+                    badge = stringResource(R.string.common_all),
                     isSelected = pruningProfile == PruningProfile.FULL,
                     onClick = { onSelectProfile(PruningProfile.FULL) }
                 )
 
                 PruningPresetCard(
-                    title = "自定义维度裁剪",
-                    subtitle = "自由勾选需要保留或剔除的维度",
-                    badge = "高级",
+                    title = stringResource(R.string.pruner_profile_custom_title),
+                    subtitle = stringResource(R.string.pruner_profile_custom_desc),
+                    badge = stringResource(R.string.converter_advanced_options),
                     isSelected = pruningProfile == PruningProfile.CUSTOM,
                     onClick = { onSelectProfile(PruningProfile.CUSTOM) }
                 )
@@ -402,25 +453,25 @@ private fun ConfigurePruningView(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("自定义保留维度", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.pruner_profile_custom_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(10.dp))
 
                         DimensionCheckboxRow(
-                            label = "主世界 (Overworld)",
+                            label = stringResource(R.string.converter_dim_overworld),
                             checked = includeOverworld,
                             onCheckedChange = onToggleOverworld,
                             icon = Icons.Outlined.Terrain
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                         DimensionCheckboxRow(
-                            label = "下界 (Nether)",
+                            label = stringResource(R.string.converter_dim_nether),
                             checked = includeNether,
                             onCheckedChange = onToggleNether,
                             icon = Icons.Outlined.Whatshot
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                         DimensionCheckboxRow(
-                            label = "末地 (The End)",
+                            label = stringResource(R.string.converter_dim_the_end),
                             checked = includeTheEnd,
                             onCheckedChange = onToggleTheEnd,
                             icon = Icons.Outlined.Brightness3
@@ -437,7 +488,7 @@ private fun ConfigurePruningView(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("高级选项", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.converter_advanced_options), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
@@ -446,8 +497,8 @@ private fun ConfigurePruningView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("保留原始 NBT (-k)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                            Text("无损保留所有方块实体与物品附魔属性", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.converter_keep_nbt), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.converter_keep_nbt_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(checked = keepOriginalNbt, onCheckedChange = onToggleKeepOriginalNbt)
                     }
@@ -457,7 +508,7 @@ private fun ConfigurePruningView(
                     OutlinedTextField(
                         value = overrideWorldName,
                         onValueChange = onUpdateWorldName,
-                        label = { Text("瘦身后世界名称") },
+                        label = { Text(stringResource(R.string.converter_override_name_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = ExpressiveShapes.medium
@@ -475,7 +526,7 @@ private fun ConfigurePruningView(
             ) {
                 Icon(Icons.Outlined.CleaningServices, contentDescription = null, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(10.dp))
-                Text("开始深度瘦身", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.pruner_action_start), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -497,7 +548,7 @@ private fun PruningPresetCard(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             else MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.8.dp, MaterialTheme.colorScheme.primary) else null,
+        border = if (isSelected) BorderStroke(1.8.dp, MaterialTheme.colorScheme.primary) else null,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -581,6 +632,9 @@ private fun PruningRunningView(
     onCancel: () -> Unit
 ) {
     val listState = rememberLazyListState()
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
     LaunchedEffect(logs.size) {
         if (logs.isNotEmpty()) {
             listState.animateScrollToItem(logs.size - 1)
@@ -601,7 +655,7 @@ private fun PruningRunningView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("瘦身执行中...", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.converter_converting), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text("$progress%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
 
@@ -613,7 +667,7 @@ private fun PruningRunningView(
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stageText.ifBlank { "正在整理区块索引..." },
+                    text = stageText.ifBlank { stringResource(R.string.converter_converting) },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -645,6 +699,16 @@ private fun PruningRunningView(
                         }
                     }
                 }
+                IconButton(
+                    onClick = {
+                        val text = logs.joinToString("\n")
+                        clipboardManager.setText(AnnotatedString(text))
+                        Toast.makeText(context, context.getString(R.string.toast_logs_copied), Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                ) {
+                    Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.common_copy), tint = MaterialTheme.colorScheme.primary)
+                }
             }
         }
 
@@ -658,7 +722,7 @@ private fun PruningRunningView(
         ) {
             Icon(Icons.Outlined.Close, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("取消瘦身")
+            Text(stringResource(R.string.converter_action_abort))
         }
     }
 }
@@ -700,7 +764,7 @@ private fun PruningCompletedView(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "地图瘦身完成！",
+            text = stringResource(R.string.converter_success),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -708,7 +772,7 @@ private fun PruningCompletedView(
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "已安全移除指定维度与冗余区块，有效缩减地图存储占用",
+            text = stringResource(R.string.pruner_screen_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -727,7 +791,7 @@ private fun PruningCompletedView(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("原始大小", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pruner_stat_original), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("%.1f MB".format(origMb), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
@@ -735,13 +799,13 @@ private fun PruningCompletedView(
                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("瘦身后", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pruner_stat_pruned), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("%.1f MB".format(prunedMb), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("节省空间", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pruner_stat_saved), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("-%.1f%%".format(savedPercent.coerceAtLeast(0.0)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
@@ -758,7 +822,7 @@ private fun PruningCompletedView(
         ) {
             Icon(Icons.Outlined.Folder, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isExporting) "正在导出..." else "导出为文件夹")
+            Text(stringResource(R.string.converter_export_dir))
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -771,13 +835,13 @@ private fun PruningCompletedView(
         ) {
             Icon(Icons.Outlined.FolderZip, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isExporting) "正在导出..." else "导出为压缩包 (.mcworld)")
+            Text(stringResource(R.string.converter_export_archive, ".mcworld"))
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         TextButton(onClick = onNewPruning) {
-            Text("处理另一个世界")
+            Text(stringResource(R.string.converter_convert_another))
         }
     }
 }
@@ -800,7 +864,7 @@ private fun PruningErrorView(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "瘦身过程出现异常",
+            text = stringResource(R.string.converter_failed),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.error
@@ -814,7 +878,7 @@ private fun PruningErrorView(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry, shape = ExpressiveShapes.medium) {
-            Text("重试")
+            Text(stringResource(R.string.common_retry))
         }
     }
 }

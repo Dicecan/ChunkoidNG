@@ -14,7 +14,20 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -24,31 +37,67 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderZip
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.Badge
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.conversion.ChunkerFormat
 import com.noches.chunkoidng.core.conversion.PruningProfile
-import com.noches.chunkoidng.core.world.Platform
 import com.noches.chunkoidng.core.world.WorldInfo
+import com.noches.chunkoidng.ui.components.FormatPickerBottomSheet
 import com.noches.chunkoidng.ui.components.SourcePickerCard
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
-import com.noches.chunkoidng.ui.theme.SquircleIconShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +146,7 @@ fun WorldConverterScreen(
                 context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             } catch (e: Exception) { e.printStackTrace() }
             viewModel.exportConvertedWorld(it, packAsArchiveExport) { _ ->
-                Toast.makeText(context, "导出成功！", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.toast_export_success), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -108,20 +157,20 @@ fun WorldConverterScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("世界存档转换", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.converter_screen_title), fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToHistory) {
-                        Icon(Icons.Outlined.History, contentDescription = "转换记录")
+                        Icon(Icons.Outlined.History, contentDescription = stringResource(R.string.nav_history))
                     }
                     if (uiState.stage == ConverterStage.CONFIGURE || uiState.stage == ConverterStage.COMPLETED || uiState.stage == ConverterStage.ERROR) {
                         IconButton(onClick = { viewModel.reset() }) {
-                            Icon(Icons.Outlined.Refresh, contentDescription = "重新选择")
+                            Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.source_picker_reselect))
                         }
                     }
                 },
@@ -196,7 +245,7 @@ fun WorldConverterScreen(
                     }
                     ConverterStage.ERROR -> {
                         ErrorView(
-                            errorMessage = uiState.errorMessage ?: "发生未知错误",
+                            errorMessage = uiState.errorMessage ?: stringResource(R.string.common_unknown),
                             onRetry = { viewModel.reset() }
                         )
                     }
@@ -205,7 +254,7 @@ fun WorldConverterScreen(
 
             if (showFormatPicker) {
                 FormatPickerBottomSheet(
-                    sourcePlatform = uiState.worldInfo?.platform ?: Platform.BEDROCK,
+                    sourceWorld = uiState.worldInfo,
                     currentFormat = uiState.targetFormat,
                     onSelectFormat = {
                         viewModel.selectTargetFormat(it)
@@ -231,13 +280,13 @@ private fun SelectSourceView(
     ) {
         Spacer(modifier = Modifier.height(32.dp))
         Text(
-            text = "导入源世界存档",
+            text = stringResource(R.string.converter_import_title),
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "支持从系统目录或 .mcworld / .zip 压缩包直接导入",
+            text = stringResource(R.string.converter_import_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -245,20 +294,20 @@ private fun SelectSourceView(
         Spacer(modifier = Modifier.height(48.dp))
 
         SourcePickerCard(
-            title = "选择存档文件夹",
-            subtitle = "Minecraft 存档根目录 (含 level.dat)",
+            title = stringResource(R.string.source_picker_folder_title),
+            subtitle = stringResource(R.string.source_picker_folder_desc),
             icon = Icons.Outlined.Folder,
             iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
             iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            badge = "推荐",
+            badge = stringResource(R.string.converter_badge_recommended),
             onClick = onSelectFolder
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         SourcePickerCard(
-            title = "选择压缩包文件",
-            subtitle = "支持 .zip 或 .mcworld 格式",
+            title = stringResource(R.string.source_picker_zip_title),
+            subtitle = stringResource(R.string.source_picker_zip_desc),
             icon = Icons.Outlined.FolderZip,
             iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
             iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -335,7 +384,7 @@ private fun ConfigureView(
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text(worldInfo?.name ?: "Unknown World", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(worldInfo?.name ?: stringResource(R.string.common_unknown), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
                             Badge(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
                                 Text(worldInfo?.platform?.displayName ?: "", modifier = Modifier.padding(horizontal = 4.dp))
@@ -363,8 +412,14 @@ private fun ConfigureView(
                 ) {
                     Column {
                         val isSamePlatform = worldInfo != null && worldInfo.platform == targetFormat.platform
-                        val badgeText = if (targetFormat.id == "INPUT") "保持原版本" else if (isSamePlatform) "版本升降级" else "双端跨格式转换"
-                        Text("目标版本 [$badgeText]", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f))
+                        val badgeText = if (targetFormat.id == "INPUT") {
+                            stringResource(R.string.version_keep_input)
+                        } else if (isSamePlatform) {
+                            stringResource(R.string.converter_target_badge_same)
+                        } else {
+                            stringResource(R.string.converter_target_badge_cross)
+                        }
+                        Text("${stringResource(R.string.converter_target_card_title)} [$badgeText]", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f))
                         Text(targetFormat.displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer)
                     }
                     Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
@@ -388,8 +443,8 @@ private fun ConfigureView(
                             Icon(Icons.Outlined.CleaningServices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("维度与区块裁剪策略", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("智能剔除无效维度，缩减体积防闪退", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.converter_pruning_card_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.converter_pruning_card_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         Icon(
@@ -404,7 +459,7 @@ private fun ConfigureView(
                         exit = fadeOut() + shrinkVertically()
                     ) {
                         Column(modifier = Modifier.padding(top = 16.dp)) {
-                            Text("快速裁剪预设", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.converter_pruning_presets), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(8.dp))
 
                             FlowRow(
@@ -413,10 +468,16 @@ private fun ConfigureView(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 PruningProfile.values().forEach { profile ->
+                                    val profileLabel = when (profile) {
+                                        PruningProfile.OVERWORLD_ONLY -> stringResource(R.string.pruner_profile_overworld_title)
+                                        PruningProfile.SPEED -> stringResource(R.string.pruner_profile_speed_title)
+                                        PruningProfile.FULL -> stringResource(R.string.pruner_profile_full_title)
+                                        PruningProfile.CUSTOM -> stringResource(R.string.pruner_profile_custom_title)
+                                    }
                                     FilterChip(
                                         selected = pruningProfile == profile,
                                         onClick = { onSelectPruningProfile(profile) },
-                                        label = { Text(profile.displayName, fontSize = 12.sp) }
+                                        label = { Text(profileLabel, fontSize = 12.sp) }
                                     )
                                 }
                             }
@@ -424,22 +485,22 @@ private fun ConfigureView(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             DimensionSwitchItem(
-                                title = "主世界 (Overworld)",
-                                subtitle = "游戏主维度与建筑核心",
+                                title = stringResource(R.string.converter_dim_overworld),
+                                subtitle = stringResource(R.string.converter_dim_overworld_desc),
                                 checked = includeOverworld,
                                 onCheckedChange = onToggleOverworld
                             )
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             DimensionSwitchItem(
-                                title = "下界 / 地狱 (The Nether)",
-                                subtitle = "地狱维度，关闭可显著降低文件大小",
+                                title = stringResource(R.string.converter_dim_nether),
+                                subtitle = stringResource(R.string.converter_dim_nether_desc),
                                 checked = includeNether,
                                 onCheckedChange = onToggleNether
                             )
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             DimensionSwitchItem(
-                                title = "末路之地 (The End)",
-                                subtitle = "末地与末地城，关闭可大幅加速转换",
+                                title = stringResource(R.string.converter_dim_the_end),
+                                subtitle = stringResource(R.string.converter_dim_the_end_desc),
                                 checked = includeTheEnd,
                                 onCheckedChange = onToggleTheEnd
                             )
@@ -465,8 +526,8 @@ private fun ConfigureView(
                             Icon(Icons.Outlined.Tune, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("世界参数与规则覆盖", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("世界名称、默认游戏模式与难度", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.converter_world_settings_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.converter_world_settings_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         Icon(
@@ -484,14 +545,20 @@ private fun ConfigureView(
                             OutlinedTextField(
                                 value = overrideWorldName,
                                 onValueChange = onUpdateWorldName,
-                                label = { Text("目标世界名称") },
+                                label = { Text(stringResource(R.string.converter_override_name_label)) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            Text("默认游戏模式", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.converter_override_gamemode_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                val modes = listOf("DEFAULT" to "保持原样", "SURVIVAL" to "生存", "CREATIVE" to "创造", "ADVENTURE" to "冒险", "SPECTATOR" to "旁观")
+                                val modes = listOf(
+                                    "DEFAULT" to stringResource(R.string.converter_gamemode_default),
+                                    "SURVIVAL" to stringResource(R.string.converter_gamemode_survival),
+                                    "CREATIVE" to stringResource(R.string.converter_gamemode_creative),
+                                    "ADVENTURE" to stringResource(R.string.converter_gamemode_adventure),
+                                    "SPECTATOR" to stringResource(R.string.converter_gamemode_spectator)
+                                )
                                 modes.forEach { (modeKey, modeTitle) ->
                                     FilterChip(
                                         selected = overrideGameMode == modeKey,
@@ -501,9 +568,15 @@ private fun ConfigureView(
                                 }
                             }
 
-                            Text("默认游戏难度", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.converter_override_difficulty_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                val diffs = listOf("DEFAULT" to "保持原样", "PEACEFUL" to "和平", "EASY" to "简单", "NORMAL" to "普通", "HARD" to "困难")
+                                val diffs = listOf(
+                                    "DEFAULT" to stringResource(R.string.converter_gamemode_default),
+                                    "PEACEFUL" to stringResource(R.string.converter_difficulty_peaceful),
+                                    "EASY" to stringResource(R.string.converter_difficulty_easy),
+                                    "NORMAL" to stringResource(R.string.converter_difficulty_normal),
+                                    "HARD" to stringResource(R.string.converter_difficulty_hard)
+                                )
                                 diffs.forEach { (diffKey, diffTitle) ->
                                     FilterChip(
                                         selected = overrideDifficulty == diffKey,
@@ -517,8 +590,8 @@ private fun ConfigureView(
 
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("保留未修改的原始 NBT (-k)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                                    Text("在同格式裁剪或版本升降级时尽可能继承标签", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(stringResource(R.string.converter_keep_nbt), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.converter_keep_nbt_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(checked = keepOriginalNbt, onCheckedChange = onToggleKeepOriginalNbt)
                             }
@@ -537,7 +610,7 @@ private fun ConfigureView(
             ) {
                 Icon(Icons.Outlined.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("开始转换", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.converter_action_start), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -592,7 +665,7 @@ private fun ConvertingView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stageText.ifBlank { "正在转换..." }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stageText.ifBlank { stringResource(R.string.converter_converting) }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text("$progress%", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -629,11 +702,11 @@ private fun ConvertingView(
                     onClick = {
                         val text = logs.joinToString("\n")
                         clipboardManager.setText(AnnotatedString(text))
-                        Toast.makeText(context, "日志已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.toast_logs_copied), Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                 ) {
-                    Icon(Icons.Outlined.ContentCopy, contentDescription = "复制日志", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.common_copy), tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -645,7 +718,7 @@ private fun ConvertingView(
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = ExpressiveShapes.medium
         ) {
-            Text("中止转换")
+            Text(stringResource(R.string.converter_action_abort))
         }
     }
 }
@@ -670,8 +743,8 @@ private fun CompletedView(
             Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Text("转换成功！", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
-        Text("已转换为 ${targetFormat.displayName}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.converter_success), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
+        Text(stringResource(R.string.converter_converted_to, targetFormat.displayName), color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         Spacer(modifier = Modifier.height(48.dp))
 
@@ -683,7 +756,7 @@ private fun CompletedView(
         ) {
             Icon(Icons.Outlined.Folder, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("导出到文件夹 (解包)", fontSize = 16.sp)
+            Text(stringResource(R.string.converter_export_dir), fontSize = 16.sp)
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
@@ -694,12 +767,12 @@ private fun CompletedView(
         ) {
             Icon(Icons.Outlined.FolderZip, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("导出为压缩包 (${if(targetFormat.platform.isBedrock) ".mcworld" else ".zip"})", fontSize = 16.sp)
+            Text(stringResource(R.string.converter_export_archive, if(targetFormat.platform.isBedrock) ".mcworld" else ".zip"), fontSize = 16.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
         TextButton(onClick = onNewConversion) {
-            Text("转换其他世界")
+            Text(stringResource(R.string.converter_convert_another))
         }
     }
 }
@@ -713,260 +786,12 @@ private fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
     ) {
         Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(64.dp))
         Spacer(modifier = Modifier.height(16.dp))
-        Text("转换失败", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.converter_failed), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(errorMessage, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry, shape = ExpressiveShapes.medium) {
-            Text("重试")
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FormatPickerBottomSheet(
-    sourcePlatform: Platform,
-    currentFormat: ChunkerFormat,
-    onSelectFormat: (ChunkerFormat) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var selectedTab by remember { mutableStateOf(if (sourcePlatform == Platform.BEDROCK) 1 else 0) }
-    var searchQuery by remember { mutableStateOf("") }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = ExpressiveShapes.extraLarge,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
-        ) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(SquircleIconShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.SwapHoriz,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "选择目标版本与格式",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "支持双端格式互转、同平台版本升级与降级",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Outlined.Close, contentDescription = "关闭")
-                }
-            }
-
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            ) {
-                SegmentedButton(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-                    icon = {
-                        Icon(
-                            Icons.Outlined.PhoneAndroid,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                ) {
-                    Text("基岩版 (BE)", maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-
-                SegmentedButton(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
-                    icon = {
-                        Icon(
-                            Icons.Outlined.Computer,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                ) {
-                    Text("Java版 (JE)", maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-
-                SegmentedButton(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
-                    icon = {
-                        Icon(
-                            Icons.Outlined.Tune,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                ) {
-                    Text("保持原版本", maxLines = 1, softWrap = false, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-
-            if (selectedTab != 2) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("搜索版本号 (如 1.21, 1.20)...", fontSize = 13.sp) },
-                    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Outlined.Clear, contentDescription = "清除", modifier = Modifier.size(18.dp))
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    shape = ExpressiveShapes.medium,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        unfocusedBorderColor = Color.Transparent
-                    ),
-                    singleLine = true
-                )
-            }
-
-            val allFormats = when (selectedTab) {
-                0 -> ChunkerFormat.BEDROCK_FORMATS
-                1 -> ChunkerFormat.JAVA_FORMATS
-                else -> listOf(ChunkerFormat.FORMAT_INPUT)
-            }
-
-            val filteredFormats = if (searchQuery.isBlank()) {
-                allFormats
-            } else {
-                allFormats.filter {
-                    it.displayName.contains(searchQuery, ignoreCase = true) ||
-                    it.id.contains(searchQuery, ignoreCase = true) ||
-                    it.group.contains(searchQuery, ignoreCase = true)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 420.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(filteredFormats, key = { it.id }) { format ->
-                    val isSelected = format.id == currentFormat.id
-                    Card(
-                        onClick = {
-                            onSelectFormat(format)
-                        },
-                        shape = ExpressiveShapes.medium,
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) {
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
-                            }
-                        ),
-                        border = if (isSelected) {
-                            androidx.compose.foundation.BorderStroke(1.8.dp, MaterialTheme.colorScheme.primary)
-                        } else null,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (isSelected) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.surfaceContainerHighest
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (format.id == "INPUT") Icons.Outlined.Tune
-                                    else if (format.platform == Platform.BEDROCK) Icons.Outlined.PhoneAndroid
-                                    else Icons.Outlined.Computer,
-                                    contentDescription = null,
-                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(14.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = format.displayName,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = if (format.id == "INPUT") "保持原世界版本不变，仅应用维度裁剪与属性设置" else "适配版本系列: ${format.group}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 11.sp
-                                )
-                            }
-
-                            if (isSelected) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Outlined.Check,
-                                        contentDescription = "已选择",
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            Text(stringResource(R.string.common_retry))
         }
     }
 }

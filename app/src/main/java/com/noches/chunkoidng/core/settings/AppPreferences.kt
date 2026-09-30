@@ -29,5 +29,9 @@ class AppPreferences(context: Context) {
     var maxMemoryMb: Float
         get() = prefs.getFloat("max_memory_mb", 4096f)
         set(value) = prefs.edit().putFloat("max_memory_mb", value).apply()
+
+    var appLanguage: String
+        get() = prefs.getString("app_language", "system") ?: "system"
+        set(value) = prefs.edit().putString("app_language", value).apply()
 }
 

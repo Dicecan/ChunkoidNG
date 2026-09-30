@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.2-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.3-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -31,20 +31,22 @@
 ---
 
 > [!WARNING]
-> ### 🚧 Early Canary 0.2 Preview Phase
-> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, NetEase world decryption & passive encryption, and a standalone dimension pruning workbench have been fully implemented.
+> ### 🚧 Early Canary 0.3 Preview Phase
+> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, smart version upgrade/downgrade mapping & risk alerts, standardized multi-language architecture (ZH/EN/JA), NetEase world decryption & passive encryption, and a standalone dimension pruning workbench have been fully implemented.
 
 ---
 
 ## 🌟 NG (Next-Generation) Highlights
 
-* **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards, featuring unified Squircle container interactions, bottom sheet target pickers, and responsive non-wrapping typography.
-* **Ultra-Slim RootFS**: Heavily pruned payload down to 57 binaries with 50% storage savings.
-* **Interactive Sandbox Console**: Built-in environment self-check and terminal for debugging OpenJDK 17 and Chunker CLI.
-* **Full-Featured World Converter**: Supports Java/Bedrock bidirectional conversion, multi-version targets, foreground service persistence, history logs, and custom SAF export.
-* **Standalone Dimension Pruning & Slimming**: Dedicated slimming workbench with Overworld-only, Speed, Full-dimension presets, per-dimension pruning, and `-k` keep original NBT rules.
-* **NetEase Decryption & Passive Encryption**: Streaming LevelDB XOR algorithm with magic byte verification, passive encryption, and direct pipeline into world converter.
-* **Standardized UTF-8 Encoding**: Full-stack UTF-8 character encoding to eliminate garbled text across multi-language preferences and runtime diagnostics.
+* 🗺️ **Smart Version Upgrade & Downgrade Mapping**: Minecraft semantic version models and cross-platform equivalent baseline mapping (JE ↔ BE) with auto-recommendations and risk assessment for 1.18 negative height truncation and 1.13 block flattening.
+* 🌐 **Standardized i18n Architecture (ZH / EN / JA)**: Complete English (default fallback), Simplified Chinese, and Japanese localized resources with instant in-app seamless language switching.
+* 🎨 **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards, featuring unified Squircle container interactions, dedicated bottom sheet target pickers, and responsive non-wrapping typography.
+* ⚡ **Ultra-Slim RootFS**: Heavily pruned payload down to 57 binaries with 50% storage savings.
+* 🖥️ **Interactive Sandbox Console**: Built-in environment self-check and terminal for debugging OpenJDK 17 and Chunker CLI.
+* 🌍 **Full-Featured World Converter**: Supports Java/Bedrock bidirectional conversion, multi-version targets, foreground service persistence, history logs, and custom SAF export.
+* ✂️ **Standalone Dimension Pruning & Slimming**: Dedicated slimming workbench with Overworld-only, Speed, Full-dimension presets, per-dimension pruning, and `-k` keep original NBT rules.
+* 🔐 **NetEase Decryption & Passive Encryption**: Streaming LevelDB XOR algorithm with magic byte verification, passive encryption, and direct pipeline into world converter.
+* 🔤 **Standardized UTF-8 Encoding**: Full-stack UTF-8 character encoding to eliminate garbled text across multi-language preferences and runtime diagnostics.
 
 ---
 
@@ -54,6 +56,8 @@
 * ✅ **Bidirectional World Conversion**: `Implemented` (Supports Java/Bedrock conversion, version targets, foreground service, history logs, and remedy export)
 * ✅ **Dimension Pruning & World Slimming**: `Implemented` (Standalone workbench, Overworld-only/Speed presets, per-dimension toggles, and `-k` raw NBT retention)
 * ✅ **NetEase Decryption & Passive Encryption**: `Implemented` (LevelDB XOR stream decryptor, magic byte check, passive encryption, and pipeline integration)
+* ✅ **Version Mapping & Risk Assessment**: `Implemented (Canary 0.3)` (Semantic version models, baseline recommendation, 1.18/1.13 downgrade alerts)
+* ✅ **Standardized i18n (ZH / EN / JA)**: `Implemented (Canary 0.3)` (Full English, Chinese, Japanese localizations with in-app switcher)
 * ⏳ **NBT / LevelDB Visual Explorer**: `In Development` (Pending migration)
 * ⏳ **Resource Pack Converter**: `In Development` (Pending migration)
 
