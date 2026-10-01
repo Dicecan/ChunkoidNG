@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -539,6 +540,26 @@ private fun NbtEmptyStateView(
     }
 }
 
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> "%.1f KB".format(bytes / 1024.0)
+        else -> "%.2f MB".format(bytes / (1024.0 * 1024.0))
+    }
+}
+
+private fun getCategoryColor(category: LevelDbCategory): Color {
+    return when (category) {
+        LevelDbCategory.ALL -> Color(0xFF64748B)
+        LevelDbCategory.PLAYER -> Color(0xFFFF9100)
+        LevelDbCategory.ENTITY -> Color(0xFFF50057)
+        LevelDbCategory.BLOCK_ENTITY -> Color(0xFF7C4DFF)
+        LevelDbCategory.WORLD -> Color(0xFF00B0FF)
+        LevelDbCategory.CHUNK -> Color(0xFF00C853)
+        LevelDbCategory.OTHER -> Color(0xFF9E9E9E)
+    }
+}
+
 @Composable
 private fun NbtWorkspaceView(
     state: NbtEditorUiState,
@@ -558,44 +579,79 @@ private fun NbtWorkspaceView(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = state.activeWorkspaceName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = if (state.hasLevelDb) {
-                        stringResource(R.string.nbt_leveldb_records_count, state.levelDbRecords.size)
-                    } else {
-                        "${state.workspaceZipEntries.size} files"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = state.activeWorkspaceName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = if (state.hasLevelDb) {
+                                stringResource(R.string.nbt_leveldb_records_count, state.levelDbRecords.size)
+                            } else {
+                                stringResource(R.string.nbt_workspace_files_count, state.workspaceZipEntries.size)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                    ) {
+                        Text(
+                            text = if (state.hasLevelDb) "LevelDB" else "ARCHIVE",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
 
                 if (state.hasLevelDb) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Button(
                             onClick = onOpen2DMap,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Outlined.Map, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.nbt_leveldb_prune_opt_2d), fontSize = 12.sp)
+                            Icon(Icons.Outlined.Map, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.nbt_leveldb_prune_opt_2d),
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                         OutlinedButton(
                             onClick = onOpenPruneDialog,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Outlined.CleaningServices, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.nbt_prune_useless_chunks), fontSize = 12.sp)
+                            Icon(Icons.Outlined.CleaningServices, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.nbt_prune_useless_chunks),
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
                 }
@@ -640,7 +696,7 @@ private fun NbtWorkspaceView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
-                placeholder = { Text(stringResource(R.string.nbt_search_hint)) },
+                placeholder = { Text(stringResource(R.string.nbt_leveldb_search_hint)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -649,49 +705,89 @@ private fun NbtWorkspaceView(
             Box(modifier = Modifier.weight(1f)) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.filteredLevelDbRecords, key = { it.key.contentHashCode() }) { record ->
+                        val catColor = getCategoryColor(record.category)
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onRecordClick(record) },
                             shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 4.dp, height = 36.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(catColor)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = record.displayName,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = catColor.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = stringResource(record.category.titleRes),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = catColor,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                            if (record.isNbt) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                                ) {
+                                                    Text(
+                                                        text = "NBT",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    val keyDisplay = if (record.keyString.isNotEmpty() && record.keyString.all { it.isLetterOrDigit() || it in "_-~.: " }) {
+                                        record.keyString
+                                    } else {
+                                        "0x" + record.keyToHex()
+                                    }
+                                    val sizeFormatted = formatFileSize(record.valueSize.toLong())
                                     Text(
-                                        text = record.displayName,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.weight(1f),
+                                        text = "Key: $keyDisplay  •  $sizeFormatted",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    if (record.isNbt) {
-                                        Surface(
-                                            shape = RoundedCornerShape(4.dp),
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                                        ) {
-                                            Text(
-                                                text = "NBT",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                    }
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Key: ${if (record.keyString.isNotEmpty()) record.keyString else "0x" + record.keyToHex()} | ${record.valueSize} B",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
                             }
                         }
                     }
@@ -711,7 +807,7 @@ private fun NbtWorkspaceView(
                 modifier = Modifier
                     .fillMaxSize()
                     .weight(1f),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(state.workspaceZipEntries.keys.toList().sorted()) { entryName ->
@@ -720,7 +816,8 @@ private fun NbtWorkspaceView(
                             .fillMaxWidth()
                             .clickable { onFileClick(entryName) },
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
@@ -739,7 +836,7 @@ private fun NbtWorkspaceView(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = if (entryName.endsWith(".mca", true)) "Anvil MCA Region" else "NBT Document",
+                                    text = if (entryName.endsWith(".mca", true)) stringResource(R.string.nbt_file_type_mca) else stringResource(R.string.nbt_file_type_nbt),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

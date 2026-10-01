@@ -489,6 +489,10 @@
     <string name="nbt_close_workspace">ワークスペースを閉じる</string>
     <string name="nbt_tab_leveldb">LevelDB データベース</string>
     <string name="nbt_tab_files">ワールドファイル</string>
+    <string name="nbt_leveldb_search_hint">キー、プレイヤーUUID、チャンク座標 (例: 0,0) を検索...</string>
+    <string name="nbt_workspace_files_count">アーカイブ内 %1$d 個のファイル</string>
+    <string name="nbt_file_type_mca">Anvil MCA リージョン</string>
+    <string name="nbt_file_type_nbt">NBT ドキュメント</string>
     <string name="nbt_leveldb_records_count">%1$d 件のレコード</string>
     <string name="nbt_leveldb_found_count">%1$d 件見つかりました (全 %2$d 件)</string>
     <string name="nbt_leveldb_save_success">エントリ「%s」をLevelDBに正常に保存しました！</string>

@@ -489,6 +489,10 @@
     <string name="nbt_close_workspace">Close Workspace</string>
     <string name="nbt_tab_leveldb">LevelDB Database</string>
     <string name="nbt_tab_files">World Files</string>
+    <string name="nbt_leveldb_search_hint">Search Key, player UUID or chunk (e.g. 0,0)...</string>
+    <string name="nbt_workspace_files_count">%1$d files in archive</string>
+    <string name="nbt_file_type_mca">Anvil MCA Region</string>
+    <string name="nbt_file_type_nbt">NBT Document</string>
     <string name="nbt_leveldb_records_count">%1$d entries</string>
     <string name="nbt_leveldb_found_count">Found %1$d entries (of %2$d)</string>
     <string name="nbt_leveldb_save_success">Successfully saved entry "%s" to LevelDB!</string>
