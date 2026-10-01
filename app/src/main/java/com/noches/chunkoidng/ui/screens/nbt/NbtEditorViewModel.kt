@@ -10,6 +10,7 @@ import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.leveldb.BedrockLevelDbHelper
 import com.noches.chunkoidng.core.leveldb.LevelDbCategory
 import com.noches.chunkoidng.core.leveldb.LevelDbRecord
+import com.noches.chunkoidng.core.nbt.MinecraftSemanticDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -677,13 +678,20 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val rootKey = state.currentNbtFile?.name?.ifEmpty { "Root" } ?: "Root"
         val query = state.treeSearchQuery.trim().lowercase()
         val result = mutableListOf<NbtTreeNode>()
+        val context = getApplication<Application>()
 
         if (query.isNotEmpty()) {
             fun searchTraverse(tag: NbtTag, key: String, parent: NbtTag?, depth: Int, path: String, index: Int) {
                 val node = NbtTreeNode(key, tag, parent, depth, false, path, index)
+                val semantic = MinecraftSemanticDescriptor.describeNbt(key, path)
+                val semanticMatch = if (semantic != null) {
+                    context.getString(semantic.titleRes).lowercase().contains(query) ||
+                        (semantic.guideRes != null && context.getString(semantic.guideRes).lowercase().contains(query))
+                } else false
                 val matches = key.lowercase().contains(query) ||
                     path.lowercase().contains(query) ||
-                    node.displayValue.lowercase().contains(query)
+                    node.displayValue.lowercase().contains(query) ||
+                    semanticMatch
                 if (matches) {
                     result.add(node)
                 }
@@ -934,17 +942,25 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
     private fun applyLevelDbFilter() {
         val cat = _uiState.value.selectedCategory
         val q = _uiState.value.levelDbSearchQuery.trim().lowercase()
+        val context = getApplication<Application>()
 
         val filtered = allLevelDbRecords.filter { record ->
             val matchCat = (cat == LevelDbCategory.ALL || record.category == cat)
             if (!matchCat) return@filter false
             if (q.isEmpty()) return@filter true
 
+            val semantic = MinecraftSemanticDescriptor.describeLevelDbRecord(record)
+            val semanticMatch = if (semantic != null) {
+                context.getString(semantic.titleRes).lowercase().contains(q) ||
+                    (semantic.guideRes != null && context.getString(semantic.guideRes).lowercase().contains(q))
+            } else false
+
             record.displayName.lowercase().contains(q) ||
                 record.keyString.lowercase().contains(q) ||
                 record.keyToHex().contains(q) ||
                 (record.chunkX != null && record.chunkX.toString() == q) ||
-                (record.chunkZ != null && record.chunkZ.toString() == q)
+                (record.chunkZ != null && record.chunkZ.toString() == q) ||
+                semanticMatch
         }
 
         _uiState.update { it.copy(filteredLevelDbRecords = filtered) }

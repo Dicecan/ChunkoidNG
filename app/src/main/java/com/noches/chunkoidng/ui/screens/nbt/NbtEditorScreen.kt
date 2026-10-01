@@ -52,6 +52,7 @@ import br.com.gamemods.nbtmanipulator.*
 import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.leveldb.LevelDbCategory
 import com.noches.chunkoidng.core.leveldb.LevelDbRecord
+import com.noches.chunkoidng.core.nbt.MinecraftSemanticDescriptor
 import java.io.File
 import kotlin.math.max
 import kotlin.math.min
@@ -747,6 +748,21 @@ private fun NbtWorkspaceView(
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            val semanticTag = MinecraftSemanticDescriptor.describeLevelDbRecord(record)
+                                            if (semanticTag != null) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = Color(semanticTag.colorRgb).copy(alpha = 0.15f)
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(semanticTag.titleRes),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(semanticTag.colorRgb),
+                                                        fontWeight = FontWeight.Medium,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
                                             Surface(
                                                 shape = RoundedCornerShape(4.dp),
                                                 color = catColor.copy(alpha = 0.15f)
@@ -994,6 +1010,23 @@ private fun NbtNodeItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+
+        val semanticTag = MinecraftSemanticDescriptor.describeNbt(node.key, node.path)
+        if (semanticTag != null) {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = Color(semanticTag.colorRgb).copy(alpha = 0.15f),
+                modifier = Modifier.padding(start = 6.dp)
+            ) {
+                Text(
+                    text = stringResource(semanticTag.titleRes),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(semanticTag.colorRgb),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.width(8.dp))
 
@@ -1406,17 +1439,66 @@ private fun NbtEditValueDialog(
     }
     var text by remember { mutableStateOf(initialText) }
     var isError by remember { mutableStateOf(false) }
+    val semanticTag = MinecraftSemanticDescriptor.describeNbt(node.key, node.path)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.nbt_edit_value)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "${node.tagTypeName} - ${node.key}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "${node.tagTypeName} • ${node.key}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (semanticTag != null) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = Color(semanticTag.colorRgb).copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = stringResource(semanticTag.titleRes),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(semanticTag.colorRgb),
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (semanticTag?.guideRes != null) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(semanticTag.guideRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = text,
                     onValueChange = {
@@ -1632,11 +1714,59 @@ private fun NbtBinaryPreviewDialog(
     onDismiss: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val semanticTag = MinecraftSemanticDescriptor.describeLevelDbRecord(record)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(record.displayName) },
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(record.displayName)
+                if (semanticTag != null) {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color(semanticTag.colorRgb).copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = stringResource(semanticTag.titleRes),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(semanticTag.colorRgb),
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (semanticTag?.guideRes != null) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(semanticTag.guideRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = "Key: ${record.keyString.ifEmpty { "0x" + record.keyToHex() }}",
                     style = MaterialTheme.typography.bodySmall,
