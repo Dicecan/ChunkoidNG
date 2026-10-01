@@ -118,6 +118,7 @@ fun MainAppScaffold() {
                             "world_converter" -> navController.navigate("world_converter")
                             "netease_decryptor" -> navController.navigate("netease_crypt")
                             "dimension_pruner" -> navController.navigate("dimension_pruner")
+                            "nbt_editor" -> navController.navigate("nbt_editor")
                             "sandbox_terminal" -> navController.navigate("console")
                             else -> {
                                 coroutineScope.launch {
@@ -157,6 +158,12 @@ fun MainAppScaffold() {
                             launchSingleTop = true
                         }
                     }
+                )
+            }
+
+            composable("nbt_editor") {
+                com.noches.chunkoidng.ui.screens.nbt.NbtEditorScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.3-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.4-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -31,13 +31,14 @@
 ---
 
 > [!WARNING]
-> ### 🚧 Early Canary 0.3 Preview Phase
-> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, smart version upgrade/downgrade mapping & risk alerts, standardized multi-language architecture (ZH/EN/JA), NetEase world decryption & passive encryption, and a standalone dimension pruning workbench have been fully implemented.
+> ### 🚧 Early Canary 0.4 Preview Phase
+> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, smart version upgrade/downgrade mapping & risk alerts, standardized multi-language architecture (ZH/EN/JA), NetEase world decryption & passive encryption, standalone dimension pruning workbench, and full-featured NBT / LevelDB visual editor & 2D chunk grid slimming have been fully implemented.
 
 ---
 
 ## 🌟 NG (Next-Generation) Highlights
 
+* 📦 **Full-Featured NBT & LevelDB Visual Editor**: Supports single NBT files (`.dat`, `.nbt`, `level.dat`), MCA region files (`.mca`, `.mcr`), LevelDB databases (`db/`), and world archives (`.zip`, `.mcworld`); built-in pure Java LevelDB engine with SafeEnv (preventing Android mmap crashes); full NBT tree manipulation (add, edit, rename, delete, copy path/value) and 2D Bedrock Chunk Grid visualizer (tap/box selection, InhabitedTime analysis, and 0-tick useless chunk pruning).
 * 🗺️ **Smart Version Upgrade & Downgrade Mapping**: Minecraft semantic version models and cross-platform equivalent baseline mapping (JE ↔ BE) with auto-recommendations and risk assessment for 1.18 negative height truncation and 1.13 block flattening.
 * 🌐 **Standardized i18n Architecture (ZH / EN / JA)**: Complete English (default fallback), Simplified Chinese, and Japanese localized resources with instant in-app seamless language switching.
 * 🎨 **Jetpack Compose (MD3E)**: Built entirely on Material Design 3 Expressive standards, featuring unified Squircle container interactions, dedicated bottom sheet target pickers, and responsive non-wrapping typography.
@@ -58,7 +59,7 @@
 * ✅ **NetEase Decryption & Passive Encryption**: `Implemented` (LevelDB XOR stream decryptor, magic byte check, passive encryption, and pipeline integration)
 * ✅ **Version Mapping & Risk Assessment**: `Implemented (Canary 0.3)` (Semantic version models, baseline recommendation, 1.18/1.13 downgrade alerts)
 * ✅ **Standardized i18n (ZH / EN / JA)**: `Implemented (Canary 0.3)` (Full English, Chinese, Japanese localizations with in-app switcher)
-* ⏳ **NBT / LevelDB Visual Explorer**: `In Development` (Pending migration)
+* ✅ **NBT / LevelDB Visual Explorer**: `Implemented (Canary 0.4)` (Tree manipulation, LevelDB category query, 2D chunk grid visualizer & precise chunk slimming)
 * ⏳ **Resource Pack Converter**: `In Development` (Pending migration)
 
 ---
