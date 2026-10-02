@@ -39,10 +39,16 @@ object FlatWorldMusicGenerator {
                 this["DayCycleStopTime"] = NbtInt(6000)
                 this["commandsEnabled"] = NbtByte(1)
                 this["cheatsEnabled"] = NbtByte(1)
+                this["hasBeenLoadedInCreative"] = NbtByte(1)
+                this["difficulty"] = NbtInt(0)
                 this["FlatWorldLayers"] = NbtString(
-                    """{"biome_id":1,"block_layers":[{"block_name":"minecraft:bedrock","count":1},{"block_name":"minecraft:dirt","count":2},{"block_name":"minecraft:grass_block","count":1}],"encoding_version":6,"structure_options":null}"""
+                    """{"biome_id":1,"block_layers":[{"block_data":0,"block_name":"minecraft:bedrock","count":1},{"block_data":0,"block_name":"minecraft:dirt","count":2},{"block_data":0,"block_name":"minecraft:grass_block","count":1}],"encoding_version":6,"structure_options":null}"""
                 )
                 this["RandomSeed"] = NbtLong(12345678L)
+                this["experiments"] = NbtCompound().apply {
+                    this["experiments_ever_used"] = NbtByte(1)
+                    this["saved_with_toggled_experiments"] = NbtByte(1)
+                }
             }
 
             val levelDatFile = File(tempDir, "level.dat")
@@ -50,6 +56,7 @@ object FlatWorldMusicGenerator {
                 version = 10
             }
             NbtIO.writeNbtFile(levelDatFile, nbtFile, compressed = false, littleEndian = true, writeHeaders = true)
+            File(tempDir, "level.dat_old").writeBytes(levelDatFile.readBytes())
 
             onProgress?.invoke("正在生成基岩版物理结构文件 (.mcstructure)...")
             val structuresDir = File(tempDir, "structures").apply { mkdirs() }
@@ -61,6 +68,9 @@ object FlatWorldMusicGenerator {
             val moduleUuid = UUID.randomUUID().toString()
 
             val bpDir = File(tempDir, "behavior_packs/music_loader").apply { mkdirs() }
+            val bpStructuresDir = File(bpDir, "structures").apply { mkdirs() }
+            mcstructureFile.copyTo(File(bpStructuresDir, "music.mcstructure"), overwrite = true)
+
             val bpManifest = File(bpDir, "manifest.json")
             bpManifest.writeText(
                 """
@@ -71,7 +81,7 @@ object FlatWorldMusicGenerator {
                     "name": "Redstone Music Loader",
                     "uuid": "$packUuid",
                     "version": [1, 0, 0],
-                    "min_engine_version": [1, 16, 0]
+                    "min_engine_version": [1, 20, 0]
                   },
                   "modules": [
                     {

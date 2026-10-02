@@ -57,28 +57,20 @@ public object NbtIO {
                 stream.flush()
             }
         } else {
-            RandomAccessFile(file, "rw").use { openFile ->
-                openFile.setLength(8)
-                FileOutputStream(openFile.fd).buffered().let { stream ->
-                    with(LittleEndianDataOutputStream(stream)) {
-                        writeInt(tag.version ?: 0)
-                        writeInt(0)
-                        flush()
-                    }
-                    writeNbtFile(stream, tag, compressed, littleEndian)
-                    stream.flush()
-                }
+            val baos = ByteArrayOutputStream()
+            writeNbtFile(baos, tag, compressed, littleEndian)
+            val nbtBytes = baos.toByteArray()
+            val ver = tag.version ?: 0
+            val len = nbtBytes.size
 
-                val fileLength = openFile.length() - 8L
-                val intLength = if (fileLength > Int.MAX_VALUE) Int.MAX_VALUE else fileLength.toInt()
-                tag.length = intLength
-
-                openFile.seek(8)
-                with(LittleEndianDataOutputStream(FileOutputStream(openFile.fd))) {
-                    writeInt(intLength)
-                    flush()
-                }
+            file.outputStream().use { fos ->
+                val dos = LittleEndianDataOutputStream(fos)
+                dos.writeInt(ver)
+                dos.writeInt(len)
+                dos.write(nbtBytes)
+                dos.flush()
             }
+            tag.length = len
         }
     }
 

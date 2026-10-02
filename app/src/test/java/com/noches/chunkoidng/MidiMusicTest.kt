@@ -5,6 +5,8 @@ import com.noches.chunkoidng.core.midi.*
 import com.noches.chunkoidng.core.midi.exporters.FlatWorldMusicGenerator
 import com.noches.chunkoidng.core.midi.exporters.NbsExporter
 import com.noches.chunkoidng.core.midi.exporters.StructureExporter
+import com.noches.chunkoidng.core.world.Platform
+import com.noches.chunkoidng.core.world.WorldMetadataReader
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.ByteArrayOutputStream
@@ -144,18 +146,46 @@ class MidiMusicTest {
         assertTrue(mcworldFile.length() > 0)
 
         val entryNames = mutableListOf<String>()
-        ZipInputStream(FileInputStream(mcworldFile)).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                entryNames.add(entry.name)
-                entry = zis.nextEntry
-            }
+        val extractedDir = File.createTempFile("extracted_mcworld", "").apply {
+            delete()
+            mkdirs()
         }
 
-        assertTrue(entryNames.contains("levelname.txt"))
-        assertTrue(entryNames.contains("level.dat"))
-        assertTrue(entryNames.contains("structures/music.mcstructure"))
-        assertTrue(entryNames.contains("world_behavior_packs.json"))
-        assertTrue(entryNames.any { it.contains("music_init.mcfunction") })
+        try {
+            ZipInputStream(FileInputStream(mcworldFile)).use { zis ->
+                var entry = zis.nextEntry
+                while (entry != null) {
+                    entryNames.add(entry.name)
+                    val destFile = File(extractedDir, entry.name)
+                    destFile.parentFile?.mkdirs()
+                    destFile.outputStream().use { fos ->
+                        zis.copyTo(fos)
+                    }
+                    entry = zis.nextEntry
+                }
+            }
+
+            assertTrue(entryNames.contains("levelname.txt"))
+            assertTrue(entryNames.contains("level.dat"))
+            assertTrue(entryNames.contains("level.dat_old"))
+            assertTrue(entryNames.contains("structures/music.mcstructure"))
+            assertTrue(entryNames.contains("behavior_packs/music_loader/structures/music.mcstructure"))
+            assertTrue(entryNames.contains("world_behavior_packs.json"))
+            assertTrue(entryNames.any { it.contains("music_init.mcfunction") })
+
+            val levelDat = File(extractedDir, "level.dat")
+            assertTrue(levelDat.exists())
+            val metadata = WorldMetadataReader.readLevelDat(levelDat)
+            assertNotNull(metadata)
+            assertEquals(Platform.BEDROCK, metadata?.platform)
+            assertEquals("Superflat Test", metadata?.worldName)
+            assertEquals("Creative", metadata?.gameType)
+
+            val bpStructure = File(extractedDir, "behavior_packs/music_loader/structures/music.mcstructure")
+            assertTrue(bpStructure.exists())
+            assertTrue(bpStructure.length() > 0)
+        } finally {
+            extractedDir.deleteRecursively()
+        }
     }
 }
