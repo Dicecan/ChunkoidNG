@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Android向けオープンソースのMinecraftワールド変換ツール</string>
-    <string name="app_version_display">Next-Generation · CANARY 0.3 (Compose MD3E)</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.4 (Compose MD3E)</string>
+    <string name="app_version_badge">CANARY 0.4</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">キャンセル</string>
@@ -175,7 +176,9 @@
     <string name="about_team_org">保守組織</string>
     <string name="about_team_contributors">主要貢献者</string>
     <string name="about_team_license">オープンソースライセンス</string>
-    <string name="about_features_title">CANARY 0.3 実装機能と特徴</string>
+    <string name="about_features_title">CANARY 0.4 実装機能と特徴</string>
+    <string name="about_feature_nbt">全機能 NBT・LevelDB ビジュアルエディタ</string>
+    <string name="about_feature_nbt_desc">全フォーマットのツリー編集、Minecraft セマンティックタグ、大容量配列ページング、2D チャンクグリッド軽量化</string>
     <string name="about_feature_convert">ワールド相互変換とエクスポート</string>
     <string name="about_feature_convert_desc">Java/統合版の相互変換、バージョン選択、バックグラウンド保活、履歴管理、SAFエクスポートに対応</string>
     <string name="about_feature_mapping">バージョン昇格・降格マッピング</string>

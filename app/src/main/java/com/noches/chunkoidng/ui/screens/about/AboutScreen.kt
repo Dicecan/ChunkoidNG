@@ -149,6 +149,11 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     FeatureHighlightRow(
+                        title = stringResource(R.string.about_feature_nbt),
+                        desc = stringResource(R.string.about_feature_nbt_desc)
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    FeatureHighlightRow(
                         title = stringResource(R.string.about_feature_mapping),
                         desc = stringResource(R.string.about_feature_mapping_desc)
                     )

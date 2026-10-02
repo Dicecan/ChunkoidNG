@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">首个专为安卓打造的开源 Minecraft 世界转换工具</string>
-    <string name="app_version_display">Next-Generation · CANARY 0.3 (Compose MD3E)</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.4 (Compose MD3E)</string>
+    <string name="app_version_badge">CANARY 0.4</string>
 
     <string name="common_ok">确定</string>
     <string name="common_cancel">取消</string>
@@ -175,7 +176,9 @@
     <string name="about_team_org">现维护组织</string>
     <string name="about_team_contributors">核心贡献者</string>
     <string name="about_team_license">开源协议</string>
-    <string name="about_features_title">CANARY 0.3 实装功能与特性</string>
+    <string name="about_features_title">CANARY 0.4 实装功能与特性</string>
+    <string name="about_feature_nbt">全能 NBT 与 LevelDB 可视化编辑器</string>
+    <string name="about_feature_nbt_desc">支持全格式树结构编辑、Minecraft 智能语义作用标签、大数组分页与 2D 区块栅格可视化精准瘦身</string>
     <string name="about_feature_convert">世界存档双向互转与导出</string>
     <string name="about_feature_convert_desc">全功能支持 Java / 基岩版互转、跨版本升降级、前台服务保活转换、转换历史管理与 SAF 自定义导出</string>
     <string name="about_feature_mapping">版本升降级基础映射与智能推荐</string>

@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
-    <string name="app_version_display">Next-Generation · CANARY 0.3 (Compose MD3E)</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.4 (Compose MD3E)</string>
+    <string name="app_version_badge">CANARY 0.4</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">Cancel</string>
@@ -175,7 +176,9 @@
     <string name="about_team_org">Current Maintainer</string>
     <string name="about_team_contributors">Core Contributors</string>
     <string name="about_team_license">Open Source License</string>
-    <string name="about_features_title">CANARY 0.3 Features &amp; Highlights</string>
+    <string name="about_features_title">CANARY 0.4 Features &amp; Highlights</string>
+    <string name="about_feature_nbt">NBT &amp; LevelDB Visual Explorer</string>
+    <string name="about_feature_nbt_desc">Full-format tree manipulation, Minecraft smart semantic tags, big data paging, and 2D chunk grid slimming</string>
     <string name="about_feature_convert">Bidirectional World Conversion</string>
     <string name="about_feature_convert_desc">Java/Bedrock bidirectional conversion, target version pickers, foreground persistence, history logs, and SAF export</string>
     <string name="about_feature_mapping">Smart Version Upgrade &amp; Downgrade Mapping</string>

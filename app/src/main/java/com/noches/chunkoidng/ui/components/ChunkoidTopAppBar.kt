@@ -63,7 +63,7 @@ fun ChunkoidTopAppBar(
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "CANARY 0.3",
+                            text = stringResource(R.string.app_version_badge),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
