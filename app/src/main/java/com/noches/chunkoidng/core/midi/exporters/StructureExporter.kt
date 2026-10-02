@@ -59,7 +59,7 @@ object StructureExporter {
         var lastTick = 0
 
         for ((tick, noteList) in notesByTick) {
-            val delta = (tick - lastTick).coerceAtLeast(1)
+            val delta = (tick - lastTick).coerceIn(1, 8)
             var remainingDelay = delta
 
             while (remainingDelay > 0) {
@@ -249,10 +249,19 @@ object StructureExporter {
             }
         }
 
+        val negOne = NbtInt(-1)
+        val list0 = ArrayList<NbtInt>(totalBlocks)
+        val list1 = ArrayList<NbtInt>(totalBlocks)
+        for (i in 0 until totalBlocks) {
+            val v = layer0[i]
+            list0.add(if (v == -1) negOne else NbtInt(v))
+            list1.add(negOne)
+        }
+
         val structureCompound = NbtCompound().apply {
             this["block_indices"] = NbtList(
-                NbtList(layer0.map { NbtInt(it) }),
-                NbtList(layer1.map { NbtInt(it) })
+                NbtList(list0),
+                NbtList(list1)
             )
             this["entities"] = NbtList<NbtCompound>()
             this["palette"] = NbtCompound().apply {

@@ -82,27 +82,38 @@ object MidiParser {
                 bytesRead += count
             }
 
-            val trackStream = ByteArrayInputStream(trackData)
+            var offset = 0
             var currentTick = 0L
             var runningStatus = 0
             val channelPrograms = IntArray(16) { 0 }
             var trackName = "Track $trackIdx"
             val currentTrackNotes = mutableListOf<RawMidiNote>()
 
-            while (trackStream.available() > 0) {
-                val delta = readVariableLength(trackStream)
+            fun readVarInt(): Long {
+                var value = 0L
+                while (offset < trackData.size) {
+                    val b = trackData[offset++].toInt() and 0xFF
+                    value = (value shl 7) or ((b and 0x7F).toLong())
+                    if ((b and 0x80) == 0) break
+                }
+                return value
+            }
+
+            while (offset < trackData.size) {
+                val delta = readVarInt()
                 currentTick += delta
+                if (offset >= trackData.size) break
 
-                var statusByte = trackStream.read()
-                if (statusByte < 0) break
-
-                if (statusByte < 0x80) {
-                    trackStream.reset()
-                    val skipCount = trackData.size - trackStream.available() - 1
-                    trackStream.skip(skipCount.toLong())
+                val firstByte = trackData[offset++].toInt() and 0xFF
+                val statusByte: Int
+                if (firstByte < 0x80) {
+                    offset--
                     statusByte = runningStatus
                 } else {
-                    runningStatus = statusByte
+                    statusByte = firstByte
+                    if (firstByte < 0xF0) {
+                        runningStatus = firstByte
+                    }
                 }
 
                 val eventType = statusByte and 0xF0
@@ -110,66 +121,76 @@ object MidiParser {
 
                 when (eventType) {
                     0x80 -> {
-                        val key = trackStream.read()
-                        val vel = trackStream.read()
+                        if (offset + 1 < trackData.size) {
+                            val key = trackData[offset++].toInt() and 0xFF
+                            val vel = trackData[offset++].toInt() and 0xFF
+                        }
                     }
                     0x90 -> {
-                        val key = trackStream.read()
-                        val vel = trackStream.read()
-                        if (vel > 0) {
-                            val prog = channelPrograms[channel]
-                            currentTrackNotes.add(
-                                RawMidiNote(
-                                    channel = channel,
-                                    pitch = key,
-                                    velocity = vel,
-                                    tick = currentTick,
-                                    startMs = 0L,
-                                    program = prog
+                        if (offset + 1 < trackData.size) {
+                            val key = trackData[offset++].toInt() and 0xFF
+                            val vel = trackData[offset++].toInt() and 0xFF
+                            if (vel > 0) {
+                                val prog = channelPrograms[channel]
+                                currentTrackNotes.add(
+                                    RawMidiNote(
+                                        channel = channel,
+                                        pitch = key,
+                                        velocity = vel,
+                                        tick = currentTick,
+                                        startMs = 0L,
+                                        program = prog
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                     0xA0, 0xB0, 0xE0 -> {
-                        trackStream.read()
-                        trackStream.read()
+                        offset = minOf(offset + 2, trackData.size)
                     }
                     0xC0 -> {
-                        val prog = trackStream.read()
-                        channelPrograms[channel] = prog
+                        if (offset < trackData.size) {
+                            val prog = trackData[offset++].toInt() and 0xFF
+                            channelPrograms[channel] = prog
+                        }
                     }
                     0xD0 -> {
-                        trackStream.read()
+                        if (offset < trackData.size) {
+                            offset++
+                        }
                     }
                     0xF0 -> {
                         if (statusByte == 0xFF) {
-                            val metaType = trackStream.read()
-                            val metaLength = readVariableLength(trackStream).toInt()
-                            val metaBytes = ByteArray(metaLength)
-                            trackStream.read(metaBytes)
+                            if (offset < trackData.size) {
+                                val metaType = trackData[offset++].toInt() and 0xFF
+                                val metaLength = readVarInt().toInt()
+                                val actualLength = minOf(metaLength, (trackData.size - offset).coerceAtLeast(0))
+                                val metaBytes = trackData.copyOfRange(offset, offset + actualLength)
+                                offset += metaLength
 
-                            when (metaType) {
-                                0x51 -> {
-                                    if (metaLength == 3) {
-                                        val usPerQuarter = ((metaBytes[0].toInt() and 0xFF) shl 16) or
-                                                ((metaBytes[1].toInt() and 0xFF) shl 8) or
-                                                (metaBytes[2].toInt() and 0xFF)
-                                        tempoChanges.add(TempoChange(currentTick, usPerQuarter.toLong()))
+                                when (metaType) {
+                                    0x51 -> {
+                                        if (actualLength >= 3) {
+                                            val usPerQuarter = ((metaBytes[0].toInt() and 0xFF) shl 16) or
+                                                    ((metaBytes[1].toInt() and 0xFF) shl 8) or
+                                                    (metaBytes[2].toInt() and 0xFF)
+                                            tempoChanges.add(TempoChange(currentTick, usPerQuarter.toLong()))
+                                        }
                                     }
-                                }
-                                0x03 -> {
-                                    val name = String(metaBytes, Charsets.UTF_8).trim()
-                                    if (name.isNotEmpty()) {
-                                        trackName = name
-                                        if (trackIdx == 0 && songTitle == defaultTitle) {
-                                            songTitle = name
+                                    0x03 -> {
+                                        val name = String(metaBytes, Charsets.UTF_8).trim()
+                                        if (name.isNotEmpty()) {
+                                            trackName = name
+                                            if (trackIdx == 0 && songTitle == defaultTitle) {
+                                                songTitle = name
+                                            }
                                         }
                                     }
                                 }
                             }
                         } else {
-                            val sysexLength = readVariableLength(trackStream).toInt()
-                            trackStream.skip(sysexLength.toLong())
+                            val sysexLength = readVarInt().toInt()
+                            offset = minOf(offset + sysexLength, trackData.size)
                         }
                     }
                 }

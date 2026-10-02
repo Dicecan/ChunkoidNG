@@ -28,7 +28,7 @@ import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.pack.BedrockEngineVersion
 import com.noches.chunkoidng.core.pack.PackPlatform
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PackConverterScreen(
     onNavigateBack: () -> Unit,
@@ -167,9 +167,10 @@ fun PackConverterScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
                             selected = uiState.sourcePlatform == PackPlatform.JAVA && uiState.targetPlatform == PackPlatform.BEDROCK,
@@ -199,8 +200,9 @@ fun PackConverterScreen(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             for (ver in BedrockEngineVersion.ALL.take(3)) {
                                 FilterChip(
@@ -216,8 +218,9 @@ fun PackConverterScreen(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             for (fmt in listOf(34, 15, 12)) {
                                 FilterChip(

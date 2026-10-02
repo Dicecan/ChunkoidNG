@@ -716,4 +716,8 @@
     <string name="midi_conv_success">生成とエクスポートが完了しました！</string>
     <string name="midi_conv_save_file">成果物を保存 / 共有</string>
     <string name="midi_conv_no_file">MIDIファイルを選択してください</string>
+    <string name="midi_conv_parsing">MIDIファイル構造を解析中...</string>
+    <string name="midi_conv_logs_title">実行ログ</string>
+    <string name="midi_conv_logs_empty">ログはまだありません。MIDIファイルを選択してください。</string>
+    <string name="midi_conv_clear_logs">ログをクリア</string>
 </resources>

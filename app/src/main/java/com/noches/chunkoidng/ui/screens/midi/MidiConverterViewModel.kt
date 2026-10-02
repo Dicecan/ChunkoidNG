@@ -15,6 +15,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 enum class MidiExportMode {
     FLAT_WORLD,
@@ -37,7 +40,10 @@ data class MidiConverterUiState(
     val coordY: Int = 64,
     val coordZ: Int = 0,
     val autoBackup: Boolean = true,
+    val isParsing: Boolean = false,
     val isGenerating: Boolean = false,
+    val statusMessage: String = "",
+    val logs: List<String> = emptyList(),
     val generatedFile: File? = null,
     val injectionResult: WorldInjectionResult? = null,
     val errorMessage: String? = null
@@ -48,16 +54,34 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
     private val _uiState = MutableStateFlow(MidiConverterUiState())
     val uiState: StateFlow<MidiConverterUiState> = _uiState.asStateFlow()
 
+    private fun addLog(message: String) {
+        val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        val line = "[$time] $message"
+        _uiState.update {
+            it.copy(
+                statusMessage = message,
+                logs = it.logs + line
+            )
+        }
+    }
+
+    fun clearLogs() {
+        _uiState.update { it.copy(logs = emptyList()) }
+    }
+
     fun onMidiSelected(uri: Uri, displayName: String) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     selectedMidiUri = uri,
                     selectedMidiName = displayName,
-                    isGenerating = true,
+                    isParsing = true,
+                    statusMessage = "正在读取并解析 MIDI 文件...",
                     errorMessage = null
                 )
             }
+            addLog("选择 MIDI 文件: $displayName")
+            addLog("正在解析二进制 SMF 结构与音轨...")
 
             try {
                 val parsed = withContext(Dispatchers.IO) {
@@ -67,17 +91,23 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                     MidiParser.parse(bytes, displayName.substringBeforeLast('.'))
                 }
 
+                addLog("成功解析 MIDI: 格式 ${parsed.format}, 分辨率 ${parsed.division} PPQ")
+                addLog("音轨数: ${parsed.tracks.size}, 音符总计: ${parsed.notes.size}, 时长: ${parsed.durationMs / 1000} 秒, 初始 BPM: ${parsed.initialBpm.toInt()}")
+
                 _uiState.update {
                     it.copy(
                         parsedSong = parsed,
-                        isGenerating = false
+                        isParsing = false,
+                        statusMessage = "解析完成"
                     )
                 }
             } catch (e: Exception) {
+                addLog("解析失败: ${e.message}")
                 _uiState.update {
                     it.copy(
-                        isGenerating = false,
-                        errorMessage = e.message ?: "Failed to parse MIDI"
+                        isParsing = false,
+                        errorMessage = e.message ?: "Failed to parse MIDI",
+                        statusMessage = "解析失败"
                     )
                 }
             }
@@ -100,6 +130,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
         _uiState.update {
             it.copy(targetWorldDir = dir, targetWorldName = dir.name)
         }
+        addLog("已选择目标世界存档: ${dir.name}")
     }
 
     fun setCoordinates(x: Int, y: Int, z: Int) {
@@ -116,33 +147,52 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
 
         viewModelScope.launch {
             _uiState.update {
-                it.copy(isGenerating = true, errorMessage = null, injectionResult = null, generatedFile = null)
+                it.copy(
+                    isGenerating = true,
+                    errorMessage = null,
+                    injectionResult = null,
+                    generatedFile = null,
+                    statusMessage = "开始合成红石音乐..."
+                )
             }
+            addLog("开始生成红石音乐 - 模式: ${state.selectedExportMode.name}")
+            addLog("配置: 速度 ${state.ticksPerSecond} ticks/s, 最优移调: ${state.autoTranspose}")
 
             try {
+                addLog("正在量化时序至 0.1s 红石刻并进行乐器基座方块映射...")
                 val quantConfig = QuantizationConfig(
                     ticksPerSecond = state.ticksPerSecond,
                     autoTransposition = state.autoTranspose
                 )
-                val song = RedstoneQuantizer.quantize(parsed, quantConfig)
+                val song = withContext(Dispatchers.IO) {
+                    RedstoneQuantizer.quantize(parsed, quantConfig)
+                }
+                addLog("时序量化完成: ${song.notes.size} 个音符事件, 总时长 ${song.lengthTicks} 红石刻")
+
                 val cacheDir = getApplication<Application>().cacheDir
                 val title = song.title.ifBlank { "music" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
                 when (state.selectedExportMode) {
                     MidiExportMode.FLAT_WORLD -> {
+                        addLog("正在组装基岩版超平坦即听世界 (.mcworld)...")
                         val outputWorld = File(cacheDir, "$title.mcworld")
                         withContext(Dispatchers.IO) {
-                            FlatWorldMusicGenerator.generateFlatWorld(song, outputWorld)
+                            FlatWorldMusicGenerator.generateFlatWorld(song, outputWorld) { step ->
+                                addLog(step)
+                            }
                         }
+                        val sizeMb = outputWorld.length().toDouble() / (1024.0 * 1024.0)
+                        addLog("超平坦世界生成成功！文件大小: %.2f MB".format(sizeMb))
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = outputWorld)
+                            it.copy(isGenerating = false, generatedFile = outputWorld, statusMessage = "超平坦世界生成成功")
                         }
                     }
 
                     MidiExportMode.INJECT_WORLD -> {
                         val targetDir = state.targetWorldDir
                             ?: throw IllegalArgumentException("Target world folder not selected")
+                        addLog("正在注入目标世界存档: ${targetDir.name} (目标坐标: X=${state.coordX}, Y=${state.coordY}, Z=${state.coordZ})...")
                         val injectConfig = WorldInjectionConfig(
                             targetX = state.coordX,
                             targetY = state.coordY,
@@ -153,22 +203,30 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                         val result = withContext(Dispatchers.IO) {
                             WorldBlockInjector.injectSongIntoWorld(targetDir, song, injectConfig)
                         }
+                        if (result.backupFile != null) {
+                            addLog("已创建安全备份: ${result.backupFile.name}")
+                        }
+                        addLog(result.message)
+                        addLog("游戏内触发命令: ${result.inGameCommand}")
                         _uiState.update {
-                            it.copy(isGenerating = false, injectionResult = result)
+                            it.copy(isGenerating = false, injectionResult = result, statusMessage = "注入完成")
                         }
                     }
 
                     MidiExportMode.STRUCTURE -> {
+                        addLog("正在生成基岩版物理结构文件 (.mcstructure)...")
                         val outputStruct = File(cacheDir, "$title.mcstructure")
                         withContext(Dispatchers.IO) {
                             StructureExporter.exportBedrockMcStructure(song, outputStruct)
                         }
+                        addLog("结构文件生成成功: ${outputStruct.name} (${outputStruct.length()} 字节)")
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = outputStruct)
+                            it.copy(isGenerating = false, generatedFile = outputStruct, statusMessage = "结构导出完成")
                         }
                     }
 
                     MidiExportMode.FUNCTION -> {
+                        addLog("正在生成全版本指令数据包...")
                         val dpDir = File(cacheDir, "music_${title}_datapack")
                         withContext(Dispatchers.IO) {
                             dpDir.deleteRecursively()
@@ -189,26 +247,31 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                             }
                             zos.close()
                         }
+                        addLog("指令数据包生成成功: ${zipFile.name}")
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = zipFile)
+                            it.copy(isGenerating = false, generatedFile = zipFile, statusMessage = "数据包导出完成")
                         }
                     }
 
                     MidiExportMode.NBS -> {
+                        addLog("正在导出 Note Block Studio (.nbs) 文件...")
                         val outputNbs = File(cacheDir, "$title.nbs")
                         withContext(Dispatchers.IO) {
                             NbsExporter.export(song, outputNbs)
                         }
+                        addLog("NBS 文件导出成功: ${outputNbs.name} (${outputNbs.length()} 字节)")
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = outputNbs)
+                            it.copy(isGenerating = false, generatedFile = outputNbs, statusMessage = "NBS 导出完成")
                         }
                     }
                 }
             } catch (e: Exception) {
+                addLog("合成失败: ${e.message}")
                 _uiState.update {
                     it.copy(
                         isGenerating = false,
-                        errorMessage = e.message ?: "Failed to generate redstone music"
+                        errorMessage = e.message ?: "Failed to generate redstone music",
+                        statusMessage = "合成失败"
                     )
                 }
             }
@@ -226,8 +289,10 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                         }
                     }
                 }
+                addLog("成功保存产物至: ${destinationUri.path ?: "外部存储"}")
                 onFinished(true)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                addLog("保存失败: ${e.message}")
                 onFinished(false)
             }
         }

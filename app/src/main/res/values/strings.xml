@@ -716,4 +716,8 @@
     <string name="midi_conv_success">Generation Complete!</string>
     <string name="midi_conv_save_file">Save / Share Output</string>
     <string name="midi_conv_no_file">Please select a MIDI file first</string>
+    <string name="midi_conv_parsing">Parsing MIDI file structure...</string>
+    <string name="midi_conv_logs_title">Execution Logs</string>
+    <string name="midi_conv_logs_empty">No logs yet. Select a MIDI file to begin.</string>
+    <string name="midi_conv_clear_logs">Clear Logs</string>
 </resources>

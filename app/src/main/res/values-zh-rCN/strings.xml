@@ -716,4 +716,8 @@
     <string name="midi_conv_success">生成并导出成功！</string>
     <string name="midi_conv_save_file">保存 / 分享产物</string>
     <string name="midi_conv_no_file">请先选择 MIDI 音乐文件</string>
+    <string name="midi_conv_parsing">正在解析 MIDI 文件结构...</string>
+    <string name="midi_conv_logs_title">执行日志</string>
+    <string name="midi_conv_logs_empty">暂无日志。选择 MIDI 文件后开始生成。</string>
+    <string name="midi_conv_clear_logs">清空日志</string>
 </resources>

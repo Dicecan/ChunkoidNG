@@ -27,7 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.noches.chunkoidng.R
 import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MidiConverterScreen(
     onNavigateBack: () -> Unit,
@@ -224,43 +224,36 @@ fun MidiConverterScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            FilterChip(
-                                selected = uiState.selectedExportMode == MidiExportMode.FLAT_WORLD,
-                                onClick = { viewModel.setExportMode(MidiExportMode.FLAT_WORLD) },
-                                label = { Text(stringResource(R.string.midi_mode_flat_world)) }
-                            )
-                            FilterChip(
-                                selected = uiState.selectedExportMode == MidiExportMode.INJECT_WORLD,
-                                onClick = { viewModel.setExportMode(MidiExportMode.INJECT_WORLD) },
-                                label = { Text(stringResource(R.string.midi_mode_inject)) }
-                            )
-                        }
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            FilterChip(
-                                selected = uiState.selectedExportMode == MidiExportMode.STRUCTURE,
-                                onClick = { viewModel.setExportMode(MidiExportMode.STRUCTURE) },
-                                label = { Text(stringResource(R.string.midi_mode_structure)) }
-                            )
-                            FilterChip(
-                                selected = uiState.selectedExportMode == MidiExportMode.FUNCTION,
-                                onClick = { viewModel.setExportMode(MidiExportMode.FUNCTION) },
-                                label = { Text(stringResource(R.string.midi_mode_function)) }
-                            )
-                            FilterChip(
-                                selected = uiState.selectedExportMode == MidiExportMode.NBS,
-                                onClick = { viewModel.setExportMode(MidiExportMode.NBS) },
-                                label = { Text(stringResource(R.string.midi_mode_nbs)) }
-                            )
-                        }
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        FilterChip(
+                            selected = uiState.selectedExportMode == MidiExportMode.FLAT_WORLD,
+                            onClick = { viewModel.setExportMode(MidiExportMode.FLAT_WORLD) },
+                            label = { Text(stringResource(R.string.midi_mode_flat_world)) }
+                        )
+                        FilterChip(
+                            selected = uiState.selectedExportMode == MidiExportMode.INJECT_WORLD,
+                            onClick = { viewModel.setExportMode(MidiExportMode.INJECT_WORLD) },
+                            label = { Text(stringResource(R.string.midi_mode_inject)) }
+                        )
+                        FilterChip(
+                            selected = uiState.selectedExportMode == MidiExportMode.STRUCTURE,
+                            onClick = { viewModel.setExportMode(MidiExportMode.STRUCTURE) },
+                            label = { Text(stringResource(R.string.midi_mode_structure)) }
+                        )
+                        FilterChip(
+                            selected = uiState.selectedExportMode == MidiExportMode.FUNCTION,
+                            onClick = { viewModel.setExportMode(MidiExportMode.FUNCTION) },
+                            label = { Text(stringResource(R.string.midi_mode_function)) }
+                        )
+                        FilterChip(
+                            selected = uiState.selectedExportMode == MidiExportMode.NBS,
+                            onClick = { viewModel.setExportMode(MidiExportMode.NBS) },
+                            label = { Text(stringResource(R.string.midi_mode_nbs)) }
+                        )
                     }
 
                     if (uiState.selectedExportMode == MidiExportMode.INJECT_WORLD) {
@@ -305,6 +298,36 @@ fun MidiConverterScreen(
                 }
             }
 
+            if (uiState.isParsing) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Text(
+                                text = stringResource(R.string.midi_conv_parsing),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+
             if (uiState.isGenerating) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -317,7 +340,7 @@ fun MidiConverterScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.midi_conv_generating),
+                            text = if (uiState.statusMessage.isNotBlank()) uiState.statusMessage else stringResource(R.string.midi_conv_generating),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -440,6 +463,90 @@ fun MidiConverterScreen(
                 }
             }
 
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Terminal,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = stringResource(R.string.midi_conv_logs_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        if (uiState.logs.isNotEmpty()) {
+                            TextButton(onClick = { viewModel.clearLogs() }) {
+                                Text(
+                                    text = stringResource(R.string.midi_conv_clear_logs),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 96.dp, max = 220.dp),
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        val logScrollState = rememberScrollState()
+                        LaunchedEffect(uiState.logs.size) {
+                            if (uiState.logs.isNotEmpty()) {
+                                logScrollState.animateScrollTo(logScrollState.maxValue)
+                            }
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(logScrollState)
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (uiState.logs.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.midi_conv_logs_empty),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                uiState.logs.forEach { logLine ->
+                                    Text(
+                                        text = logLine,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Button(
                 onClick = {
                     if (uiState.selectedMidiUri == null) {
@@ -448,7 +555,7 @@ fun MidiConverterScreen(
                         viewModel.generateAndExport()
                     }
                 },
-                enabled = !uiState.isGenerating && uiState.selectedMidiUri != null,
+                enabled = !uiState.isGenerating && !uiState.isParsing && uiState.selectedMidiUri != null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

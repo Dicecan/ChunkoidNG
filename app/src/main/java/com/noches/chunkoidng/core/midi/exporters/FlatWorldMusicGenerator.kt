@@ -11,13 +11,18 @@ import java.util.zip.ZipOutputStream
 
 object FlatWorldMusicGenerator {
 
-    fun generateFlatWorld(song: NoteBlockSong, outputMcworldFile: File) {
+    fun generateFlatWorld(
+        song: NoteBlockSong,
+        outputMcworldFile: File,
+        onProgress: ((String) -> Unit)? = null
+    ) {
         val tempDir = File.createTempFile("chunkoid_flat_", "").apply {
             delete()
             mkdirs()
         }
 
         try {
+            onProgress?.invoke("正在写入 levelname.txt 与 level.dat 世界元数据...")
             File(tempDir, "levelname.txt").writeText("Redstone Music - ${song.title.ifBlank { "Untitled" }}")
 
             val levelCompound = NbtCompound().apply {
@@ -46,10 +51,12 @@ object FlatWorldMusicGenerator {
             }
             NbtIO.writeNbtFile(levelDatFile, nbtFile, compressed = false, littleEndian = true, writeHeaders = true)
 
+            onProgress?.invoke("正在生成基岩版物理结构文件 (.mcstructure)...")
             val structuresDir = File(tempDir, "structures").apply { mkdirs() }
             val mcstructureFile = File(structuresDir, "music.mcstructure")
             StructureExporter.exportBedrockMcStructure(song, mcstructureFile)
 
+            onProgress?.invoke("正在配置行为包与自动启动函数...")
             val packUuid = UUID.randomUUID().toString()
             val moduleUuid = UUID.randomUUID().toString()
 
@@ -109,8 +116,10 @@ object FlatWorldMusicGenerator {
                 """.trimIndent()
             )
 
+            onProgress?.invoke("正在压缩打包为 .mcworld 即听世界文件...")
             outputMcworldFile.parentFile?.mkdirs()
             zipDirectory(tempDir, outputMcworldFile)
+            onProgress?.invoke("即听世界打包完成！")
 
         } finally {
             tempDir.deleteRecursively()
