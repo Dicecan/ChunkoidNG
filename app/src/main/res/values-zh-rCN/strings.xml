@@ -462,6 +462,11 @@
     <string name="nbt_expand_all">全部展开</string>
     <string name="nbt_collapse_all">全部折叠</string>
     <string name="nbt_edit_value">编辑数值</string>
+    <string name="nbt_edit_array">编辑数组</string>
+    <string name="nbt_array_info">%1$s %2$s（%3$d 个元素）</string>
+    <string name="nbt_array_empty">此数组为空。</string>
+    <string name="nbt_array_page">第 %1$d / %2$d 页</string>
+    <string name="nbt_array_apply">应用元素修改</string>
     <string name="nbt_add_tag">新建标签</string>
     <string name="nbt_tag_key">标签名称 (Key)</string>
     <string name="nbt_tag_value">标签数值</string>
@@ -650,4 +655,12 @@
     <string name="leveldb_record_map">地图画物品绘制数据</string>
     <string name="leveldb_record_scheduler">世界计划刻调度器</string>
     <string name="leveldb_record_digp">生物群系与生成调色板</string>
+    <string name="nbt_workspace_leveldb">LevelDB</string>
+    <string name="nbt_workspace_anvil">Anvil 区域文件</string>
+    <string name="nbt_workspace_file_count">%1$d 个文件</string>
+    <string name="nbt_workspace_db_record">db/（%1$d 字节）</string>
+    <string name="nbt_workspace_archive">归档</string>
+    <string name="nbt_record_key_size">键：%1$s  •  %2$s</string>
+    <string name="nbt_record_key">键：%1$s</string>
+    <string name="nbt_record_size">大小：%1$d 字节</string>
 </resources>

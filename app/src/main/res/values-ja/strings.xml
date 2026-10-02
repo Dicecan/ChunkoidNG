@@ -462,6 +462,11 @@
     <string name="nbt_expand_all">すべて展開</string>
     <string name="nbt_collapse_all">すべて折りたたむ</string>
     <string name="nbt_edit_value">値を編集</string>
+    <string name="nbt_edit_array">配列を編集</string>
+    <string name="nbt_array_info">%1$s %2$s（%3$d 要素）</string>
+    <string name="nbt_array_empty">この配列は空です。</string>
+    <string name="nbt_array_page">%1$d / %2$d ページ</string>
+    <string name="nbt_array_apply">要素を適用</string>
     <string name="nbt_add_tag">新規タグ</string>
     <string name="nbt_tag_key">タグ名 (Key)</string>
     <string name="nbt_tag_value">タグ値</string>
@@ -650,4 +655,12 @@
     <string name="leveldb_record_map">地図描画データ</string>
     <string name="leveldb_record_scheduler">ワールドスケジュールtick</string>
     <string name="leveldb_record_digp">バイオーム＆スポーンパレット</string>
+    <string name="nbt_workspace_leveldb">LevelDB</string>
+    <string name="nbt_workspace_anvil">Anvil MCA</string>
+    <string name="nbt_workspace_file_count">%1$d ファイル</string>
+    <string name="nbt_workspace_db_record">db/（%1$d バイト）</string>
+    <string name="nbt_workspace_archive">アーカイブ</string>
+    <string name="nbt_record_key_size">キー：%1$s  •  %2$s</string>
+    <string name="nbt_record_key">キー：%1$s</string>
+    <string name="nbt_record_size">サイズ：%1$d バイト</string>
 </resources>

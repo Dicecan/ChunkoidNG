@@ -462,6 +462,11 @@
     <string name="nbt_expand_all">Expand All</string>
     <string name="nbt_collapse_all">Collapse All</string>
     <string name="nbt_edit_value">Edit Value</string>
+    <string name="nbt_edit_array">Edit Array</string>
+    <string name="nbt_array_info">%1$s %2$s (%3$d elements)</string>
+    <string name="nbt_array_empty">This array is empty.</string>
+    <string name="nbt_array_page">Page %1$d of %2$d</string>
+    <string name="nbt_array_apply">Apply element</string>
     <string name="nbt_add_tag">New Tag</string>
     <string name="nbt_tag_key">Tag Name (Key)</string>
     <string name="nbt_tag_value">Tag Value</string>
@@ -650,4 +655,12 @@
     <string name="leveldb_record_map">Map Item Drawing Data</string>
     <string name="leveldb_record_scheduler">World Ticks Scheduler</string>
     <string name="leveldb_record_digp">Biome &amp; Spawn Palette</string>
+    <string name="nbt_workspace_leveldb">LevelDB</string>
+    <string name="nbt_workspace_anvil">Anvil MCA</string>
+    <string name="nbt_workspace_file_count">%1$d files</string>
+    <string name="nbt_workspace_db_record">db/ (%1$d B)</string>
+    <string name="nbt_workspace_archive">ARCHIVE</string>
+    <string name="nbt_record_key_size">Key: %1$s  •  %2$s</string>
+    <string name="nbt_record_key">Key: %1$s</string>
+    <string name="nbt_record_size">Size: %1$d bytes</string>
 </resources>

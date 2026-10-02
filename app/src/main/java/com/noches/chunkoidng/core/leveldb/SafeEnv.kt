@@ -37,11 +37,13 @@ class SafeRandomInputFile(file: java.io.File) : RandomInputFile {
     override fun size(): Long = raf.length()
 
     override fun read(offset: Long, length: Int): ByteBuffer {
-        val buffer = ByteBuffer.allocate(length)
+        require(offset >= 0 && length >= 0) { "Invalid read range" }
+        val available = (raf.length() - offset).coerceAtLeast(0L).coerceAtMost(length.toLong()).toInt()
+        val buffer = ByteBuffer.allocate(available)
         var totalRead = 0
-        while (totalRead < length) {
+        while (totalRead < available) {
             val bytesRead = channel.read(buffer, offset + totalRead)
-            if (bytesRead == -1) {
+            if (bytesRead <= 0) {
                 break
             }
             totalRead += bytesRead

@@ -10,7 +10,9 @@ import org.iq80.leveldb.Options
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
+import java.io.EOFException
 import java.io.File
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -54,185 +56,175 @@ data class LevelDbRecord(
 
 class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
 
+    data class ChunkCoordinateSummary(
+        val populated: Set<Pair<Int, Int>>,
+        val blockEntities: Set<Pair<Int, Int>>
+    )
+
     private var db: DB? = null
+    private val dbLock = Any()
 
     fun open(readOnly: Boolean = false): DB {
-        if (db == null) {
-            val options = Options().apply {
-                createIfMissing(false)
+        synchronized(dbLock) {
+            if (db == null) {
+                val options = Options().apply {
+                    createIfMissing(false)
+                }
+                db = org.iq80.leveldb.impl.DbImpl(options, dbFolder.absolutePath, SafeEnv())
             }
-            db = org.iq80.leveldb.impl.DbImpl(options, dbFolder.absolutePath, SafeEnv())
+            return db!!
         }
-        return db!!
     }
 
     fun getAllRecords(onProgress: ((scannedCount: Int) -> Unit)? = null): List<LevelDbRecord> {
-        val database = open()
         val list = mutableListOf<LevelDbRecord>()
-        val iterator = database.iterator()
-        var count = 0
-        try {
-            iterator.seekToFirst()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                val key = entry.key
-                val value = entry.value
-                val sample = if (value.size > 16) value.copyOfRange(0, 16) else value
-                list.add(categorizeKey(key, value.size, sample))
-                count++
-                if (count % 200 == 0) {
-                    onProgress?.invoke(count)
+        synchronized(dbLock) {
+            val iterator = open().iterator()
+            var count = 0
+            try {
+                iterator.seekToFirst()
+                while (iterator.hasNext()) {
+                    val entry = iterator.next()
+                    // LevelDB iterators are allowed to reuse their backing buffers.
+                    // Records outlive the iterator, so retain an owned key copy.
+                    val key = entry.key.copyOf()
+                    val value = entry.value
+                    // categorizeKey only inspects the first few bytes. Reusing the
+                    // iterator-owned value avoids a copy for every LevelDB record.
+                    list.add(categorizeKey(key, value.size, value))
+                    count++
+                    if (count % 200 == 0) {
+                        onProgress?.invoke(count)
+                    }
                 }
+                onProgress?.invoke(count)
+            } finally {
+                iterator.close()
             }
-            onProgress?.invoke(count)
-        } finally {
-            iterator.close()
         }
         return list
     }
 
     fun get(key: ByteArray): ByteArray? {
-        val database = open()
-        return database.get(key)
+        return synchronized(dbLock) { open().get(key) }
     }
 
     fun put(key: ByteArray, value: ByteArray) {
-        val database = open()
-        database.put(key, value)
+        synchronized(dbLock) { open().put(key, value) }
     }
 
     fun delete(key: ByteArray) {
-        val database = open()
-        database.delete(key)
+        synchronized(dbLock) { open().delete(key) }
     }
 
     fun deleteChunk(chunkX: Int, chunkZ: Int, dimensionId: Int? = null): Int {
-        val database = open()
-        val allRecords = getAllRecords()
-        val toDelete = allRecords.filter { record ->
-            record.chunkX == chunkX && record.chunkZ == chunkZ &&
-                (dimensionId == null || record.dimensionId == dimensionId)
+        return deleteChunkRecords { info ->
+            isKnownChunkTag(info.tagByte) && info.chunkX == chunkX && info.chunkZ == chunkZ &&
+                (dimensionId == null || info.dimensionId == dimensionId)
         }
-        val batch = database.createWriteBatch()
-        try {
-            for (rec in toDelete) {
-                batch.delete(rec.key)
-            }
-            database.write(batch)
-        } finally {
-            batch.close()
-        }
-        return toDelete.size
     }
 
     fun deleteChunks(chunkCoords: Collection<Pair<Int, Int>>, dimensionId: Int? = null): Int {
-        val database = open()
-        val allRecords = getAllRecords()
         val coordSet = chunkCoords.toSet()
-        val toDelete = allRecords.filter { record ->
-            record.chunkX != null && record.chunkZ != null &&
-                coordSet.contains(Pair(record.chunkX, record.chunkZ)) &&
-                (dimensionId == null || record.dimensionId == dimensionId)
+        return deleteChunkRecords { info ->
+            isKnownChunkTag(info.tagByte) && coordSet.contains(Pair(info.chunkX, info.chunkZ)) &&
+                (dimensionId == null || info.dimensionId == dimensionId)
         }
-        val batch = database.createWriteBatch()
-        try {
-            for (rec in toDelete) {
-                batch.delete(rec.key)
-            }
-            database.write(batch)
-        } finally {
-            batch.close()
-        }
-        return toDelete.size
     }
 
     fun deleteChunksOutsideRange(minChunkX: Int, maxChunkX: Int, minChunkZ: Int, maxChunkZ: Int, dimensionId: Int? = null): Int {
-        val database = open()
-        val allRecords = getAllRecords()
-        val toDelete = allRecords.filter { record ->
-            val cx = record.chunkX
-            val cz = record.chunkZ
-            cx != null && cz != null &&
-                (dimensionId == null || record.dimensionId == dimensionId) &&
-                (cx < minChunkX || cx > maxChunkX || cz < minChunkZ || cz > maxChunkZ)
+        return deleteChunkRecords { info ->
+            isKnownChunkTag(info.tagByte) && (dimensionId == null || info.dimensionId == dimensionId) &&
+                (info.chunkX < minChunkX || info.chunkX > maxChunkX ||
+                    info.chunkZ < minChunkZ || info.chunkZ > maxChunkZ)
         }
-        val batch = database.createWriteBatch()
-        try {
-            for (rec in toDelete) {
-                batch.delete(rec.key)
+    }
+
+    private fun isKnownChunkTag(tagByte: Int): Boolean {
+        return when (tagByte) {
+            0x31, 0x32, 0x2F, 0x2C, 0x2D, 0x33, 0x34, 0x35, 0x36, 0x37 -> true
+            else -> false
+        }
+    }
+
+    private data class ChunkKeyInfo(
+        val chunkX: Int,
+        val chunkZ: Int,
+        val dimensionId: Int,
+        val tagByte: Int
+    )
+
+    private fun deleteChunkRecords(predicate: (ChunkKeyInfo) -> Boolean): Int {
+        synchronized(dbLock) {
+            val database = open()
+            val keys = mutableListOf<ByteArray>()
+            val iterator = database.iterator()
+            try {
+                iterator.seekToFirst()
+                while (iterator.hasNext()) {
+                    val key = iterator.next().key
+                    val info = parseChunkKey(key)
+                    if (info != null && predicate(info)) {
+                        keys += key.copyOf()
+                    }
+                }
+            } finally {
+                iterator.close()
             }
-            database.write(batch)
-        } finally {
-            batch.close()
+
+            if (keys.isEmpty()) return 0
+            val batch = database.createWriteBatch()
+            try {
+                keys.forEach(batch::delete)
+                database.write(batch)
+            } finally {
+                batch.close()
+            }
+            return keys.size
         }
-        return toDelete.size
     }
 
     fun getPopulatedChunkCoordinates(dimensionId: Int = 0): Set<Pair<Int, Int>> {
-        val database = open()
-        val set = mutableSetOf<Pair<Int, Int>>()
-        val iterator = database.iterator()
-        try {
-            iterator.seekToFirst()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                val key = entry.key
-                if (key.size in 9..14 || key.size in 4..8) {
-                    try {
-                        val buffer = ByteBuffer.wrap(key).order(ByteOrder.LITTLE_ENDIAN)
-                        if (key.size >= 8) {
-                            val chunkX = buffer.getInt(0)
-                            val chunkZ = buffer.getInt(4)
-                            val hasDim = key.size >= 13
-                            val dim = if (hasDim) buffer.getInt(8) else 0
-                            if (dim == dimensionId) {
-                                set.add(Pair(chunkX, chunkZ))
-                            }
-                        }
-                    } catch (_: Exception) {}
-                }
-            }
-        } finally {
-            iterator.close()
-        }
-        return set
+        return scanChunkCoordinates(dimensionId).populated
     }
 
     fun getBlockEntityChunkCoordinates(dimensionId: Int = 0): Set<Pair<Int, Int>> {
-        val database = open()
-        val set = mutableSetOf<Pair<Int, Int>>()
-        val iterator = database.iterator()
-        try {
-            iterator.seekToFirst()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                val key = entry.key
-                if (key.size in 9..14) {
-                    try {
-                        val buffer = ByteBuffer.wrap(key).order(ByteOrder.LITTLE_ENDIAN)
-                        val chunkX = buffer.getInt(0)
-                        val chunkZ = buffer.getInt(4)
-                        val hasDim = key.size >= 13
-                        val dim = if (hasDim) buffer.getInt(8) else 0
-                        val tagByte = if (hasDim && key.size >= 13) key[12].toInt() and 0xFF else key[8].toInt() and 0xFF
-                        if (dim == dimensionId && tagByte == 0x31) {
-                            set.add(Pair(chunkX, chunkZ))
-                        }
-                    } catch (_: Exception) {}
+        return scanChunkCoordinates(dimensionId).blockEntities
+    }
+
+    fun getChunkCoordinateSummary(dimensionId: Int = 0): ChunkCoordinateSummary {
+        return scanChunkCoordinates(dimensionId)
+    }
+
+    private fun scanChunkCoordinates(dimensionId: Int): ChunkCoordinateSummary {
+        val populated = mutableSetOf<Pair<Int, Int>>()
+        val blockEntities = mutableSetOf<Pair<Int, Int>>()
+        synchronized(dbLock) {
+            val iterator = open().iterator()
+            try {
+                iterator.seekToFirst()
+                while (iterator.hasNext()) {
+                    val info = parseChunkKey(iterator.next().key) ?: continue
+                    if (info.dimensionId != dimensionId) continue
+                    val coordinate = Pair(info.chunkX, info.chunkZ)
+                    populated += coordinate
+                    if (info.tagByte == 0x31) blockEntities += coordinate
                 }
+            } finally {
+                iterator.close()
             }
-        } finally {
-            iterator.close()
         }
-        return set
+        return ChunkCoordinateSummary(populated, blockEntities)
     }
 
     override fun close() {
-        try {
-            db?.close()
-        } catch (_: Exception) {
-        } finally {
-            db = null
+        synchronized(dbLock) {
+            try {
+                db?.close()
+            } catch (_: Exception) {
+            } finally {
+                db = null
+            }
         }
     }
 
@@ -299,39 +291,32 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
                 return LevelDbRecord(key, keyStr, "Scheduler (schedulerWT)", LevelDbCategory.WORLD, valueSize = valueSize, isNbt = isNbt)
             }
 
-            if (key.size in 9..14 || key.size in 4..8) {
-                try {
-                    val buffer = ByteBuffer.wrap(key).order(ByteOrder.LITTLE_ENDIAN)
-                    if (key.size >= 8) {
-                        val chunkX = buffer.getInt(0)
-                        val chunkZ = buffer.getInt(4)
-                        val hasDim = key.size >= 13
-                        val dim = if (hasDim) buffer.getInt(8) else 0
-                        val tagByte = if (hasDim && key.size >= 13) key[12].toInt() and 0xFF else if (key.size >= 9) key[8].toInt() and 0xFF else -1
+            parseChunkKey(key)?.let { chunkKey ->
+                val chunkX = chunkKey.chunkX
+                val chunkZ = chunkKey.chunkZ
+                val dim = chunkKey.dimensionId
+                val tagByte = chunkKey.tagByte
+                val hasDim = key.size >= 13
+                val dimName = when (dim) {
+                    1 -> " [Nether]"
+                    2 -> " [End]"
+                    else -> ""
+                }
 
-                        val dimName = when (dim) {
-                            1 -> " [Nether]"
-                            2 -> " [End]"
-                            else -> ""
-                        }
-
-                        when (tagByte) {
-                            0x31 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Block Entities", LevelDbCategory.BLOCK_ENTITY, chunkX, chunkZ, dim, valueSize, isNbt = true, hasMultipleCompounds = true)
-                            0x32 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Entity Data", LevelDbCategory.ENTITY, chunkX, chunkZ, dim, valueSize, isNbt = true, hasMultipleCompounds = true)
-                            0x2F -> {
-                                val subIndex = if (hasDim && key.size >= 14) key[13].toInt() else if (key.size >= 10) key[9].toInt() else 0
-                                return LevelDbRecord(key, keyStr, "SubChunk [$chunkX, $chunkZ]$dimName (Y: $subIndex)", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
-                            }
-                            0x2C -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Version", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
-                            0x2D -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName 2D Data", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
-                            0x33 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Pending Ticks", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = true)
-                            0x34 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Extra Block Data", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = isNbt)
-                            0x35 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Biome State", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
-                            0x36 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Generation State", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
-                            0x37 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Spawn Data", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = isNbt)
-                        }
+                when (tagByte) {
+                    0x31 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Block Entities", LevelDbCategory.BLOCK_ENTITY, chunkX, chunkZ, dim, valueSize, isNbt = true, hasMultipleCompounds = true)
+                    0x32 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Entity Data", LevelDbCategory.ENTITY, chunkX, chunkZ, dim, valueSize, isNbt = true, hasMultipleCompounds = true)
+                    0x2F -> {
+                        val subIndex = if (hasDim && key.size >= 14) key[13].toInt() else if (key.size >= 10) key[9].toInt() else 0
+                        return LevelDbRecord(key, keyStr, "SubChunk [$chunkX, $chunkZ]$dimName (Y: $subIndex)", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
                     }
-                } catch (_: Exception) {
+                    0x2C -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Version", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
+                    0x2D -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName 2D Data", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
+                    0x33 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Pending Ticks", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = true)
+                    0x34 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Extra Block Data", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = isNbt)
+                    0x35 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Biome State", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
+                    0x36 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Generation State", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = false)
+                    0x37 -> return LevelDbRecord(key, keyStr, "Chunk [$chunkX, $chunkZ]$dimName Spawn Data", LevelDbCategory.CHUNK, chunkX, chunkZ, dim, valueSize, isNbt = isNbt)
                 }
             }
 
@@ -343,50 +328,86 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
             return LevelDbRecord(key, keyStr, fallbackName, LevelDbCategory.OTHER, valueSize = valueSize, isNbt = isNbt)
         }
 
+        private fun parseChunkKey(key: ByteArray): ChunkKeyInfo? {
+            if (key.size !in 8..14) return null
+            val chunkX = readLittleEndianInt(key, 0)
+            val chunkZ = readLittleEndianInt(key, 4)
+            if (key.size == 8) return ChunkKeyInfo(chunkX, chunkZ, 0, -1)
+
+            val hasDim = key.size >= 13
+            val dimensionId = if (hasDim) readLittleEndianInt(key, 8) else 0
+            val tagOffset = if (hasDim) 12 else 8
+            return ChunkKeyInfo(
+                chunkX = chunkX,
+                chunkZ = chunkZ,
+                dimensionId = dimensionId,
+                tagByte = key[tagOffset].toInt() and 0xFF
+            )
+        }
+
+        private fun readLittleEndianInt(bytes: ByteArray, offset: Int): Int {
+            return (bytes[offset].toInt() and 0xFF) or
+                ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
+                ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
+                (bytes[offset + 3].toInt() shl 24)
+        }
+
         fun readBedrockNbt(bytes: ByteArray, isMultiple: Boolean = false): NbtFile {
             if (!isMultiple) {
                 try {
-                    val stream = ByteArrayInputStream(bytes)
-                    return NbtIO.readNbtFile(stream, compressed = false, littleEndian = true, readHeaders = false)
+                    return readBedrockRoot(ByteArrayInputStream(bytes))
                 } catch (e: Exception) {
-                    val stream = ByteArrayInputStream(bytes)
-                    val rootCompound = NbtCompound()
-                    var index = 0
-                    while (stream.available() > 0) {
-                        try {
-                            val nbt = NbtIO.readNbtFile(stream, compressed = false, littleEndian = true, readHeaders = false)
-                            val name = if (nbt.name.isNotEmpty()) nbt.name else "entry_$index"
-                            rootCompound[name] = nbt.tag
-                            index++
-                        } catch (_: Exception) {
-                            break
-                        }
-                    }
-                    if (index > 0) {
-                        return NbtFile("Root", rootCompound)
-                    }
-                    throw e
+                    return readBedrockRoots(bytes, e)
                 }
-            } else {
-                val rootCompound = NbtCompound()
-                val stream = ByteArrayInputStream(bytes)
-                var index = 0
-                while (stream.available() > 0) {
-                    try {
-                        val nbt = NbtIO.readNbtFile(stream, compressed = false, littleEndian = true, readHeaders = false)
-                        val name = if (nbt.name.isNotEmpty()) nbt.name else "entry_$index"
-                        rootCompound[name] = nbt.tag
-                        index++
-                    } catch (_: Exception) {
-                        break
-                    }
-                }
-                if (index == 0) {
-                    val singleStream = ByteArrayInputStream(bytes)
-                    return NbtIO.readNbtFile(singleStream, compressed = false, littleEndian = true, readHeaders = false)
-                }
-                return NbtFile("Root", rootCompound)
             }
+
+            return readBedrockRoots(bytes, null)
+        }
+
+        private fun readBedrockRoot(stream: ByteArrayInputStream): NbtFile {
+            return NbtIO.readNbtFile(stream, compressed = false, littleEndian = true, readHeaders = false)
+        }
+
+        private fun readBedrockRoots(bytes: ByteArray, firstFailure: Exception?): NbtFile {
+            val stream = ByteArrayInputStream(bytes)
+            val rootCompound = NbtCompound()
+            var index = 0
+            var failure: Exception? = firstFailure
+
+            while (stream.available() > 0) {
+                if (isZeroPadding(stream)) break
+                val availableBefore = stream.available()
+                try {
+                    val nbt = readBedrockRoot(stream)
+                    val name = if (nbt.name.isNotEmpty()) nbt.name else "entry_$index"
+                    rootCompound[name] = nbt.tag
+                    index++
+                } catch (e: Exception) {
+                    failure = e
+                    throw IOException("Invalid Bedrock NBT payload", e)
+                }
+                if (stream.available() >= availableBefore) {
+                    throw IOException("Bedrock NBT parser made no progress")
+                }
+            }
+
+            if (index == 0) {
+                throw failure ?: EOFException("Empty Bedrock NBT payload")
+            }
+            return NbtFile("Root", rootCompound)
+        }
+
+        private fun isZeroPadding(stream: ByteArrayInputStream): Boolean {
+            stream.mark(stream.available())
+            if (stream.read() != 0) {
+                stream.reset()
+                return false
+            }
+            var value = stream.read()
+            while (value == 0) value = stream.read()
+            val allZero = value < 0
+            stream.reset()
+            return allZero
         }
 
         fun writeBedrockNbt(nbtFile: NbtFile, wasMultiple: Boolean = false): ByteArray {

@@ -6,7 +6,7 @@ import java.lang.Float.floatToIntBits
 import java.lang.Long.reverseBytes
 
 public class LittleEndianDataOutputStream(out: OutputStream) : FilterOutputStream(DataOutputStream(out)), DataOutput {
-    private val data = out as DataOutputStream
+    private val data = this.out as DataOutputStream
     override fun writeBoolean(v: Boolean) {
         data.writeBoolean(v)
     }

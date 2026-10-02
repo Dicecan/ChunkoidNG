@@ -1,0 +1,48 @@
+package com.noches.chunkoidng
+
+import com.noches.chunkoidng.core.leveldb.BedrockLevelDbHelper
+import com.noches.chunkoidng.core.leveldb.SafeEnv
+import org.iq80.leveldb.Options
+import org.iq80.leveldb.impl.DbImpl
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Test
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.file.Files
+
+class BedrockLevelDbHelperTest {
+
+    @Test
+    fun chunkDeletionKeepsCoordinateOnlyAndUnknownKeys() {
+        val folder = Files.createTempDirectory("chunkoid-leveldb-test").toFile()
+        try {
+            DbImpl(Options().apply { createIfMissing(true) }, folder.absolutePath, SafeEnv()).use { database ->
+                database.put(chunkKey(4, -7, 0x31), byteArrayOf(1))
+                database.put(chunkKey(4, -7, 0x7E), byteArrayOf(2))
+                database.put(coordinateOnlyKey(4, -7), byteArrayOf(3))
+            }
+
+            BedrockLevelDbHelper(folder).use { helper ->
+                assertEquals(1, helper.deleteChunk(4, -7, 0))
+                assertNull(helper.get(chunkKey(4, -7, 0x31)))
+                assertNotNull(helper.get(chunkKey(4, -7, 0x7E)))
+                assertNotNull(helper.get(coordinateOnlyKey(4, -7)))
+            }
+        } finally {
+            folder.deleteRecursively()
+        }
+    }
+
+    private fun chunkKey(x: Int, z: Int, tag: Int): ByteArray {
+        return coordinateOnlyKey(x, z) + byteArrayOf(tag.toByte())
+    }
+
+    private fun coordinateOnlyKey(x: Int, z: Int): ByteArray {
+        return ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN)
+            .putInt(x)
+            .putInt(z)
+            .array()
+    }
+}

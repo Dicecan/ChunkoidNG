@@ -326,6 +326,14 @@ fun NbtEditorScreen(
         )
     }
 
+    state.showArrayEditorDialog?.let { node ->
+        NbtArrayEditorDialog(
+            node = node,
+            onDismiss = { viewModel.dismissArrayEditorDialog() },
+            onUpdateElement = { index, value -> viewModel.applyArrayElementUpdate(node, index, value) }
+        )
+    }
+
     state.showAddTagDialog?.let { parentNode ->
         NbtAddTagDialog(
             parentNode = parentNode,
@@ -615,7 +623,7 @@ private fun NbtWorkspaceView(
                         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
                     ) {
                         Text(
-                            text = if (state.hasLevelDb) "LevelDB" else "ARCHIVE",
+                            text = if (state.hasLevelDb) stringResource(R.string.nbt_workspace_leveldb) else stringResource(R.string.nbt_workspace_archive),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -797,7 +805,7 @@ private fun NbtWorkspaceView(
                                     }
                                     val sizeFormatted = formatFileSize(record.valueSize.toLong())
                                     Text(
-                                        text = "Key: $keyDisplay  •  $sizeFormatted",
+                                        text = stringResource(R.string.nbt_record_key_size, keyDisplay, sizeFormatted),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1,
@@ -952,6 +960,7 @@ private fun NbtNodeItem(
     onCopyValue: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val isPrimitiveArray = node.tag is NbtByteArray || node.tag is NbtIntArray || node.tag is NbtLongArray
 
     val typeColor = when (node.tag) {
         is NbtCompound -> Color(0xFF7C4DFF)
@@ -967,7 +976,7 @@ private fun NbtNodeItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                if (node.isContainer) onToggleExpand() else onEditValue()
+                if (isPrimitiveArray) onEditValue() else if (node.isContainer) onToggleExpand() else onEditValue()
             }
             .padding(vertical = 4.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -976,11 +985,12 @@ private fun NbtNodeItem(
 
         if (node.isContainer) {
             IconButton(
-                onClick = onToggleExpand,
+                onClick = if (isPrimitiveArray) onEditValue else onToggleExpand,
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
-                    if (node.isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    if (isPrimitiveArray) Icons.Default.Edit
+                    else if (node.isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
@@ -1061,9 +1071,9 @@ private fun NbtNodeItem(
                         }
                     )
                 }
-                if (!node.isContainer) {
+                if (!node.isContainer || isPrimitiveArray) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.nbt_edit_value)) },
+                        text = { Text(stringResource(if (isPrimitiveArray) R.string.nbt_edit_array else R.string.nbt_edit_value)) },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                         onClick = {
                             menuExpanded = false
@@ -1530,6 +1540,127 @@ private fun NbtEditValueDialog(
     )
 }
 
+private const val NBT_ARRAY_PAGE_SIZE = 100
+
+@Composable
+private fun NbtArrayEditorDialog(
+    node: NbtTreeNode,
+    onDismiss: () -> Unit,
+    onUpdateElement: (index: Int, value: String) -> Boolean
+) {
+    val elementCount = when (val tag = node.tag) {
+        is NbtByteArray -> tag.value.size
+        is NbtIntArray -> tag.value.size
+        is NbtLongArray -> tag.value.size
+        else -> 0
+    }
+    var page by remember(node.path) { mutableStateOf(0) }
+    val pageCount = maxOf(1, (elementCount + NBT_ARRAY_PAGE_SIZE - 1) / NBT_ARRAY_PAGE_SIZE)
+    if (page >= pageCount) page = pageCount - 1
+
+    val start = page * NBT_ARRAY_PAGE_SIZE
+    val end = minOf(elementCount, start + NBT_ARRAY_PAGE_SIZE)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.nbt_edit_array)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.nbt_array_info, node.tagTypeName, node.key, elementCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (elementCount == 0) {
+                    Text(
+                        text = stringResource(R.string.nbt_array_empty),
+                        modifier = Modifier.padding(vertical = 24.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 360.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(
+                            count = end - start,
+                            key = { offset -> start + offset }
+                        ) { offset ->
+                            val index = start + offset
+                            val currentValue = when (val tag = node.tag) {
+                                is NbtByteArray -> tag.value[index].toString()
+                                is NbtIntArray -> tag.value[index].toString()
+                                is NbtLongArray -> tag.value[index].toString()
+                                else -> ""
+                            }
+                            var value by remember(index, currentValue) { mutableStateOf(currentValue) }
+                            var isError by remember(index) { mutableStateOf(false) }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = value,
+                                    onValueChange = {
+                                        value = it
+                                        isError = false
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    label = { Text("[$index]") },
+                                    singleLine = true,
+                                    isError = isError,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+                                IconButton(
+                                    onClick = { isError = !onUpdateElement(index, value) }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = stringResource(R.string.nbt_array_apply)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { page-- },
+                            enabled = page > 0
+                        ) {
+                            Icon(Icons.Default.ChevronLeft, contentDescription = null)
+                        }
+                        Text(
+                            text = stringResource(R.string.nbt_array_page, page + 1, pageCount),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        IconButton(
+                            onClick = { page++ },
+                            enabled = page + 1 < pageCount
+                        ) {
+                            Icon(Icons.Default.ChevronRight, contentDescription = null)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_ok))
+            }
+        }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NbtAddTagDialog(
@@ -1768,12 +1899,12 @@ private fun NbtBinaryPreviewDialog(
                     }
                 }
                 Text(
-                    text = "Key: ${record.keyString.ifEmpty { "0x" + record.keyToHex() }}",
+                    text = stringResource(R.string.nbt_record_key, record.keyString.ifEmpty { "0x" + record.keyToHex() }),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Size: ${record.valueSize} bytes",
+                    text = stringResource(R.string.nbt_record_size, record.valueSize),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

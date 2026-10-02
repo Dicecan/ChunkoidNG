@@ -79,6 +79,7 @@ data class NbtEditorUiState(
     val treeSearchQuery: String = "",
 
     val showEditValueDialog: NbtTreeNode? = null,
+    val showArrayEditorDialog: NbtTreeNode? = null,
     val showAddTagDialog: NbtTreeNode? = null,
     val showRenameTagDialog: NbtTreeNode? = null,
     val showDeleteTagDialog: NbtTreeNode? = null,
@@ -91,6 +92,12 @@ data class NbtEditorUiState(
 )
 
 class NbtEditorViewModel(application: Application) : AndroidViewModel(application) {
+
+    private companion object {
+        const val MAX_ARCHIVE_ENTRIES = 100_000
+        const val MAX_ARCHIVE_ENTRY_BYTES = 512L * 1024 * 1024
+        const val MAX_ARCHIVE_TOTAL_BYTES = 2L * 1024 * 1024 * 1024
+    }
 
     private val _uiState = MutableStateFlow(NbtEditorUiState())
     val uiState: StateFlow<NbtEditorUiState> = _uiState.asStateFlow()
@@ -230,14 +237,22 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val context = getApplication<Application>()
         val workspaceEntries = mutableMapOf<String, ByteArray>()
         var hasLevelDb = false
+        var entryCount = 0
+        var totalBytes = 0L
 
         val cacheFolder = File(context.cacheDir, "nbt_active_leveldb")
         if (cacheFolder.exists()) cacheFolder.deleteRecursively()
+        val archiveRoot = cacheFolder.canonicalFile
 
         try {
             ZipInputStream(ByteArrayInputStream(bytes)).use { zis ->
                 var entry = zis.nextEntry
                 while (entry != null) {
+                    if (++entryCount > MAX_ARCHIVE_ENTRIES) throw IOException("Archive contains too many entries")
+                    val canonicalEntry = File(cacheFolder, entry.name).canonicalFile
+                    if (canonicalEntry.path != archiveRoot.path && !canonicalEntry.path.startsWith(archiveRoot.path + File.separator)) {
+                        throw SecurityException("Archive contains an invalid path")
+                    }
                     if (!entry.isDirectory) {
                         val name = entry.name
                         if (name.startsWith("db/") || name.startsWith("db\\")) {
@@ -246,7 +261,21 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             if (relName.isNotEmpty() && relName != "LOCK") {
                                 cacheFolder.mkdirs()
                                 val targetFile = File(cacheFolder, relName)
-                                targetFile.outputStream().use { out -> zis.copyTo(out) }
+                                var entryBytes = 0L
+                                targetFile.parentFile?.mkdirs()
+                                targetFile.outputStream().use { out ->
+                                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                                    while (true) {
+                                        val read = zis.read(buffer)
+                                        if (read < 0) break
+                                        entryBytes += read
+                                        totalBytes += read
+                                        if (entryBytes > MAX_ARCHIVE_ENTRY_BYTES || totalBytes > MAX_ARCHIVE_TOTAL_BYTES) {
+                                            throw IOException("Archive exceeds extraction limits")
+                                        }
+                                        out.write(buffer, 0, read)
+                                    }
+                                }
                             }
                         } else if (name.endsWith(".dat", ignoreCase = true) ||
                             name.endsWith(".nbt", ignoreCase = true) ||
@@ -255,14 +284,22 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             name.endsWith(".mcr", ignoreCase = true) ||
                             name.equals("levelname.txt", ignoreCase = true)
                         ) {
-                            workspaceEntries[name] = zis.readBytes()
+                            val value = zis.readBytes()
+                            totalBytes += value.size
+                            if (value.size > MAX_ARCHIVE_ENTRY_BYTES || totalBytes > MAX_ARCHIVE_TOTAL_BYTES) {
+                                throw IOException("Archive exceeds extraction limits")
+                            }
+                            workspaceEntries[name] = value
                         }
                     }
                     zis.closeEntry()
                     entry = zis.nextEntry
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            cacheFolder.deleteRecursively()
+            throw e
+        }
 
         if (hasLevelDb) {
             workspaceEntries["db/"] = byteArrayOf()
@@ -277,8 +314,9 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             levelDbHelper = BedrockLevelDbHelper(cacheFolder)
             records = try {
                 levelDbHelper?.getAllRecords() ?: emptyList()
-            } catch (_: Exception) {
-                emptyList()
+            } catch (e: Exception) {
+                cacheFolder.deleteRecursively()
+                throw IOException("Unable to open LevelDB", e)
             }
             allLevelDbRecords = records
         }
@@ -288,7 +326,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 it.copy(
                     mode = NbtEditorMode.WORKSPACE,
                     title = archiveName,
-                    subtitle = if (hasLevelDb) "LevelDB" else "${workspaceEntries.size} files",
+                subtitle = if (hasLevelDb) context.getString(R.string.nbt_workspace_leveldb) else context.getString(R.string.nbt_workspace_file_count, workspaceEntries.size),
                     isLoading = false,
                     activeWorkspaceName = archiveName,
                     originalZipBytes = bytes,
@@ -313,6 +351,9 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
         folder.listFiles()?.forEach { f ->
             if (!f.isDirectory && f.name != "LOCK") {
+                if (f.name == "CURRENT" || f.name.startsWith("MANIFEST") || f.name.endsWith(".ldb") || f.name.endsWith(".log")) {
+                    cacheFolder.mkdirs()
+                }
                 f.copyTo(File(cacheFolder, f.name), overwrite = true)
             }
         }
@@ -323,8 +364,9 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
         val records = try {
             levelDbHelper?.getAllRecords() ?: emptyList()
-        } catch (_: Exception) {
-            emptyList()
+        } catch (e: Exception) {
+            cacheFolder.deleteRecursively()
+            throw IOException("Unable to open LevelDB", e)
         }
         allLevelDbRecords = records
 
@@ -333,7 +375,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 it.copy(
                     mode = NbtEditorMode.WORKSPACE,
                     title = folder.name,
-                    subtitle = "LevelDB",
+                    subtitle = context.getString(R.string.nbt_workspace_leveldb),
                     isLoading = false,
                     activeWorkspaceName = folder.name,
                     hasLevelDb = true,
@@ -383,6 +425,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun openAnvilRegion(regionFile: File, displayName: String) {
+        val context = getApplication<Application>()
         _uiState.value.currentRegionFile?.close()
         val anvil = AnvilRegionFile(regionFile)
         val table = anvil.getChunkTable()
@@ -390,7 +433,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             it.copy(
                 mode = NbtEditorMode.CHUNK_GRID,
                 title = displayName,
-                subtitle = "Anvil MCA",
+                subtitle = context.getString(R.string.nbt_workspace_anvil),
                 isLoading = false,
                 currentRegionFile = anvil,
                 currentRegionCachedFile = regionFile,
@@ -470,7 +513,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             it.copy(
                                 mode = NbtEditorMode.NBT_TREE,
                                 title = record.displayName,
-                                subtitle = "db/ (${record.valueSize} B)",
+                            subtitle = context.getString(R.string.nbt_workspace_db_record, record.valueSize),
                                 isLoading = false,
                                 currentNbtFile = nbtFile,
                                 currentFileName = record.displayName,
@@ -647,9 +690,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             when (tag) {
                 is NbtCompound -> tag.forEach { (k, v) -> collect(v, "$path/$k") }
                 is NbtList<*> -> tag.forEachIndexed { i, v -> collect(v, "$path/[$i]") }
-                is NbtByteArray -> tag.value.forEachIndexed { i, _ -> paths.add("$path/[$i]") }
-                is NbtIntArray -> tag.value.forEachIndexed { i, _ -> paths.add("$path/[$i]") }
-                is NbtLongArray -> tag.value.forEachIndexed { i, _ -> paths.add("$path/[$i]") }
+                is NbtByteArray, is NbtIntArray, is NbtLongArray -> Unit
                 else -> {}
             }
         }
@@ -698,9 +739,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 when (tag) {
                     is NbtCompound -> tag.forEach { (k, child) -> searchTraverse(child, k, tag, depth + 1, "$path/$k", -1) }
                     is NbtList<*> -> tag.forEachIndexed { i, child -> searchTraverse(child, "[$i]", tag, depth + 1, "$path/[$i]", i) }
-                    is NbtByteArray -> tag.value.forEachIndexed { i, b -> searchTraverse(NbtByte(b), "[$i]", tag, depth + 1, "$path/[$i]", i) }
-                    is NbtIntArray -> tag.value.forEachIndexed { i, intVal -> searchTraverse(NbtInt(intVal), "[$i]", tag, depth + 1, "$path/[$i]", i) }
-                    is NbtLongArray -> tag.value.forEachIndexed { i, l -> searchTraverse(NbtLong(l), "[$i]", tag, depth + 1, "$path/[$i]", i) }
+                    is NbtByteArray, is NbtIntArray, is NbtLongArray -> Unit
                     else -> {}
                 }
             }
@@ -715,9 +754,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     when (tag) {
                         is NbtCompound -> tag.forEach { (k, child) -> traverse(child, k, tag, depth + 1, "$path/$k", -1) }
                         is NbtList<*> -> tag.forEachIndexed { i, child -> traverse(child, "[$i]", tag, depth + 1, "$path/[$i]", i) }
-                        is NbtByteArray -> tag.value.forEachIndexed { i, b -> traverse(NbtByte(b), "[$i]", tag, depth + 1, "$path/[$i]", i) }
-                        is NbtIntArray -> tag.value.forEachIndexed { i, intVal -> traverse(NbtInt(intVal), "[$i]", tag, depth + 1, "$path/[$i]", i) }
-                        is NbtLongArray -> tag.value.forEachIndexed { i, l -> traverse(NbtLong(l), "[$i]", tag, depth + 1, "$path/[$i]", i) }
+                        is NbtByteArray, is NbtIntArray, is NbtLongArray -> Unit
                         else -> {}
                     }
                 }
@@ -729,11 +766,51 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun requestEditValue(node: NbtTreeNode) {
-        _uiState.update { it.copy(showEditValueDialog = node) }
+        if (node.tag is NbtByteArray || node.tag is NbtIntArray || node.tag is NbtLongArray) {
+            _uiState.update { it.copy(showArrayEditorDialog = node) }
+        } else {
+            _uiState.update { it.copy(showEditValueDialog = node) }
+        }
     }
 
     fun dismissEditValueDialog() {
         _uiState.update { it.copy(showEditValueDialog = null) }
+    }
+
+    fun dismissArrayEditorDialog() {
+        _uiState.update { it.copy(showArrayEditorDialog = null) }
+    }
+
+    /** Updates one primitive array element without materializing the whole array as tree nodes. */
+    fun applyArrayElementUpdate(node: NbtTreeNode, index: Int, input: String): Boolean {
+        val tag = node.tag
+        val valid = when (tag) {
+            is NbtByteArray -> input.toByteOrNull()?.let { value ->
+                if (index in tag.value.indices) {
+                    tag.value[index] = value
+                    true
+                } else false
+            }
+            is NbtIntArray -> input.toIntOrNull()?.let { value ->
+                if (index in tag.value.indices) {
+                    tag.value[index] = value
+                    true
+                } else false
+            }
+            is NbtLongArray -> input.toLongOrNull()?.let { value ->
+                if (index in tag.value.indices) {
+                    tag.value[index] = value
+                    true
+                } else false
+            }
+            else -> false
+        } ?: false
+
+        if (!valid) return false
+
+        _uiState.update { it.copy(isDirty = true) }
+        rebuildTreeNodes()
+        return true
     }
 
     fun applyNodeValueUpdate(node: NbtTreeNode, input: String): Boolean {
@@ -1052,8 +1129,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val populated = helper.getPopulatedChunkCoordinates(0)
-            val blockEntities = helper.getBlockEntityChunkCoordinates(0)
+            val chunkSummary = helper.getChunkCoordinateSummary(0)
             withContext(Dispatchers.Main) {
                 _uiState.update {
                     it.copy(
@@ -1062,8 +1138,8 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         subtitle = "Overworld",
                         isLoading = false,
                         isWorldChunkMode = true,
-                        populatedWorldChunks = populated,
-                        blockEntityWorldChunks = blockEntities,
+                        populatedWorldChunks = chunkSummary.populated,
+                        blockEntityWorldChunks = chunkSummary.blockEntities,
                         currentDimensionId = 0,
                         selectedChunkSet = emptySet(),
                         selectedChunkLocalX = -1,
@@ -1084,8 +1160,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val populated = helper.getPopulatedChunkCoordinates(dimId)
-            val blockEntities = helper.getBlockEntityChunkCoordinates(dimId)
+            val chunkSummary = helper.getChunkCoordinateSummary(dimId)
             val dimName = when (dimId) {
                 1 -> "Nether"
                 2 -> "The End"
@@ -1096,8 +1171,8 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     it.copy(
                         subtitle = dimName,
                         isLoading = false,
-                        populatedWorldChunks = populated,
-                        blockEntityWorldChunks = blockEntities,
+                        populatedWorldChunks = chunkSummary.populated,
+                        blockEntityWorldChunks = chunkSummary.blockEntities,
                         currentDimensionId = dimId,
                         selectedChunkSet = emptySet(),
                         selectedChunkLocalX = -1,
@@ -1240,15 +1315,14 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 try {
                     val deleted = helper.deleteChunks(targets, state.currentDimensionId)
                     syncLevelDbToStorage()
-                    val populated = helper.getPopulatedChunkCoordinates(state.currentDimensionId)
-                    val blockEntities = helper.getBlockEntityChunkCoordinates(state.currentDimensionId)
+                    val chunkSummary = helper.getChunkCoordinateSummary(state.currentDimensionId)
                     reloadLevelDbRecords()
                     withContext(Dispatchers.Main) {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                populatedWorldChunks = populated,
-                                blockEntityWorldChunks = blockEntities,
+                                populatedWorldChunks = chunkSummary.populated,
+                                blockEntityWorldChunks = chunkSummary.blockEntities,
                                 selectedChunkSet = emptySet(),
                                 userMessage = context.getString(R.string.nbt_delete_chunks_batch_success, targets.size)
                             )
@@ -1403,7 +1477,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     val file = File(state.currentFilePath)
                     val bak = File("${state.currentFilePath}.bak")
                     if (file.exists()) file.copyTo(bak, overwrite = true)
-                    file.writeBytes(updatedZip)
+                    atomicWriteFile(file, updatedZip)
                 } else if (state.currentFileUri != null) {
                     context.contentResolver.openOutputStream(state.currentFileUri)?.use { it.write(updatedZip) }
                 }
@@ -1432,7 +1506,14 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 val bak = File("$path.bak")
                 if (file.exists()) file.copyTo(bak, overwrite = true)
 
-                NbtIO.writeNbtFile(file, nbtFile, state.isCompressed, state.isLittleEndian, state.readHeaders)
+                val bytes = ByteArrayOutputStream().also { output ->
+                    if (!state.readHeaders) {
+                        NbtIO.writeNbtFile(output, nbtFile, state.isCompressed, state.isLittleEndian)
+                    } else {
+                        output.write(serializeCurrentNbt())
+                    }
+                }.toByteArray()
+                atomicWriteFile(file, bytes)
                 _uiState.update {
                     it.copy(
                         isDirty = false,
@@ -1467,7 +1548,9 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 entries[zipEntry] = updatedNbt
                 val updatedZip = updateZipWithNbt(zipBytes, zipEntry, updatedNbt)
 
-                context.contentResolver.openOutputStream(uri)?.use { it.write(updatedZip) }
+                val output = context.contentResolver.openOutputStream(uri)
+                    ?: throw IOException("Unable to open output stream")
+                output.use { it.write(updatedZip) }
                 _uiState.update {
                     it.copy(
                         originalZipBytes = updatedZip,
@@ -1479,7 +1562,9 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 return
             }
 
-            context.contentResolver.openOutputStream(uri)?.use { stream ->
+            val output = context.contentResolver.openOutputStream(uri)
+                ?: throw IOException("Unable to open output stream")
+            output.use { stream ->
                 if (!state.readHeaders) {
                     NbtIO.writeNbtFile(stream, nbtFile, state.isCompressed, state.isLittleEndian)
                 } else {
@@ -1540,6 +1625,15 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         return baos.toByteArray()
     }
 
+    private fun atomicWriteFile(file: File, bytes: ByteArray) {
+        val temp = File(file.parentFile, ".${file.name}.tmp")
+        temp.outputStream().use { it.write(bytes) }
+        if (!temp.renameTo(file)) {
+            temp.delete()
+            throw IOException("Unable to commit file")
+        }
+    }
+
     private fun updateZipWithLevelDbFolder(originalZip: ByteArray, levelDbFolder: File): ByteArray {
         val baos = ByteArrayOutputStream()
         val writtenEntries = mutableSetOf<String>()
@@ -1596,7 +1690,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 val file = File(state.currentFilePath)
                 val bak = File("${state.currentFilePath}.bak")
                 if (file.exists()) file.copyTo(bak, overwrite = true)
-                file.writeBytes(updatedZip)
+                atomicWriteFile(file, updatedZip)
             } else if (state.currentFileUri != null) {
                 context.contentResolver.openOutputStream(state.currentFileUri)?.use { it.write(updatedZip) }
             }
@@ -1636,7 +1730,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 val file = File(state.currentFilePath)
                 val bak = File("${state.currentFilePath}.bak")
                 if (file.exists()) file.copyTo(bak, overwrite = true)
-                file.writeBytes(updatedZip)
+                atomicWriteFile(file, updatedZip)
             } else if (state.currentFileUri != null) {
                 context.contentResolver.openOutputStream(state.currentFileUri)?.use { it.write(updatedZip) }
             }
@@ -1725,7 +1819,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     it.copy(
                         mode = NbtEditorMode.CHUNK_GRID,
                         title = it.currentRegionFile?.file?.name ?: "MCA",
-                        subtitle = "Anvil MCA"
+                        subtitle = getApplication<Application>().getString(R.string.nbt_workspace_anvil)
                     )
                 }
             } else {
@@ -1733,7 +1827,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     it.copy(
                         mode = NbtEditorMode.WORKSPACE,
                         title = it.activeWorkspaceName,
-                        subtitle = if (it.hasLevelDb) "LevelDB" else "${it.workspaceZipEntries.size} files"
+                        subtitle = if (it.hasLevelDb) getApplication<Application>().getString(R.string.nbt_workspace_leveldb) else getApplication<Application>().getString(R.string.nbt_workspace_file_count, it.workspaceZipEntries.size)
                     )
                 }
             }
@@ -1745,7 +1839,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 it.copy(
                     mode = NbtEditorMode.WORKSPACE,
                     title = it.activeWorkspaceName,
-                    subtitle = if (it.hasLevelDb) "LevelDB" else "${it.workspaceZipEntries.size} files"
+                    subtitle = if (it.hasLevelDb) getApplication<Application>().getString(R.string.nbt_workspace_leveldb) else getApplication<Application>().getString(R.string.nbt_workspace_file_count, it.workspaceZipEntries.size)
                 )
             }
             return true
