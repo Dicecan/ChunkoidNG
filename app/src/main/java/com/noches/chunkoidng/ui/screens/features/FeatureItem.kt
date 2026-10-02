@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.Dataset
 import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Terminal
@@ -91,6 +92,18 @@ val chunkoidFeatures = listOf(
         accentContainerLight = FeatureColors.PackConverterContainerLight,
         accentDark = FeatureColors.PackConverterDark,
         accentContainerDark = FeatureColors.PackConverterContainerDark
+    ),
+    FeatureItem(
+        id = "midi_converter",
+        titleRes = R.string.feature_midi_title,
+        subtitleRes = R.string.feature_midi_subtitle,
+        badgeRes = R.string.feature_midi_badge,
+        tagsRes = listOf(R.string.feature_midi_tag_1, R.string.feature_midi_tag_2, R.string.feature_midi_tag_3),
+        icon = Icons.Outlined.MusicNote,
+        accentLight = FeatureColors.MidiConverterLight,
+        accentContainerLight = FeatureColors.MidiConverterContainerLight,
+        accentDark = FeatureColors.MidiConverterDark,
+        accentContainerDark = FeatureColors.MidiConverterContainerDark
     ),
     FeatureItem(
         id = "sandbox_terminal",

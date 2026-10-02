@@ -62,6 +62,7 @@ dependencies {
     implementation(files("libs/leveldb-1.1.0.jar"))
     implementation(libs.guava)
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20231013")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

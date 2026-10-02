@@ -93,4 +93,9 @@ object FeatureColors {
     val TerminalContainerLight = Color(0xFFF1F5F9)
     val TerminalDark = Color(0xFF94A3B8)
     val TerminalContainerDark = Color(0xFF1E293B)
+
+    val MidiConverterLight = Color(0xFFD97706)
+    val MidiConverterContainerLight = Color(0xFFFEF3C7)
+    val MidiConverterDark = Color(0xFFFBBF24)
+    val MidiConverterContainerDark = Color(0xFF78350F)
 }

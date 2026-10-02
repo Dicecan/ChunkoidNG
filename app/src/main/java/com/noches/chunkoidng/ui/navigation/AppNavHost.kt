@@ -119,6 +119,8 @@ fun MainAppScaffold() {
                             "netease_decryptor" -> navController.navigate("netease_crypt")
                             "dimension_pruner" -> navController.navigate("dimension_pruner")
                             "nbt_editor" -> navController.navigate("nbt_editor")
+                            "pack_converter" -> navController.navigate("pack_converter")
+                            "midi_converter" -> navController.navigate("midi_converter")
                             "sandbox_terminal" -> navController.navigate("console")
                             else -> {
                                 coroutineScope.launch {
@@ -163,6 +165,18 @@ fun MainAppScaffold() {
 
             composable("nbt_editor") {
                 com.noches.chunkoidng.ui.screens.nbt.NbtEditorScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("pack_converter") {
+                com.noches.chunkoidng.ui.screens.pack.PackConverterScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("midi_converter") {
+                com.noches.chunkoidng.ui.screens.midi.MidiConverterScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

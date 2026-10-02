@@ -666,4 +666,54 @@
     <string name="nbt_record_key_size">キー：%1$s  •  %2$s</string>
     <string name="nbt_record_key">キー：%1$s</string>
     <string name="nbt_record_size">サイズ：%1$d バイト</string>
+
+    <string name="feature_midi_title">Midi 赤石音楽変換</string>
+    <string name="feature_midi_subtitle">MIDIをレッドストーン音楽機構、平坦試聴ワールド、関数に変換</string>
+    <string name="feature_midi_badge">音楽工房</string>
+    <string name="feature_midi_tag_1">平坦ワールド</string>
+    <string name="feature_midi_tag_2">ワールド注入</string>
+    <string name="feature_midi_tag_3">NBS / 構造体</string>
+
+    <string name="pack_conv_title">リソースパック双方向変換</string>
+    <string name="pack_conv_subtitle">Java版 ↔ 統合版 双方向ディープリソースパック変換</string>
+    <string name="pack_conv_select_file">パックファイル / フォルダを選択</string>
+    <string name="pack_conv_select_file_desc">.zip、.mcpack、解凍済みフォルダに対応</string>
+    <string name="pack_conv_detected_platform">検出されたフォーマット：%1$s</string>
+    <string name="pack_conv_direction_java_to_bedrock">Java版 → 統合版</string>
+    <string name="pack_conv_direction_bedrock_to_java">統合版 → Java版</string>
+    <string name="pack_conv_target_version">対象の統合版エンジンバージョン</string>
+    <string name="pack_conv_target_java_format">対象のJava版パックフォーマット</string>
+    <string name="pack_conv_opt_atlases">テクスチャアトラスを生成 (terrain &amp; item)</string>
+    <string name="pack_conv_opt_flipbook">アニメーションフレームを変換 (Flipbook)</string>
+    <string name="pack_conv_opt_lang">言語辞書とローカライゼーションを変換</string>
+    <string name="pack_conv_opt_sounds">サウンド定義マッピングを変換 (sounds.json)</string>
+    <string name="pack_conv_btn_start">パック変換を開始</string>
+    <string name="pack_conv_converting">リソースパックを変換中...</string>
+    <string name="pack_conv_success">パック変換が完了しました！</string>
+    <string name="pack_conv_success_desc">%1$d 個のリソースファイルを正常に変換しました</string>
+    <string name="pack_conv_save_pack">変換されたパックを保存</string>
+    <string name="pack_conv_no_file">変換するリソースパックを選択してください</string>
+
+    <string name="midi_conv_title">MIDI レッドストーン音楽工房</string>
+    <string name="midi_conv_subtitle">標準MIDIをゲーム内の音符ブロック機械、試聴ワールド、コマンドに変換</string>
+    <string name="midi_conv_select_file">MIDIファイルを選択 (.mid / .midi)</string>
+    <string name="midi_conv_select_file_desc">標準MIDIフォーマット0または1ファイル</string>
+    <string name="midi_conv_song_info">%1$s · %2$d トラック · %3$d 音符 · %4$s</string>
+    <string name="midi_conv_tuning_options">タイミングと移調設定</string>
+    <string name="midi_conv_speed">再生速度：%1$.1f レッドストーンtick/秒</string>
+    <string name="midi_conv_auto_transpose">最適ピッチ自動移調 (0..24)</string>
+    <string name="midi_conv_export_mode">出力形式</string>
+    <string name="midi_mode_flat_world">新規スーパーフラット試聴ワールド (.mcworld)</string>
+    <string name="midi_mode_inject">既存ワールドに注入</string>
+    <string name="midi_mode_structure">構造体ファイル (.mcstructure / .schem)</string>
+    <string name="midi_mode_function">全バージョンコマンドパック (.mcfunction)</string>
+    <string name="midi_mode_nbs">Note Block Studio (.nbs)</string>
+    <string name="midi_conv_select_world">対象のワールドフォルダを選択</string>
+    <string name="midi_conv_world_target_coord">注入座標：X=%1$d, Y=%2$d, Z=%3$d</string>
+    <string name="midi_conv_auto_backup">注入前にワールドバックアップを自動作成</string>
+    <string name="midi_conv_btn_generate">生成してエクスポート</string>
+    <string name="midi_conv_generating">レッドストーン音楽とワールドを合成中...</string>
+    <string name="midi_conv_success">生成とエクスポートが完了しました！</string>
+    <string name="midi_conv_save_file">成果物を保存 / 共有</string>
+    <string name="midi_conv_no_file">MIDIファイルを選択してください</string>
 </resources>
