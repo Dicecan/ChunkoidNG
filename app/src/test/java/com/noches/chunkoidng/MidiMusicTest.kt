@@ -168,10 +168,9 @@ class MidiMusicTest {
             assertTrue(entryNames.contains("levelname.txt"))
             assertTrue(entryNames.contains("level.dat"))
             assertTrue(entryNames.contains("level.dat_old"))
+            assertTrue(entryNames.contains("world_icon.jpeg"))
             assertTrue(entryNames.contains("structures/music.mcstructure"))
-            assertTrue(entryNames.contains("behavior_packs/music_loader/structures/music.mcstructure"))
-            assertTrue(entryNames.contains("world_behavior_packs.json"))
-            assertTrue(entryNames.any { it.contains("music_init.mcfunction") })
+            assertTrue(entryNames.any { it.startsWith("db/") })
 
             val levelDat = File(extractedDir, "level.dat")
             assertTrue(levelDat.exists())
@@ -181,9 +180,9 @@ class MidiMusicTest {
             assertEquals("Superflat Test", metadata?.worldName)
             assertEquals("Creative", metadata?.gameType)
 
-            val bpStructure = File(extractedDir, "behavior_packs/music_loader/structures/music.mcstructure")
-            assertTrue(bpStructure.exists())
-            assertTrue(bpStructure.length() > 0)
+            val dbDir = File(extractedDir, "db")
+            assertTrue(dbDir.exists())
+            assertTrue((dbDir.listFiles()?.size ?: 0) > 0)
         } finally {
             extractedDir.deleteRecursively()
         }

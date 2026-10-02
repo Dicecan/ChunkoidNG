@@ -1,15 +1,35 @@
 package com.noches.chunkoidng.core.midi.exporters
 
 import br.com.gamemods.nbtmanipulator.*
+import com.noches.chunkoidng.core.leveldb.BedrockBlockState
+import com.noches.chunkoidng.core.leveldb.BedrockChunkHelper
+import com.noches.chunkoidng.core.leveldb.SafeEnv
+import com.noches.chunkoidng.core.leveldb.SubChunkEncoder
 import com.noches.chunkoidng.core.midi.NoteBlockSong
+import org.iq80.leveldb.Options
+import org.iq80.leveldb.impl.DbImpl
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 object FlatWorldMusicGenerator {
+
+    private val MINIMAL_JPEG = byteArrayOf(
+        0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xDB.toByte(), 0x00, 0x43, 0x00, 0x08,
+        0x06, 0x06, 0x07, 0x06, 0x05, 0x08, 0x07, 0x07, 0x07, 0x09, 0x09, 0x08,
+        0x0A, 0x0C, 0x14, 0x0D, 0x0C, 0x0B, 0x0B, 0x0C, 0x19, 0x12, 0x13, 0x0F,
+        0x14, 0x1D, 0x1A, 0x1F, 0x1E, 0x1D, 0x1A, 0x1C, 0x1C, 0x20, 0x24, 0x2E,
+        0x27, 0x20, 0x22, 0x2C, 0x23, 0x1C, 0x1C, 0x28, 0x37, 0x29, 0x2C, 0x30,
+        0x31, 0x34, 0x34, 0x34, 0x1F, 0x27, 0x39, 0x3D, 0x38, 0x32, 0x3C, 0x2E,
+        0x33, 0x34, 0x32, 0xFF.toByte(), 0xC0.toByte(), 0x00, 0x0B, 0x08, 0x00, 0x01, 0x00,
+        0x01, 0x01, 0x01, 0x11, 0x00, 0xFF.toByte(), 0xC4.toByte(), 0x00, 0x1F, 0x00, 0x00,
+        0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+        0x09, 0x0A, 0x0B, 0xFF.toByte(), 0xDA.toByte(), 0x00, 0x08, 0x01, 0x01, 0x00, 0x00,
+        0x3F, 0x00, 0xBF.toByte(), 0x00, 0xFF.toByte(), 0xD9.toByte()
+    )
 
     fun generateFlatWorld(
         song: NoteBlockSong,
@@ -22,32 +42,42 @@ object FlatWorldMusicGenerator {
         }
 
         try {
-            onProgress?.invoke("正在写入 levelname.txt 与 level.dat 世界元数据...")
+            onProgress?.invoke("正在构建红石音乐实体结构布局...")
+            val layout = StructureExporter.buildContraption(song)
+
+            onProgress?.invoke("正在写入 levelname.txt 与 level.dat 超平坦元数据...")
             File(tempDir, "levelname.txt").writeText("Redstone Music - ${song.title.ifBlank { "Untitled" }}")
+            File(tempDir, "world_icon.jpeg").writeBytes(MINIMAL_JPEG)
+
+            val flatLayersJson = """{"biome_id":1,"block_layers":[{"block_name":"minecraft:bedrock","count":1},{"block_name":"minecraft:dirt","count":2},{"block_name":"minecraft:grass_block","count":1}],"encoding_version":6,"structure_options":null,"world_version":"version.post_1_18"}"""
 
             val levelCompound = NbtCompound().apply {
                 this["LevelName"] = NbtString(song.title.ifBlank { "Redstone Music" })
                 this["StorageVersion"] = NbtInt(10)
                 this["NetworkVersion"] = NbtInt(0)
                 this["Platform"] = NbtInt(2)
+                this["PlatformBroadcastIntent"] = NbtInt(3)
                 this["GameType"] = NbtInt(1)
+                this["Difficulty"] = NbtInt(1)
                 this["Generator"] = NbtInt(2)
                 this["SpawnX"] = NbtInt(0)
-                this["SpawnY"] = NbtInt(5)
+                this["SpawnY"] = NbtInt(-59)
                 this["SpawnZ"] = NbtInt(-3)
-                this["Time"] = NbtLong(6000L)
-                this["DayCycleStopTime"] = NbtInt(6000)
+                this["RandomSeed"] = NbtLong(123456789L)
+                this["Time"] = NbtLong(1000L)
+                this["DayCycleStopTime"] = NbtLong(-1L)
+                this["LastPlayed"] = NbtLong(System.currentTimeMillis() / 1000L)
                 this["commandsEnabled"] = NbtByte(1)
                 this["cheatsEnabled"] = NbtByte(1)
                 this["hasBeenLoadedInCreative"] = NbtByte(1)
-                this["difficulty"] = NbtInt(0)
-                this["FlatWorldLayers"] = NbtString(
-                    """{"biome_id":1,"block_layers":[{"block_data":0,"block_name":"minecraft:bedrock","count":1},{"block_data":0,"block_name":"minecraft:dirt","count":2},{"block_data":0,"block_name":"minecraft:grass_block","count":1}],"encoding_version":6,"structure_options":null}"""
-                )
-                this["RandomSeed"] = NbtLong(12345678L)
+                this["immutableWorld"] = NbtByte(0)
+                this["MultiplayerGame"] = NbtByte(1)
+                this["LANBroadcast"] = NbtByte(1)
+                this["XBLBroadcastIntent"] = NbtInt(3)
+                this["FlatWorldLayers"] = NbtString(flatLayersJson)
                 this["experiments"] = NbtCompound().apply {
-                    this["experiments_ever_used"] = NbtByte(1)
-                    this["saved_with_toggled_experiments"] = NbtByte(1)
+                    this["experiments_ever_used"] = NbtByte(0)
+                    this["saved_with_toggled_experiments"] = NbtByte(0)
                 }
             }
 
@@ -58,73 +88,87 @@ object FlatWorldMusicGenerator {
             NbtIO.writeNbtFile(levelDatFile, nbtFile, compressed = false, littleEndian = true, writeHeaders = true)
             File(tempDir, "level.dat_old").writeBytes(levelDatFile.readBytes())
 
-            onProgress?.invoke("正在生成基岩版物理结构文件 (.mcstructure)...")
+            onProgress?.invoke("正在写入 LevelDB 世界区块与实体红石音乐方块...")
+            val dbDir = File(tempDir, "db").apply { mkdirs() }
+            val dbOptions = Options().apply { createIfMissing(true) }
+            val db = DbImpl(dbOptions, dbDir.absolutePath, SafeEnv())
+
+            try {
+                val minChunkX = minOf(0, (layout.blocks.minOfOrNull { it.x } ?: 0) shr 4)
+                val maxChunkX = maxOf(0, (layout.blocks.maxOfOrNull { it.x } ?: 0) shr 4)
+                val minChunkZ = minOf(-1, (layout.blocks.minOfOrNull { it.z } ?: 0) shr 4)
+                val maxChunkZ = maxOf(0, (layout.blocks.maxOfOrNull { it.z } ?: 0) shr 4)
+
+                for (cx in minChunkX..maxChunkX) {
+                    for (cz in minChunkZ..maxChunkZ) {
+                        val vKey = BedrockChunkHelper.createChunkVersionKey(cx, cz)
+                        db.put(vKey, byteArrayOf(BedrockChunkHelper.OVERWORLD_VERSION_VALUE))
+
+                        val d2Key = BedrockChunkHelper.create2DDataKey(cx, cz)
+                        db.put(d2Key, BedrockChunkHelper.createDefault2DData(-60))
+
+                        val subBlocks = Array(SubChunkEncoder.SUBCHUNK_SIZE) { BedrockBlockState.AIR }
+
+                        for (lx in 0..15) {
+                            for (lz in 0..15) {
+                                subBlocks[SubChunkEncoder.getLocalIndex(lx, 0, lz)] = BedrockBlockState.BEDROCK
+                                subBlocks[SubChunkEncoder.getLocalIndex(lx, 1, lz)] = BedrockBlockState.DIRT
+                                subBlocks[SubChunkEncoder.getLocalIndex(lx, 2, lz)] = BedrockBlockState.DIRT
+                                subBlocks[SubChunkEncoder.getLocalIndex(lx, 3, lz)] = BedrockBlockState.GRASS_BLOCK
+                            }
+                        }
+
+                        val blockEntities = mutableListOf<NbtCompound>()
+
+                        for (block in layout.blocks) {
+                            val worldX = block.x
+                            val worldY = -60 + block.y
+                            val worldZ = block.z
+
+                            if ((worldX shr 4) == cx && (worldZ shr 4) == cz) {
+                                val lx = worldX and 15
+                                val lz = worldZ and 15
+                                val ly = worldY + 64
+
+                                if (ly in 0..15) {
+                                    subBlocks[SubChunkEncoder.getLocalIndex(lx, ly, lz)] = BedrockBlockState(
+                                        name = block.bedrockName,
+                                        states = block.bedrockStates
+                                    )
+                                }
+
+                                if (block.notePitch != null) {
+                                    val entity = NbtCompound().apply {
+                                        this["id"] = NbtString("Music")
+                                        this["note"] = NbtByte(block.notePitch.toByte())
+                                        this["x"] = NbtInt(worldX)
+                                        this["y"] = NbtInt(worldY)
+                                        this["z"] = NbtInt(worldZ)
+                                        this["isMovable"] = NbtByte(1)
+                                    }
+                                    blockEntities.add(entity)
+                                }
+                            }
+                        }
+
+                        val subKey = BedrockChunkHelper.createSubChunkKey(cx, cz, -4)
+                        val encodedSub = SubChunkEncoder.encode(subBlocks)
+                        db.put(subKey, encodedSub)
+
+                        if (blockEntities.isNotEmpty()) {
+                            val beKey = BedrockChunkHelper.createBlockEntityKey(cx, cz)
+                            db.put(beKey, BedrockChunkHelper.serializeBlockEntities(blockEntities))
+                        }
+                    }
+                }
+            } finally {
+                db.close()
+            }
+
+            onProgress?.invoke("正在导出物理结构备份 (.mcstructure)...")
             val structuresDir = File(tempDir, "structures").apply { mkdirs() }
             val mcstructureFile = File(structuresDir, "music.mcstructure")
             StructureExporter.exportBedrockMcStructure(song, mcstructureFile)
-
-            onProgress?.invoke("正在配置行为包与自动启动函数...")
-            val packUuid = UUID.randomUUID().toString()
-            val moduleUuid = UUID.randomUUID().toString()
-
-            val bpDir = File(tempDir, "behavior_packs/music_loader").apply { mkdirs() }
-            val bpStructuresDir = File(bpDir, "structures").apply { mkdirs() }
-            mcstructureFile.copyTo(File(bpStructuresDir, "music.mcstructure"), overwrite = true)
-
-            val bpManifest = File(bpDir, "manifest.json")
-            bpManifest.writeText(
-                """
-                {
-                  "format_version": 2,
-                  "header": {
-                    "description": "ChunkoidNG Redstone Music Loader",
-                    "name": "Redstone Music Loader",
-                    "uuid": "$packUuid",
-                    "version": [1, 0, 0],
-                    "min_engine_version": [1, 20, 0]
-                  },
-                  "modules": [
-                    {
-                      "description": "Script / Data Module",
-                      "type": "data",
-                      "uuid": "$moduleUuid",
-                      "version": [1, 0, 0]
-                    }
-                  ]
-                }
-                """.trimIndent()
-            )
-
-            val functionsDir = File(bpDir, "functions").apply { mkdirs() }
-            File(functionsDir, "tick.json").writeText(
-                """
-                {
-                  "values": [
-                    "music_init"
-                  ]
-                }
-                """.trimIndent()
-            )
-
-            File(functionsDir, "music_init.mcfunction").writeText(
-                """
-                execute as @a[tag=!music_inited] at @s run structure load "music" 0 4 0
-                execute as @a[tag=!music_inited] at @s run tp @s 0 5 -3 0 0
-                execute as @a[tag=!music_inited] at @s run tellraw @s {"rawtext":[{"text":"§a♪ Redstone Music Loaded! Press the button ahead to play ♪"}]}
-                tag @a[tag=!music_inited] add music_inited
-                """.trimIndent()
-            )
-
-            File(tempDir, "world_behavior_packs.json").writeText(
-                """
-                [
-                  {
-                    "pack_id": "$packUuid",
-                    "version": [1, 0, 0]
-                  }
-                ]
-                """.trimIndent()
-            )
 
             onProgress?.invoke("正在压缩打包为 .mcworld 即听世界文件...")
             outputMcworldFile.parentFile?.mkdirs()
