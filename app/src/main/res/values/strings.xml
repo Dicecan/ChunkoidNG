@@ -721,4 +721,31 @@
     <string name="midi_conv_logs_title">Execution Logs</string>
     <string name="midi_conv_logs_empty">No logs yet. Select a MIDI file to begin.</string>
     <string name="midi_conv_clear_logs">Clear Logs</string>
+
+    <string name="crash_screen_title">Application Crashed</string>
+    <string name="crash_title">ChunkoidNG encountered an unhandled exception</string>
+    <string name="crash_subtitle">A crash log has been recorded. You can copy or share this log to assist in resolving the issue.</string>
+    <string name="crash_summary_label">Exception Summary</string>
+    <string name="crash_stacktrace_label">Stack Trace</string>
+    <string name="crash_action_copy">Copy Log</string>
+    <string name="crash_action_share">Share Log</string>
+    <string name="crash_action_restart">Restart App</string>
+    <string name="crash_action_exit">Exit</string>
+    <string name="crash_log_copied">Crash log copied to clipboard</string>
+    <string name="settings_category_background">Background &amp; Notifications</string>
+    <string name="settings_notification_title">Notification Permission</string>
+    <string name="settings_notification_desc">Allow notifications to display real-time conversion progress in the notification bar and prevent system kill</string>
+    <string name="settings_notification_granted">Granted</string>
+    <string name="settings_notification_grant">Grant</string>
+    <string name="settings_battery_title">Ignore Battery Optimization</string>
+    <string name="settings_battery_desc">Allow continuous background execution to prevent process kill during screen lock on heavy conversions</string>
+    <string name="settings_battery_granted">Ignored</string>
+    <string name="settings_battery_grant">Request Exemption</string>
+    <string name="settings_category_diagnostics">Diagnostics &amp; Logs</string>
+    <string name="settings_crash_logs_title">Crash Logs</string>
+    <string name="settings_crash_logs_desc">View locally recorded crash diagnostic reports</string>
+    <string name="settings_crash_logs_count">%1$d records</string>
+    <string name="settings_crash_logs_empty">No crash logs found</string>
+    <string name="settings_crash_logs_clear">Clear All Logs</string>
+    <string name="settings_crash_logs_cleared">Crash logs cleared</string>
 </resources>

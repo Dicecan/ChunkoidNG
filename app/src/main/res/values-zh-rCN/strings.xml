@@ -721,4 +721,31 @@
     <string name="midi_conv_logs_title">执行日志</string>
     <string name="midi_conv_logs_empty">暂无日志。选择 MIDI 文件后开始生成。</string>
     <string name="midi_conv_clear_logs">清空日志</string>
+
+    <string name="crash_screen_title">应用异常退出</string>
+    <string name="crash_title">ChunkoidNG 遇到了未捕获的异常</string>
+    <string name="crash_subtitle">已自动生成详细的崩溃日志报告。您可以复制或分享日志以协助定位并修复该问题。</string>
+    <string name="crash_summary_label">异常摘要</string>
+    <string name="crash_stacktrace_label">堆栈追踪</string>
+    <string name="crash_action_copy">复制日志</string>
+    <string name="crash_action_share">分享日志</string>
+    <string name="crash_action_restart">重启应用</string>
+    <string name="crash_action_exit">退出应用</string>
+    <string name="crash_log_copied">崩溃日志已复制到剪贴板</string>
+    <string name="settings_category_background">后台与通知</string>
+    <string name="settings_notification_title">通知栏权限</string>
+    <string name="settings_notification_desc">允许发送通知以在后台转换时常驻显示实时进度，防止系统意外终止任务</string>
+    <string name="settings_notification_granted">已开启</string>
+    <string name="settings_notification_grant">前往开启</string>
+    <string name="settings_battery_title">忽略电池优化</string>
+    <string name="settings_battery_desc">允许应用在后台持续运行，防止系统在锁屏或息屏时终止大型世界转换</string>
+    <string name="settings_battery_granted">已忽略</string>
+    <string name="settings_battery_grant">申请忽略</string>
+    <string name="settings_category_diagnostics">诊断与日志</string>
+    <string name="settings_crash_logs_title">崩溃日志记录</string>
+    <string name="settings_crash_logs_desc">查看本地记录的应用异常崩溃日志报告</string>
+    <string name="settings_crash_logs_count">%1$d 条记录</string>
+    <string name="settings_crash_logs_empty">暂无崩溃日志记录</string>
+    <string name="settings_crash_logs_clear">清空全部日志</string>
+    <string name="settings_crash_logs_cleared">已清空所有崩溃日志</string>
 </resources>

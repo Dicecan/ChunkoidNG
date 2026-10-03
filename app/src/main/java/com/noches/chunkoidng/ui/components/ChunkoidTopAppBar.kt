@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.R
 import com.noches.chunkoidng.ui.navigation.Screen
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
+import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +45,14 @@ fun ChunkoidTopAppBar(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (currentScreen == Screen.Features) {
+                    AppLogo(
+                        size = 30.dp,
+                        iconSize = 19.dp,
+                        shape = ExpressiveShapes.small
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
                 Text(
                     text = when (currentScreen) {
                         Screen.Features -> stringResource(R.string.app_name)

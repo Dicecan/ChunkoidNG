@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.R
+import com.noches.chunkoidng.ui.components.AppLogo
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 
 @Composable
@@ -78,19 +79,11 @@ fun AboutScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(ExpressiveShapes.medium)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.foundation.Image(
-                            painter = painterResource(id = R.drawable.ic_app_logo),
-                            contentDescription = stringResource(R.string.app_name),
-                            modifier = Modifier.size(44.dp)
-                        )
-                    }
+                    AppLogo(
+                        size = 72.dp,
+                        iconSize = 46.dp,
+                        shape = ExpressiveShapes.medium
+                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
 

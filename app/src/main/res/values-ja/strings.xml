@@ -721,4 +721,31 @@
     <string name="midi_conv_logs_title">実行ログ</string>
     <string name="midi_conv_logs_empty">ログはまだありません。MIDIファイルを選択してください。</string>
     <string name="midi_conv_clear_logs">ログをクリア</string>
+
+    <string name="crash_screen_title">アプリがクラッシュしました</string>
+    <string name="crash_title">ChunkoidNGで予期しない例外が発生しました</string>
+    <string name="crash_subtitle">クラッシュログが生成されました。問題を修正するためにログをコピーまたは共有できます。</string>
+    <string name="crash_summary_label">例外の概要</string>
+    <string name="crash_stacktrace_label">スタックトレース</string>
+    <string name="crash_action_copy">ログをコピー</string>
+    <string name="crash_action_share">ログを共有</string>
+    <string name="crash_action_restart">アプリを再起動</string>
+    <string name="crash_action_exit">終了</string>
+    <string name="crash_log_copied">クラッシュログをクリップボードにコピーしました</string>
+    <string name="settings_category_background">バックグラウンドと通知</string>
+    <string name="settings_notification_title">通知の権限</string>
+    <string name="settings_notification_desc">バックグラウンド変換時に進行状況を表示しプロセスの強制終了を防ぐために通知を許可します</string>
+    <string name="settings_notification_granted">許可済み</string>
+    <string name="settings_notification_grant">許可する</string>
+    <string name="settings_battery_title">バッテリー最適化の無視</string>
+    <string name="settings_battery_desc">画面消灯時に変換プロセスが強制終了されるのを防ぎます</string>
+    <string name="settings_battery_granted">許可済み</string>
+    <string name="settings_battery_grant">免除をリクエスト</string>
+    <string name="settings_category_diagnostics">診断とログ</string>
+    <string name="settings_crash_logs_title">クラッシュログ</string>
+    <string name="settings_crash_logs_desc">端末に保存されたクラッシュレポートを確認します</string>
+    <string name="settings_crash_logs_count">%1$d 件の記録</string>
+    <string name="settings_crash_logs_empty">クラッシュログはありません</string>
+    <string name="settings_crash_logs_clear">すべてのログを削除</string>
+    <string name="settings_crash_logs_cleared">クラッシュログを削除しました</string>
 </resources>
