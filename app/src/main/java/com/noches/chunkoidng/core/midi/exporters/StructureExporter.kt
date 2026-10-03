@@ -43,12 +43,17 @@ object StructureExporter {
             notePitch: Int? = null,
             instrument: NoteBlockInstrument? = null
         ) {
+            val effectiveBedrockStates = if (bedrockName == "minecraft:dirt" && bedrockStates.isEmpty()) {
+                mapOf("dirt_type" to "normal")
+            } else {
+                bedrockStates
+            }
             blocks.add(
                 BlockPlacement(
                     x = x, y = y, z = z,
                     bedrockName = bedrockName,
                     javaStateString = javaStateString,
-                    bedrockStates = bedrockStates,
+                    bedrockStates = effectiveBedrockStates,
                     notePitch = notePitch,
                     instrument = instrument
                 )
@@ -69,11 +74,11 @@ object StructureExporter {
             )
         }
 
-        fun addRepeater(x: Int, z: Int, dirZ: Int, delay: Int) {
+        fun addRepeater(x: Int, z: Int, dirZ: Int, delay: Int, isEast: Boolean = false) {
             val d = delay.coerceIn(1, 4)
-            val dir = if (dirZ > 0) 2 else 0
-            val card = if (dirZ > 0) "north" else "south"
-            val javaFacing = if (dirZ > 0) "south" else "north"
+            val dir = if (isEast) 1 else if (dirZ > 0) 2 else 0
+            val card = if (isEast) "west" else if (dirZ > 0) "north" else "south"
+            val javaFacing = if (isEast) "east" else if (dirZ > 0) "south" else "north"
             addBlock(
                 x = x, y = 1, z = z,
                 bedrockName = "minecraft:stone",
@@ -114,14 +119,21 @@ object StructureExporter {
         var dirZ = 1
 
         fun doUTurn() {
+            val midX = currentX + (laneSpacing / 2)
             if (dirZ > 0) {
                 val turnZ = laneLength + 2
                 addWire(currentX, currentZ + 1)
                 addWire(currentX, turnZ)
-                for (x in (currentX + 1)..(currentX + laneSpacing)) {
-                    addWire(x, turnZ)
+                for (x in (currentX + 1)..(currentX + laneSpacing - 1)) {
+                    if (x == midX) {
+                        addRepeater(x, turnZ, 0, 1, isEast = true)
+                    } else {
+                        addWire(x, turnZ)
+                    }
                 }
+                addWire(currentX + laneSpacing, turnZ)
                 addWire(currentX + laneSpacing, turnZ - 1)
+                addRepeater(currentX + laneSpacing, laneLength, -1, 1)
                 currentX += laneSpacing
                 currentZ = laneLength
                 dirZ = -1
@@ -129,10 +141,16 @@ object StructureExporter {
                 val turnZ = 0
                 addWire(currentX, 1)
                 addWire(currentX, 0)
-                for (x in (currentX + 1)..(currentX + laneSpacing)) {
-                    addWire(x, 0)
+                for (x in (currentX + 1)..(currentX + laneSpacing - 1)) {
+                    if (x == midX) {
+                        addRepeater(x, 0, 0, 1, isEast = true)
+                    } else {
+                        addWire(x, 0)
+                    }
                 }
+                addWire(currentX + laneSpacing, 0)
                 addWire(currentX + laneSpacing, 1)
+                addRepeater(currentX + laneSpacing, 2, 1, 1)
                 currentX += laneSpacing
                 currentZ = 2
                 dirZ = 1
@@ -143,12 +161,14 @@ object StructureExporter {
             if (dirZ > 0) {
                 if (currentZ >= laneLength) {
                     doUTurn()
+                    currentZ += dirZ
                 } else {
                     currentZ += dirZ
                 }
             } else {
                 if (currentZ <= 2) {
                     doUTurn()
+                    currentZ += dirZ
                 } else {
                     currentZ += dirZ
                 }
@@ -164,7 +184,8 @@ object StructureExporter {
         var lastTick = 0
 
         for ((tick, noteList) in notesByTick) {
-            val delta = (tick - lastTick).coerceAtLeast(1)
+            val rawDelta = tick - lastTick
+            val delta = (rawDelta * 2).coerceAtLeast(0)
 
             if (dirZ > 0 && currentZ >= laneLength - 2) {
                 while (currentZ < laneLength) {
@@ -178,13 +199,13 @@ object StructureExporter {
                 doUTurn()
             }
 
-            if (delta <= 4) {
+            if (delta in 1..4) {
                 stepTrack(true, delta)
                 stepTrack(false, 0)
             } else if (delta in 5..8) {
                 stepTrack(true, 4)
                 stepTrack(true, delta - 4)
-            } else {
+            } else if (delta > 8) {
                 var rem = delta
                 while (rem > 0) {
                     val rDelay = minOf(rem, 4)
@@ -280,11 +301,16 @@ object StructureExporter {
         val paletteIndexMap = mutableMapOf<String, Int>()
 
         fun getOrAddPalette(name: String, states: Map<String, Any>): Int {
-            val key = "$name|$states"
+            val effectiveStates = if (name == "minecraft:dirt" && states.isEmpty()) {
+                mapOf("dirt_type" to "normal")
+            } else {
+                states
+            }
+            val key = "$name|$effectiveStates"
             paletteIndexMap[key]?.let { return it }
 
             val statesCompound = NbtCompound()
-            states.forEach { (k, v) ->
+            effectiveStates.forEach { (k, v) ->
                 when (v) {
                     is Int -> statesCompound[k] = NbtInt(v)
                     is Byte -> statesCompound[k] = NbtByte(v)

@@ -31,7 +31,7 @@ data class BedrockBlockState(
     companion object {
         val AIR = BedrockBlockState("minecraft:air")
         val BEDROCK = BedrockBlockState("minecraft:bedrock")
-        val DIRT = BedrockBlockState("minecraft:dirt")
+        val DIRT = BedrockBlockState("minecraft:dirt", mapOf("dirt_type" to "normal"))
         val GRASS_BLOCK = BedrockBlockState("minecraft:grass_block")
     }
 }

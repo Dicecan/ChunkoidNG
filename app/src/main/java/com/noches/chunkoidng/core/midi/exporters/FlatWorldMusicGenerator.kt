@@ -132,9 +132,14 @@ object FlatWorldMusicGenerator {
                                 val ly = worldY + 64
 
                                 if (ly in 0..15) {
+                                    val effectiveStates = if (block.bedrockName == "minecraft:dirt" && block.bedrockStates.isEmpty()) {
+                                        mapOf("dirt_type" to "normal")
+                                    } else {
+                                        block.bedrockStates
+                                    }
                                     subBlocks[SubChunkEncoder.getLocalIndex(lx, ly, lz)] = BedrockBlockState(
                                         name = block.bedrockName,
-                                        states = block.bedrockStates
+                                        states = effectiveStates
                                     )
                                 }
 

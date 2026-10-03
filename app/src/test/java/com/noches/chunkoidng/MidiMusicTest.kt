@@ -244,15 +244,20 @@ class MidiMusicTest {
         println("MIDI_DIAG: durationMs=${parsed.durationMs}, bpm=${parsed.initialBpm}, noteCount=${parsed.notes.size}")
         println("MIDI_DIAG: lengthTicks=${song.lengthTicks}, songNoteCount=${song.notes.size}")
         println("CHORD_STATS: maxNotesPerTick=${notesByTick.values.maxOf { it.size }}, count=${notesByTick.size}")
+        val sortedTicks = notesByTick.keys.toList()
+        for (i in 0 until minOf(20, sortedTicks.size - 1)) {
+            val d = sortedTicks[i + 1] - sortedTicks[i]
+            println("TICK_DIFF: t0=${sortedTicks[i]}, t1=${sortedTicks[i + 1]}, delta=$d, ms0=${sortedTicks[i] * 100}, ms1=${sortedTicks[i + 1] * 100}")
+        }
         val layout = StructureExporter.buildContraption(song)
         println("MIDI_DIAG: sizeX=${layout.sizeX}, sizeY=${layout.sizeY}, sizeZ=${layout.sizeZ}")
         val repeaters = layout.blocks.filter { it.bedrockName == "minecraft:unpowered_repeater" }
         assertTrue(repeaters.isNotEmpty())
         for (repeater in repeaters) {
             val dir = repeater.bedrockStates["direction"] as Int
-            assertTrue(dir == 0 || dir == 2)
+            assertTrue(dir in listOf(0, 1, 2))
             val card = repeater.bedrockStates["minecraft:cardinal_direction"] as String
-            assertTrue(card == "north" || card == "south")
+            assertTrue(card in listOf("north", "south", "west"))
         }
         assertTrue(layout.sizeZ in 80..115)
         assertTrue(layout.sizeX >= 50)
