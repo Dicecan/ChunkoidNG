@@ -82,6 +82,28 @@ class MidiMusicTest {
     }
 
     @Test
+    fun testMidiParserRejectsTruncatedAndUnsupportedInput() {
+        val valid = createSyntheticMidiBytes()
+        assertThrows(IllegalArgumentException::class.java) {
+            MidiParser.parse(valid.copyOf(valid.size - 1), "truncated")
+        }
+
+        val smpte = valid.copyOf()
+        smpte[12] = 0x80.toByte()
+        assertThrows(IllegalArgumentException::class.java) {
+            MidiParser.parse(smpte, "smpte")
+        }
+    }
+
+    @Test
+    fun testQuantizerRejectsUnsafeSpeed() {
+        val parsed = MidiParser.parse(createSyntheticMidiBytes(), "Test")
+        assertThrows(IllegalArgumentException::class.java) {
+            RedstoneQuantizer.quantize(parsed, QuantizationConfig(ticksPerSecond = 0.01))
+        }
+    }
+
+    @Test
     fun testNbsExporter() {
         val song = NoteBlockSong(
             title = "Test NBS",

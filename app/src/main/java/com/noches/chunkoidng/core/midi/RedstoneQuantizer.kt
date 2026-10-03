@@ -11,10 +11,18 @@ data class QuantizationConfig(
 
 object RedstoneQuantizer {
 
+    private const val MAX_OUTPUT_TICKS = 2_000_000
+
     fun quantize(
         parsedSong: ParsedMidiSong,
         config: QuantizationConfig = QuantizationConfig()
     ): NoteBlockSong {
+        require(config.ticksPerSecond.isFinite() && config.ticksPerSecond in 0.1..100.0) {
+            "ticksPerSecond must be between 0.1 and 100"
+        }
+        require(config.manualSemitoneShift in -120..120) {
+            "manualSemitoneShift must be between -120 and 120"
+        }
         val msPerTick = 1000.0 / config.ticksPerSecond
 
         val bestShift = if (config.autoTransposition) {
@@ -27,7 +35,9 @@ object RedstoneQuantizer {
         var maxTick = 0
 
         for (raw in parsedSong.notes) {
-            val tick = (raw.startMs / msPerTick).roundToInt()
+            val calculatedTick = (raw.startMs / msPerTick).roundToInt()
+            require(calculatedTick in 0..MAX_OUTPUT_TICKS) { "MIDI timeline is too long to export" }
+            val tick = calculatedTick
             if (tick > maxTick) maxTick = tick
 
             val isPercussion = raw.channel == 9

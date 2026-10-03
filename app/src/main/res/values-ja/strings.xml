@@ -693,6 +693,7 @@
     <string name="pack_conv_success_desc">%1$d 個のリソースファイルを正常に変換しました</string>
     <string name="pack_conv_save_pack">変換されたパックを保存</string>
     <string name="pack_conv_no_file">変換するリソースパックを選択してください</string>
+    <string name="pack_conv_save_failed">変換されたリソースパックの保存に失敗しました</string>
 
     <string name="midi_conv_title">MIDI レッドストーン音楽工房</string>
     <string name="midi_conv_subtitle">標準MIDIをゲーム内の音符ブロック機械、試聴ワールド、コマンドに変換</string>

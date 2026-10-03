@@ -106,41 +106,89 @@ object TextureAtlasGenerator {
 
     fun generateBlocksJson(
         blockTexturePaths: Set<String>,
-        outputFile: File
+        outputFile: File,
+        modelDefinitions: List<JavaModelHandler.BlockDefinition> = emptyList()
     ) {
         val root = JSONObject()
         root.put("format_version", "1.1.0")
 
-        for ((path, blockName) in uniqueAtlasEntries(blockTexturePaths)) {
-            // A directional texture is only one face of a block. Defining it as
-            // a six-sided block changes the vanilla model, so leave those to
-            // the game's existing block definition.
-            if (blockName.endsWith("_top") ||
-                blockName.endsWith("_bottom") ||
-                blockName.endsWith("_side") ||
-                blockName.endsWith("_front") ||
-                blockName.endsWith("_back") ||
-                blockName.endsWith("_left") ||
-                blockName.endsWith("_right")
-            ) {
-                continue
-            }
+        val definedNames = mutableSetOf<String>()
+        for (definition in modelDefinitions) {
             val blockObj = JSONObject()
             blockObj.put("sound", "stone")
-
             val texturesObj = JSONObject()
-            texturesObj.put("up", blockName)
-            texturesObj.put("down", blockName)
-            texturesObj.put("north", blockName)
-            texturesObj.put("south", blockName)
-            texturesObj.put("west", blockName)
-            texturesObj.put("east", blockName)
-            blockObj.put("textures", texturesObj)
+            val textures = definition.textures
+            if (textures.containsKey("all")) {
+                blockObj.put("textures", textures["all"])
+            } else {
+                for (face in listOf("up", "down", "north", "south", "west", "east")) {
+                    val key = textures[face] ?: textures["side"] ?: textures["all"] ?: continue
+                    texturesObj.put(face, key)
+                }
+                if (texturesObj.length() > 0) blockObj.put("textures", texturesObj)
+            }
+            if (blockObj.has("textures")) {
+                root.put(definition.name, blockObj)
+                definedNames.add(definition.name)
+            }
+        }
 
+        val grouped = linkedMapOf<String, MutableMap<String, String>>()
+        for ((_, textureName) in uniqueAtlasEntries(blockTexturePaths)) {
+            val (base, face) = directionalTextureName(textureName)
+            grouped.getOrPut(base) { linkedMapOf() }[face] = textureName
+        }
+        for ((blockName, faceTextures) in grouped) {
+            if (definedNames.contains(blockName)) continue
+            val fallback = faceTextures["all"] ?: faceTextures["side"] ?: faceTextures.values.firstOrNull() ?: continue
+            val up = faceTextures["up"] ?: faceTextures["top"] ?: fallback
+            val down = faceTextures["down"] ?: faceTextures["bottom"] ?: fallback
+            val side = faceTextures["side"] ?: faceTextures["front"] ?: fallback
+
+            val blockObj = JSONObject()
+            blockObj.put("sound", defaultSoundForBlock(blockName))
+            val texturesObj = JSONObject()
+            texturesObj.put("up", up)
+            texturesObj.put("down", down)
+            texturesObj.put("north", faceTextures["north"] ?: side)
+            texturesObj.put("south", faceTextures["south"] ?: side)
+            texturesObj.put("west", faceTextures["west"] ?: side)
+            texturesObj.put("east", faceTextures["east"] ?: side)
+            blockObj.put("textures", texturesObj)
             root.put(blockName, blockObj)
         }
 
         outputFile.parentFile?.mkdirs()
         outputFile.writeText(root.toString(2))
+    }
+
+    private fun directionalTextureName(name: String): Pair<String, String> {
+        val suffixes = listOf(
+            "_top" to "top",
+            "_bottom" to "bottom",
+            "_side" to "side",
+            "_front" to "front",
+            "_back" to "back",
+            "_left" to "left",
+            "_right" to "right",
+            "_up" to "up",
+            "_down" to "down"
+        )
+        val suffix = suffixes.firstOrNull { name.endsWith(it.first) }
+        return if (suffix == null) name to "all" else name.removeSuffix(suffix.first) to suffix.second
+    }
+
+    private fun defaultSoundForBlock(name: String): String {
+        return when {
+            name.contains("glass") || name.contains("ice") -> "glass"
+            name.contains("wool") || name.contains("cloth") -> "cloth"
+            name.contains("sand") -> "sand"
+            name.contains("gravel") -> "gravel"
+            name.contains("snow") -> "snow"
+            name.contains("metal") || name.contains("iron") || name.contains("gold") -> "metal"
+            name.contains("plank") || name.contains("wood") || name.contains("log") -> "wood"
+            name.contains("grass") || name.contains("leaves") -> "grass"
+            else -> "stone"
+        }
     }
 }

@@ -52,7 +52,7 @@ object PackLangHandler {
 
     fun generateLanguagesJson(locales: List<String>, outputFile: File) {
         val array = JSONArray()
-        for (loc in locales) {
+        for (loc in locales.distinct().sorted()) {
             array.put(loc)
         }
         outputFile.parentFile?.mkdirs()

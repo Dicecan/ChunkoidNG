@@ -28,6 +28,9 @@ object FlipbookAnimationHandler {
             val frameSpecs = mutableListOf<Pair<Int, Int>>()
             if (anim.has("frames")) {
                 val framesArr = anim.getJSONArray("frames")
+                if (framesArr.length() > MAX_EXPANDED_FRAMES) {
+                    throw IllegalArgumentException("Animation contains too many frames")
+                }
                 for (i in 0 until framesArr.length()) {
                     val item = framesArr.get(i)
                     when (item) {
@@ -67,8 +70,8 @@ object FlipbookAnimationHandler {
                 interpolate = interpolate,
                 frames = frameList.takeIf { it.isNotEmpty() }
             )
-        } catch (_: Exception) {
-            null
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid Java animation metadata", cause)
         }
     }
 
@@ -99,10 +102,21 @@ object FlipbookAnimationHandler {
         val result = mutableListOf<Pair<String, String>>()
         try {
             val array = JSONArray(flipbookContent)
+            if (array.length() > MAX_EXPANDED_FRAMES) {
+                throw IllegalArgumentException("Flipbook list is too large")
+            }
             for (i in 0 until array.length()) {
                 val obj = array.getJSONObject(i)
                 val flipbookTexture = obj.getString("flipbook_texture")
-                val ticks = if (obj.has("ticks_per_frame")) obj.getInt("ticks_per_frame") else 1
+                val normalizedTexture = flipbookTexture.replace('\\', '/')
+                if (!normalizedTexture.startsWith("textures/") ||
+                    normalizedTexture.split('/').any { it == ".." || it.isBlank() }
+                ) {
+                    throw IllegalArgumentException("Invalid flipbook texture path")
+                }
+                val ticks = if (obj.has("ticks_per_frame")) {
+                    obj.getInt("ticks_per_frame").coerceIn(1, 1024)
+                } else 1
                 val interpolate = if (obj.has("interpolate")) obj.getBoolean("interpolate") else false
 
                 val mcmetaRoot = JSONObject()
@@ -114,14 +128,19 @@ object FlipbookAnimationHandler {
 
                 if (obj.has("frames")) {
                     val frames = obj.getJSONArray("frames")
+                    if (frames.length() > MAX_EXPANDED_FRAMES) {
+                        throw IllegalArgumentException("Flipbook frame list is too large")
+                    }
                     animObj.put("frames", frames)
                 }
 
                 mcmetaRoot.put("animation", animObj)
-                val relativeMcmetaPath = "$flipbookTexture.png.mcmeta"
+                val relativeMcmetaPath = "$normalizedTexture.png.mcmeta"
                 result.add(relativeMcmetaPath to mcmetaRoot.toString(2))
             }
-        } catch (_: Exception) {}
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid Bedrock flipbook metadata", cause)
+        }
         return result
     }
 }

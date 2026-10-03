@@ -693,6 +693,7 @@
     <string name="pack_conv_success_desc">Successfully converted %1$d files</string>
     <string name="pack_conv_save_pack">Save Converted Pack</string>
     <string name="pack_conv_no_file">Please select a resource pack first</string>
+    <string name="pack_conv_save_failed">Failed to save the converted resource pack</string>
 
     <string name="midi_conv_title">MIDI Redstone Music Workshop</string>
     <string name="midi_conv_subtitle">Transform standard MIDI into mechanical note blocks, superflat worlds &amp; commands</string>

@@ -63,6 +63,8 @@ fun PackConverterScreen(
             viewModel.saveConvertedPack(uri) { success ->
                 if (success) {
                     Toast.makeText(context, R.string.pack_conv_success, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, R.string.pack_conv_save_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }

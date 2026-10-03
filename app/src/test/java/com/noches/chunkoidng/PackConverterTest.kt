@@ -30,6 +30,12 @@ class PackConverterTest {
 
         val javaTexture = PackAssetMapper.mapBedrockToJava("textures/blocks/grass_top.png")
         assertEquals("assets/minecraft/textures/block/grass_block_top.png", javaTexture)
+
+        assertEquals(
+            "textures/blocks/example_custom_block.png",
+            PackAssetMapper.mapJavaToBedrock("assets/example/textures/block/custom_block.png")
+        )
+        assertTrue(PackAssetMapper.isJavaArmorTexture("assets/minecraft/textures/models/armor/diamond_layer_1.png"))
     }
 
     @Test
@@ -91,6 +97,21 @@ class PackConverterTest {
             val itemJson = JSONObject(itemTexture.readText())
             val itemData = itemJson.getJSONObject("texture_data")
             assertTrue(itemData.has("iron_sword"))
+
+            val blocksFile = File(testDir, "blocks.json")
+            TextureAtlasGenerator.generateBlocksJson(
+                setOf(
+                    "textures/blocks/grass_top.png",
+                    "textures/blocks/grass_side.png",
+                    "textures/blocks/grass_bottom.png"
+                ),
+                blocksFile
+            )
+            val grassTextures = JSONObject(blocksFile.readText())
+                .getJSONObject("grass")
+                .getJSONObject("textures")
+            assertEquals("grass_top", grassTextures.getString("up"))
+            assertEquals("grass_side", grassTextures.getString("north"))
 
             val collisionFile = File(testDir, "textures/collision.json")
             TextureAtlasGenerator.generateTerrainTextureJson(
@@ -219,6 +240,68 @@ class PackConverterTest {
             assertTrue(File(target, "manifest.json").exists())
             assertTrue(File(target, "textures/blocks/stone.png").exists())
             assertFalse(File(target, "MyPack").exists())
+        } finally {
+            source.deleteRecursively()
+            target.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun testJavaSimpleBlockModelConversion() {
+        val model = JavaModelHandler.parseModel(
+            "assets/minecraft/models/block/demo.json",
+            """{"parent":"block/cube_all","textures":{"all":"minecraft:block/demo"}}"""
+        )
+        assertNotNull(model)
+        val definition = JavaModelHandler.resolveDefinitions(
+            mapOf(model!!.id to model),
+            emptyMap(),
+            setOf("textures/blocks/demo.png")
+        )
+        assertEquals(1, definition.size)
+        assertEquals("demo", definition.first().name)
+        assertEquals("demo", definition.first().textures["all"])
+    }
+
+    @Test
+    fun testJavaModelIsConvertedDuringPackConversion() {
+        val source = File.createTempFile("model_pack", "").apply {
+            delete()
+            mkdirs()
+        }
+        val target = File.createTempFile("model_pack_target", "").apply {
+            delete()
+            mkdirs()
+        }
+        try {
+            File(source, "pack.mcmeta").apply {
+                parentFile?.mkdirs()
+                writeText("{\"pack\":{\"pack_format\":34,\"description\":\"demo\"}}")
+            }
+            File(source, "assets/minecraft/textures/block/demo.png").apply {
+                parentFile?.mkdirs()
+                writeBytes(byteArrayOf(1, 2, 3))
+            }
+            File(source, "assets/minecraft/models/block/demo.json").apply {
+                parentFile?.mkdirs()
+                writeText("{\"parent\":\"block/cube_all\",\"textures\":{\"all\":\"minecraft:block/demo\"}}")
+            }
+            File(source, "assets/minecraft/blockstates/demo.json").apply {
+                parentFile?.mkdirs()
+                writeText("{\"variants\":{\"\":{\"model\":\"minecraft:block/demo\"}}}")
+            }
+
+            runBlocking {
+                ResourcePackConverterEngine.convertPack(
+                    source,
+                    target,
+                    PackConversionConfig(PackPlatform.BEDROCK)
+                ) { }
+            }
+            val blocks = JSONObject(File(target, "blocks.json").readText())
+            assertEquals("demo", blocks.getJSONObject("demo").getString("textures"))
+            assertFalse(File(target, "assets/minecraft/models/block/demo.json").exists())
+            assertFalse(File(target, "assets/minecraft/blockstates/demo.json").exists())
         } finally {
             source.deleteRecursively()
             target.deleteRecursively()

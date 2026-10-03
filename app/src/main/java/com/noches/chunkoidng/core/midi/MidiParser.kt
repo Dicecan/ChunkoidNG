@@ -35,16 +35,23 @@ data class ParsedMidiSong(
 
 object MidiParser {
 
+    private const val MAX_MIDI_BYTES = 128 * 1024 * 1024
+    private const val MAX_TRACK_BYTES = 64 * 1024 * 1024
+    private const val MAX_TRACKS = 1024
+    private const val MAX_NOTES = 1_000_000
+
     private data class TempoChange(
         val tick: Long,
         val usPerQuarter: Long
     )
 
     fun parse(file: File): ParsedMidiSong {
+        require(file.length() <= MAX_MIDI_BYTES) { "MIDI file is too large" }
         return parse(file.readBytes(), file.nameWithoutExtension)
     }
 
     fun parse(bytes: ByteArray, defaultTitle: String = "Untitled"): ParsedMidiSong {
+        require(bytes.size <= MAX_MIDI_BYTES) { "MIDI file is too large" }
         val stream = ByteArrayInputStream(bytes)
 
         val headerId = readString(stream, 4)
@@ -53,12 +60,19 @@ object MidiParser {
         }
 
         val headerLength = readInt32(stream)
+        require(headerLength >= 6) { "Invalid MIDI header length: $headerLength" }
+        require(headerLength <= 1024) { "MIDI header is too large" }
         val format = readInt16(stream)
         val numTracks = readInt16(stream)
         val division = readInt16(stream)
+        require(format in 0..2) { "Unsupported MIDI format: $format" }
+        require(numTracks in 1..MAX_TRACKS) { "Invalid MIDI track count: $numTracks" }
+        require(division > 0 && (division and 0x8000) == 0) {
+            "SMPTE MIDI division is not supported"
+        }
 
         if (headerLength > 6) {
-            stream.skip((headerLength - 6).toLong())
+            skipFully(stream, (headerLength - 6).toLong())
         }
 
         val tempoChanges = mutableListOf<TempoChange>()
@@ -71,14 +85,18 @@ object MidiParser {
         for (trackIdx in 0 until numTracks) {
             val trackChunkId = readString(stream, 4)
             if (trackChunkId != "MTrk") {
-                break
+                throw IllegalArgumentException("Invalid MIDI track header at index $trackIdx")
             }
             val trackChunkLength = readInt32(stream)
+            require(trackChunkLength >= 0 && trackChunkLength <= MAX_TRACK_BYTES) {
+                "Invalid MIDI track length: $trackChunkLength"
+            }
+            require(trackChunkLength <= stream.available()) { "Truncated MIDI track" }
             val trackData = ByteArray(trackChunkLength)
             var bytesRead = 0
             while (bytesRead < trackChunkLength) {
                 val count = stream.read(trackData, bytesRead, trackChunkLength - bytesRead)
-                if (count < 0) break
+                if (count < 0) throw IllegalArgumentException("Truncated MIDI track")
                 bytesRead += count
             }
 
@@ -91,10 +109,18 @@ object MidiParser {
 
             fun readVarInt(): Long {
                 var value = 0L
-                while (offset < trackData.size) {
+                var count = 0
+                while (offset < trackData.size && count < 4) {
                     val b = trackData[offset++].toInt() and 0xFF
                     value = (value shl 7) or ((b and 0x7F).toLong())
                     if ((b and 0x80) == 0) break
+                    count++
+                }
+                if (offset == trackData.size &&
+                    (trackData[offset - 1].toInt() and 0x80) != 0
+                ) throw IllegalArgumentException("Truncated MIDI variable length value")
+                if (count >= 4 && (trackData[offset - 1].toInt() and 0x80) != 0) {
+                    throw IllegalArgumentException("MIDI variable length value is too long")
                 }
                 return value
             }
@@ -107,6 +133,9 @@ object MidiParser {
                 val firstByte = trackData[offset++].toInt() and 0xFF
                 val statusByte: Int
                 if (firstByte < 0x80) {
+                    if (runningStatus == 0) {
+                        throw IllegalArgumentException("MIDI data byte without running status")
+                    }
                     offset--
                     statusByte = runningStatus
                 } else {
@@ -131,6 +160,7 @@ object MidiParser {
                             val key = trackData[offset++].toInt() and 0xFF
                             val vel = trackData[offset++].toInt() and 0xFF
                             if (vel > 0) {
+                                require(currentTrackNotes.size < MAX_NOTES) { "MIDI track contains too many notes" }
                                 val prog = channelPrograms[channel]
                                 currentTrackNotes.add(
                                     RawMidiNote(
@@ -163,14 +193,16 @@ object MidiParser {
                         if (statusByte == 0xFF) {
                             if (offset < trackData.size) {
                                 val metaType = trackData[offset++].toInt() and 0xFF
-                                val metaLength = readVarInt().toInt()
-                                val actualLength = minOf(metaLength, (trackData.size - offset).coerceAtLeast(0))
-                                val metaBytes = trackData.copyOfRange(offset, offset + actualLength)
+                                val metaLengthLong = readVarInt()
+                                require(metaLengthLong <= Int.MAX_VALUE) { "MIDI meta event is too large" }
+                                val metaLength = metaLengthLong.toInt()
+                                require(metaLength <= trackData.size - offset) { "Truncated MIDI meta event" }
+                                val metaBytes = trackData.copyOfRange(offset, offset + metaLength)
                                 offset += metaLength
 
                                 when (metaType) {
                                     0x51 -> {
-                                        if (actualLength >= 3) {
+                                        if (metaBytes.size >= 3) {
                                             val usPerQuarter = ((metaBytes[0].toInt() and 0xFF) shl 16) or
                                                     ((metaBytes[1].toInt() and 0xFF) shl 8) or
                                                     (metaBytes[2].toInt() and 0xFF)
@@ -187,10 +219,25 @@ object MidiParser {
                                         }
                                     }
                                 }
+                                runningStatus = 0
                             }
                         } else {
-                            val sysexLength = readVarInt().toInt()
-                            offset = minOf(offset + sysexLength, trackData.size)
+                            if (statusByte != 0xF0 && statusByte != 0xF7) {
+                                val dataBytes = when (statusByte) {
+                                    0xF1, 0xF3 -> 1
+                                    0xF2 -> 2
+                                    else -> 0
+                                }
+                                require(offset + dataBytes <= trackData.size) { "Truncated MIDI system event" }
+                                offset += dataBytes
+                            } else {
+                                val sysexLengthLong = readVarInt()
+                                require(sysexLengthLong <= Int.MAX_VALUE) { "MIDI sysex event is too large" }
+                                val sysexLength = sysexLengthLong.toInt()
+                                require(sysexLength <= trackData.size - offset) { "Truncated MIDI sysex event" }
+                                offset += sysexLength
+                            }
+                            runningStatus = 0
                         }
                     }
                 }
@@ -291,21 +338,46 @@ object MidiParser {
 
     private fun readString(stream: InputStream, length: Int): String {
         val bytes = ByteArray(length)
-        stream.read(bytes)
+        readFully(stream, bytes)
         return String(bytes, Charsets.US_ASCII)
     }
 
     private fun readInt32(stream: InputStream): Int {
-        val b0 = stream.read()
-        val b1 = stream.read()
-        val b2 = stream.read()
-        val b3 = stream.read()
+        val b0 = readByte(stream)
+        val b1 = readByte(stream)
+        val b2 = readByte(stream)
+        val b3 = readByte(stream)
         return (b0 shl 24) or (b1 shl 16) or (b2 shl 8) or b3
     }
 
     private fun readInt16(stream: InputStream): Int {
-        val b0 = stream.read()
-        val b1 = stream.read()
+        val b0 = readByte(stream)
+        val b1 = readByte(stream)
         return (b0 shl 8) or b1
+    }
+
+    private fun readByte(stream: InputStream): Int =
+        stream.read().takeIf { it >= 0 } ?: throw IllegalArgumentException("Unexpected end of MIDI file")
+
+    private fun readFully(stream: InputStream, target: ByteArray) {
+        var offset = 0
+        while (offset < target.size) {
+            val count = stream.read(target, offset, target.size - offset)
+            if (count < 0) throw IllegalArgumentException("Unexpected end of MIDI file")
+            offset += count
+        }
+    }
+
+    private fun skipFully(stream: InputStream, bytes: Long) {
+        var remaining = bytes
+        while (remaining > 0) {
+            val skipped = stream.skip(remaining)
+            if (skipped > 0) {
+                remaining -= skipped
+            } else {
+                readByte(stream)
+                remaining--
+            }
+        }
     }
 }

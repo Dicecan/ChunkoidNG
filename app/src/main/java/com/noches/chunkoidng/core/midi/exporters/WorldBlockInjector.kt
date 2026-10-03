@@ -35,6 +35,8 @@ data class WorldInjectionResult(
 
 object WorldBlockInjector {
 
+    private const val MAX_WORLD_BACKUP_BYTES = 2L * 1024L * 1024L * 1024L
+
     fun injectSongIntoWorld(
         worldDir: File,
         song: NoteBlockSong,
@@ -51,6 +53,7 @@ object WorldBlockInjector {
                 message = "Target world directory does not exist: ${worldDir.absolutePath}"
             )
         }
+        require(worldDir.canonicalFile.parentFile != null) { "Invalid target world directory" }
 
         val worldInfo = WorldMetadataReader.inspectWorld(worldDir)
         val platform = worldInfo.platform
@@ -63,6 +66,8 @@ object WorldBlockInjector {
         val sanitizedTitle = song.title.ifBlank { "music" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
             .lowercase()
+            .take(64)
+            .ifBlank { "music" }
 
         return if (platform == Platform.BEDROCK) {
             injectBedrockWorld(worldDir, worldInfo.name, song, sanitizedTitle, config, backupFile)
@@ -85,8 +90,8 @@ object WorldBlockInjector {
 
         if (config.autoLoadOnJoin) {
             val bpDir = File(worldDir, "behavior_packs/music_$slug").apply { mkdirs() }
-            val packUuid = UUID.randomUUID().toString()
-            val moduleUuid = UUID.randomUUID().toString()
+            val packUuid = UUID.nameUUIDFromBytes("chunkoidng:music:$slug".toByteArray()).toString()
+            val moduleUuid = UUID.nameUUIDFromBytes("chunkoidng:music:$slug:module".toByteArray()).toString()
 
             val bpManifest = File(bpDir, "manifest.json")
             bpManifest.writeText(
@@ -135,8 +140,8 @@ object WorldBlockInjector {
             val bpArray = if (worldBpJsonFile.exists()) {
                 try {
                     JSONArray(worldBpJsonFile.readText())
-                } catch (_: Exception) {
-                    JSONArray()
+                } catch (cause: Exception) {
+                    throw IllegalArgumentException("Existing world_behavior_packs.json is invalid", cause)
                 }
             } else {
                 JSONArray()
@@ -145,7 +150,7 @@ object WorldBlockInjector {
             var alreadyRegistered = false
             for (i in 0 until bpArray.length()) {
                 val obj = bpArray.optJSONObject(i)
-                if (obj?.optString("pack_id") == packUuid) {
+                if (obj?.optString("pack_id").equals(packUuid, ignoreCase = true)) {
                     alreadyRegistered = true
                     break
                 }
@@ -212,10 +217,13 @@ object WorldBlockInjector {
         val backupDir = File(worldDir.parentFile ?: worldDir, "backups").apply { mkdirs() }
         val backupZip = File(backupDir, "${sanitized}_backup_$timeStamp.zip")
 
+        var totalBytes = 0L
         ZipOutputStream(FileOutputStream(backupZip).buffered()).use { zos ->
             val prefixLen = worldDir.absolutePath.length + 1
             worldDir.walkTopDown().forEach { file ->
-                if (file.isFile && !file.absolutePath.contains("backups")) {
+                if (file.isFile) {
+                    totalBytes += file.length()
+                    require(totalBytes <= MAX_WORLD_BACKUP_BYTES) { "World is too large to back up" }
                     val entryName = file.absolutePath.substring(prefixLen).replace('\\', '/')
                     zos.putNextEntry(ZipEntry(entryName))
                     FileInputStream(file).use { fis ->

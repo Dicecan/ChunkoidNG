@@ -42,6 +42,12 @@ data class PackConverterUiState(
 
 class PackConverterViewModel(application: Application) : AndroidViewModel(application) {
 
+    private companion object {
+        const val MAX_STAGED_INPUT_BYTES = 512L * 1024L * 1024L
+        const val MAX_ARCHIVE_ENTRIES_FOR_SCAN = 100_000
+        const val MAX_ENTRY_NAME_LENGTH_FOR_SCAN = 512
+    }
+
     private val _uiState = MutableStateFlow(PackConverterUiState())
     val uiState: StateFlow<PackConverterUiState> = _uiState.asStateFlow()
 
@@ -69,10 +75,25 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                     val temp = File(context.cacheDir, "pack_input_${System.currentTimeMillis()}.tmp")
                     val inputStream = context.contentResolver.openInputStream(uri)
                         ?: throw IOException("Unable to open selected pack")
-                    inputStream.use { input ->
-                        FileOutputStream(temp).use { output ->
-                            input.copyTo(output)
+                    try {
+                        inputStream.use { input ->
+                            FileOutputStream(temp).use { output ->
+                                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                                var total = 0L
+                                while (true) {
+                                    val read = input.read(buffer)
+                                    if (read < 0) break
+                                    total += read
+                                    if (total > MAX_STAGED_INPUT_BYTES) {
+                                        throw IOException("Selected pack is too large")
+                                    }
+                                    output.write(buffer, 0, read)
+                                }
+                            }
                         }
+                    } catch (cause: Exception) {
+                        temp.delete()
+                        throw cause
                     }
                     temp
                 }
@@ -84,11 +105,23 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                     try {
                         ZipFile(file).use { zip ->
                             val entries = zip.entries()
+                            var count = 0
                             while (entries.hasMoreElements()) {
-                                names.add(entries.nextElement().name)
+                                count++
+                                if (count > MAX_ARCHIVE_ENTRIES_FOR_SCAN) {
+                                    throw IOException("Archive contains too many entries")
+                                }
+                                val name = entries.nextElement().name
+                                if (name.length > MAX_ENTRY_NAME_LENGTH_FOR_SCAN) {
+                                    throw IOException("Archive entry name is too long")
+                                }
+                                names.add(name)
                             }
                         }
-                    } catch (_: Exception) {}
+                    } catch (cause: Exception) {
+                        throw IOException("Selected file is not a valid ZIP resource pack", cause)
+                    }
+                    if (names.isEmpty()) throw IOException("Selected resource pack is empty")
                     PackManifestHandler.detectPlatform(names)
                 }
 

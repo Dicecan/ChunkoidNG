@@ -13,7 +13,8 @@ object PackManifestHandler {
                 it == "pack.mcmeta" ||
                     it.endsWith("/pack.mcmeta") ||
                     it.startsWith("assets/minecraft/") ||
-                    it.contains("/assets/minecraft/")
+                    it.contains("/assets/minecraft/") ||
+                    Regex("^assets/[^/]+/").containsMatchIn(it)
             }) {
             return PackPlatform.JAVA
         }

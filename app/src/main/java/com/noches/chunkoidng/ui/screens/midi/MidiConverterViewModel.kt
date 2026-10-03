@@ -51,6 +51,10 @@ data class MidiConverterUiState(
 
 class MidiConverterViewModel(application: Application) : AndroidViewModel(application) {
 
+    private companion object {
+        const val MAX_MIDI_INPUT_BYTES = 128L * 1024L * 1024L
+    }
+
     private val _uiState = MutableStateFlow(MidiConverterUiState())
     val uiState: StateFlow<MidiConverterUiState> = _uiState.asStateFlow()
 
@@ -75,6 +79,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                 it.copy(
                     selectedMidiUri = uri,
                     selectedMidiName = displayName,
+                    parsedSong = null,
                     isParsing = true,
                     statusMessage = "正在读取并解析 MIDI 文件...",
                     errorMessage = null
@@ -86,8 +91,23 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
             try {
                 val parsed = withContext(Dispatchers.IO) {
                     val context = getApplication<Application>()
-                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    val input = context.contentResolver.openInputStream(uri)
                         ?: throw IllegalArgumentException("Cannot open MIDI file")
+                    val bytes = input.use { stream ->
+                        val output = java.io.ByteArrayOutputStream()
+                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                        var total = 0L
+                        while (true) {
+                            val count = stream.read(buffer)
+                            if (count < 0) break
+                            total += count
+                            if (total > MAX_MIDI_INPUT_BYTES) {
+                                throw IllegalArgumentException("MIDI file is too large")
+                            }
+                            output.write(buffer, 0, count)
+                        }
+                        output.toByteArray()
+                    }
                     MidiParser.parse(bytes, displayName.substringBeforeLast('.'))
                 }
 
@@ -115,7 +135,9 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun setTicksPerSecond(tps: Double) {
-        _uiState.update { it.copy(ticksPerSecond = tps) }
+        if (tps.isFinite()) {
+            _uiState.update { it.copy(ticksPerSecond = tps.coerceIn(0.1, 100.0)) }
+        }
     }
 
     fun setAutoTranspose(enabled: Boolean) {
@@ -172,6 +194,8 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                 val cacheDir = getApplication<Application>().cacheDir
                 val title = song.title.ifBlank { "music" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                    .take(80)
+                    .ifBlank { "music" }
 
                 when (state.selectedExportMode) {
                     MidiExportMode.FLAT_WORLD -> {
@@ -235,17 +259,17 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                         }
                         val zipFile = File(cacheDir, "music_${title}_datapack.zip")
                         withContext(Dispatchers.IO) {
-                            val zos = java.util.zip.ZipOutputStream(FileOutputStream(zipFile).buffered())
-                            val prefix = dpDir.absolutePath.length + 1
-                            dpDir.walkTopDown().forEach { f ->
-                                if (f.isFile) {
-                                    val name = f.absolutePath.substring(prefix).replace('\\', '/')
-                                    zos.putNextEntry(java.util.zip.ZipEntry(name))
-                                    f.inputStream().use { it.copyTo(zos) }
-                                    zos.closeEntry()
+                            java.util.zip.ZipOutputStream(FileOutputStream(zipFile).buffered()).use { zos ->
+                                val prefix = dpDir.absolutePath.length + 1
+                                dpDir.walkTopDown().forEach { f ->
+                                    if (f.isFile) {
+                                        val name = f.absolutePath.substring(prefix).replace('\\', '/')
+                                        zos.putNextEntry(java.util.zip.ZipEntry(name))
+                                        f.inputStream().use { it.copyTo(zos) }
+                                        zos.closeEntry()
+                                    }
                                 }
                             }
-                            zos.close()
                         }
                         addLog("指令数据包生成成功: ${zipFile.name}")
                         _uiState.update {
@@ -283,10 +307,10 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    getApplication<Application>().contentResolver.openOutputStream(destinationUri)?.use { out ->
-                        file.inputStream().use { input ->
-                            input.copyTo(out)
-                        }
+                    val out = getApplication<Application>().contentResolver.openOutputStream(destinationUri)
+                        ?: throw java.io.IOException("Unable to open destination")
+                    out.use { output ->
+                        file.inputStream().use { input -> input.copyTo(output) }
                     }
                 }
                 addLog("成功保存产物至: ${destinationUri.path ?: "外部存储"}")

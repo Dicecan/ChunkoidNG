@@ -4,6 +4,7 @@ import br.com.gamemods.nbtmanipulator.*
 import com.noches.chunkoidng.core.midi.NoteBlockInstrument
 import com.noches.chunkoidng.core.midi.NoteBlockSong
 import java.io.File
+import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.util.zip.GZIPOutputStream
 
@@ -28,6 +29,10 @@ data class ContraptionLayout(
 
 object StructureExporter {
 
+    private const val MAX_BLOCK_PLACEMENTS = 2_000_000
+    private const val MAX_STRUCTURE_VOLUME = 8_000_000L
+    private const val MAX_COORDINATE = 1_000_000
+
     fun buildContraption(song: NoteBlockSong): ContraptionLayout {
         val blocks = mutableListOf<BlockPlacement>()
         val notesByTick = song.notes.groupBy { it.tick }.toSortedMap()
@@ -43,6 +48,12 @@ object StructureExporter {
             notePitch: Int? = null,
             instrument: NoteBlockInstrument? = null
         ) {
+            require(blocks.size < MAX_BLOCK_PLACEMENTS) {
+                "Music structure is too large to export"
+            }
+            require(x in -MAX_COORDINATE..MAX_COORDINATE && z in -MAX_COORDINATE..MAX_COORDINATE) {
+                "Music structure coordinate is out of range"
+            }
             val effectiveBedrockStates = if (bedrockName == "minecraft:dirt" && bedrockStates.isEmpty()) {
                 mapOf("dirt_type" to "normal")
             } else {
@@ -181,11 +192,12 @@ object StructureExporter {
             }
         }
 
-        var lastTick = 0
+        var lastTick = 0L
 
         for ((tick, noteList) in notesByTick) {
-            val rawDelta = tick - lastTick
-            val delta = (rawDelta * 2).coerceAtLeast(0)
+            val rawDelta = (tick.toLong() - lastTick).coerceAtLeast(0L)
+            require(rawDelta <= 1_000_000L) { "Music timeline gap is too large to export" }
+            val delta = rawDelta * 2L
 
             if (dirZ > 0 && currentZ >= laneLength - 2) {
                 while (currentZ < laneLength) {
@@ -199,17 +211,17 @@ object StructureExporter {
                 doUTurn()
             }
 
-            if (delta in 1..4) {
-                stepTrack(true, delta)
+            if (delta in 1L..4L) {
+                stepTrack(true, delta.toInt())
                 stepTrack(false, 0)
-            } else if (delta in 5..8) {
+            } else if (delta in 5L..8L) {
                 stepTrack(true, 4)
-                stepTrack(true, delta - 4)
+                stepTrack(true, (delta - 4L).toInt())
             } else if (delta > 8) {
                 var rem = delta
                 while (rem > 0) {
-                    val rDelay = minOf(rem, 4)
-                    stepTrack(true, rDelay)
+                    val rDelay = minOf(rem, 4L)
+                    stepTrack(true, rDelay.toInt())
                     rem -= rDelay
                 }
             }
@@ -262,7 +274,7 @@ object StructureExporter {
                 )
             }
 
-            lastTick = tick
+            lastTick = tick.toLong()
         }
 
         val minX = blocks.minOfOrNull { it.x } ?: 0
@@ -330,7 +342,11 @@ object StructureExporter {
             return idx
         }
 
-        val totalBlocks = layout.sizeX * layout.sizeY * layout.sizeZ
+        val totalBlocksLong = layout.sizeX.toLong() * layout.sizeY.toLong() * layout.sizeZ.toLong()
+        require(totalBlocksLong in 1..MAX_STRUCTURE_VOLUME) {
+            "Music structure volume is too large to export"
+        }
+        val totalBlocks = totalBlocksLong.toInt()
         val layer0 = IntArray(totalBlocks) { -1 }
         val layer1 = IntArray(totalBlocks) { -1 }
         val blockPositionData = NbtCompound()
@@ -398,15 +414,24 @@ object StructureExporter {
         paletteMap["minecraft:air"] = 0
         var nextPaletteId = 1
 
-        val totalBlocks = layout.sizeX * layout.sizeY * layout.sizeZ
-        val blockData = ByteArray(totalBlocks)
+        val totalBlocksLong = layout.sizeX.toLong() * layout.sizeY.toLong() * layout.sizeZ.toLong()
+        require(totalBlocksLong in 1..MAX_STRUCTURE_VOLUME) {
+            "Music schematic volume is too large to export"
+        }
+        val totalBlocks = totalBlocksLong.toInt()
+        val blockPaletteIds = IntArray(totalBlocks)
 
         for (block in layout.blocks) {
             val paletteId = paletteMap.getOrPut(block.javaStateString) { nextPaletteId++ }
             val index = (block.y * layout.sizeZ + block.z) * layout.sizeX + block.x
             if (index in 0 until totalBlocks) {
-                blockData[index] = paletteId.toByte()
+                blockPaletteIds[index] = paletteId
             }
+        }
+
+        val blockDataStream = ByteArrayOutputStream()
+        for (paletteId in blockPaletteIds) {
+            writeVarInt(blockDataStream, paletteId)
         }
 
         val paletteCompound = NbtCompound()
@@ -422,7 +447,7 @@ object StructureExporter {
             this["Length"] = NbtShort(layout.sizeZ.toShort())
             this["Offset"] = NbtIntArray(intArrayOf(0, 0, 0))
             this["Palette"] = paletteCompound
-            this["BlockData"] = NbtByteArray(blockData)
+            this["BlockData"] = NbtByteArray(blockDataStream.toByteArray())
             this["BlockEntities"] = NbtList<NbtCompound>()
         }
 
@@ -430,5 +455,14 @@ object StructureExporter {
         FileOutputStream(outputFile).use { fos ->
             NbtIO.writeNbtFile(fos, NbtFile("Schematic", root), compressed = true, littleEndian = false)
         }
+    }
+
+    private fun writeVarInt(output: ByteArrayOutputStream, value: Int) {
+        var remaining = value
+        while ((remaining and -128) != 0) {
+            output.write((remaining and 0x7F) or 0x80)
+            remaining = remaining ushr 7
+        }
+        output.write(remaining)
     }
 }

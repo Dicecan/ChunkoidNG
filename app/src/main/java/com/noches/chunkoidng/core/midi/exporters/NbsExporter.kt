@@ -8,6 +8,8 @@ import java.nio.ByteOrder
 
 object NbsExporter {
 
+    private const val MAX_NBS_VALUE = 65_535
+
     fun export(song: NoteBlockSong, outputFile: File) {
         val bytes = toByteArray(song)
         outputFile.parentFile?.mkdirs()
@@ -15,6 +17,8 @@ object NbsExporter {
     }
 
     fun toByteArray(song: NoteBlockSong): ByteArray {
+        require(song.lengthTicks in 0..MAX_NBS_VALUE) { "NBS song length is out of range" }
+        require(song.notes.size <= 1_000_000) { "NBS song contains too many notes" }
         val stream = ByteArrayOutputStream()
 
         writeShort(stream, 0)
@@ -24,6 +28,7 @@ object NbsExporter {
 
         val notesByTick = song.notes.groupBy { it.tick }.toSortedMap()
         val maxLayer = notesByTick.values.maxOfOrNull { it.size } ?: 1
+        require(maxLayer in 1..MAX_NBS_VALUE) { "NBS layer count is out of range" }
         writeShort(stream, maxLayer.toShort())
 
         writeString(stream, song.title)
@@ -49,16 +54,19 @@ object NbsExporter {
 
         var lastTick = -1
         for ((tick, tickNotes) in notesByTick) {
-            val tickDelta = (tick - lastTick).toShort()
+            require(tick >= 0 && tick >= lastTick) { "NBS tick order is invalid" }
+            val tickDelta = tick - lastTick
+            require(tickDelta in 0..MAX_NBS_VALUE) { "NBS tick delta is out of range" }
             lastTick = tick
-            writeShort(stream, tickDelta)
+            writeShort(stream, tickDelta.toShort())
 
             var lastLayer = -1
             for (idx in tickNotes.indices) {
                 val layer = idx
-                val layerDelta = (layer - lastLayer).toShort()
+                val layerDelta = layer - lastLayer
+                require(layerDelta in 0..MAX_NBS_VALUE) { "NBS layer delta is out of range" }
                 lastLayer = layer
-                writeShort(stream, layerDelta)
+                writeShort(stream, layerDelta.toShort())
 
                 val note = tickNotes[idx]
                 stream.write(note.instrument.id)

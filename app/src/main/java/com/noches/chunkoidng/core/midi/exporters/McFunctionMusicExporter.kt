@@ -2,6 +2,7 @@ package com.noches.chunkoidng.core.midi.exporters
 
 import com.noches.chunkoidng.core.midi.NoteBlockSong
 import com.noches.chunkoidng.core.pack.PackPlatform
+import org.json.JSONObject
 import java.io.File
 import java.util.Locale
 
@@ -49,6 +50,7 @@ object McFunctionMusicExporter {
         namespace: String,
         outputDir: File
     ) {
+        require(namespace.matches(Regex("[a-z0-9_.-]+"))) { "Invalid datapack namespace" }
         val functionDir = File(outputDir, "data/$namespace/function")
         functionDir.mkdirs()
 
@@ -75,15 +77,9 @@ object McFunctionMusicExporter {
         mainFunction.writeText(mainBuilder.toString())
 
         val mcmeta = File(outputDir, "pack.mcmeta")
-        mcmeta.writeText(
-            """
-            {
-              "pack": {
-                "pack_format": 48,
-                "description": "Music Datapack: ${song.title}"
-              }
-            }
-            """.trimIndent()
-        )
+        val pack = JSONObject().put("pack", JSONObject()
+            .put("pack_format", 48)
+            .put("description", "Music Datapack: ${song.title.replace(Regex("[\\u0000-\\u001F]"), " ")}"))
+        mcmeta.writeText(pack.toString(2))
     }
 }

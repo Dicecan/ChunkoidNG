@@ -122,6 +122,8 @@ object ResourcePackConverterEngine {
         val allTargetTextures = mutableSetOf<String>()
         val flipbookEntries = mutableListOf<FlipbookAnimationHandler.FlipbookEntry>()
         val detectedLocales = mutableListOf<String>()
+        val javaModels = linkedMapOf<String, JavaModelHandler.Model>()
+        val javaBlockStates = linkedMapOf<String, String>()
 
         var packName = config.customPackName ?: packRoot.name
         var packDescription = config.customDescription ?: "Converted by ChunkoidNG"
@@ -133,6 +135,39 @@ object ResourcePackConverterEngine {
             currentIdx++
             val relative = sourceFile.relativeTo(packRoot).path.replace('\\', '/')
             val relativeLower = relative.lowercase()
+
+            if (isJavaToBedrock && relativeLower.startsWith("assets/") &&
+                relativeLower.contains("/models/block/") && relativeLower.endsWith(".json")) {
+                if (config.generateAtlases) {
+                    val model = JavaModelHandler.parseModel(relative, sourceFile.readText())
+                        ?: throw IllegalArgumentException("Invalid Java block model: $relative")
+                    javaModels[model.id] = model
+                }
+                continue
+            }
+
+            if (isJavaToBedrock && relativeLower.startsWith("assets/") &&
+                relativeLower.contains("/blockstates/") && relativeLower.endsWith(".json")) {
+                if (config.generateAtlases) {
+                    val blockState = JavaModelHandler.parseBlockState(relative, sourceFile.readText())
+                    if (blockState != null) javaBlockStates[blockState.first] = blockState.second
+                }
+                continue
+            }
+
+            if (isJavaToBedrock && relativeLower.startsWith("assets/") &&
+                relativeLower.contains("/models/item/") && relativeLower.endsWith(".json")) {
+                // Java item model JSON is not a Bedrock model format. The item
+                // atlas generated from textures is the compatible fallback.
+                continue
+            }
+
+            if (PackAssetMapper.isJavaArmorTexture(relative) && !config.convertArmorModels && isJavaToBedrock) {
+                continue
+            }
+            if (PackAssetMapper.isBedrockArmorTexture(relative) && !config.convertArmorModels && !isJavaToBedrock) {
+                continue
+            }
             val targetRel = if (isJavaToBedrock) {
                 PackAssetMapper.mapJavaToBedrock(relative)
             } else {
@@ -140,12 +175,14 @@ object ResourcePackConverterEngine {
             }
 
             if (relativeLower == "pack.mcmeta" && isJavaToBedrock) {
+                validateJson(sourceFile, "Java pack.mcmeta")
                 val (_, desc) = PackManifestHandler.parseJavaPackMcmeta(sourceFile.readText())
                 if (desc != null && config.customDescription == null) packDescription = desc
                 continue
             }
 
             if (relativeLower == "manifest.json" && !isJavaToBedrock) {
+                validateJson(sourceFile, "Bedrock manifest.json")
                 val (name, desc, _) = PackManifestHandler.parseBedrockManifest(sourceFile.readText())
                 if (name != null && config.customPackName == null) packName = name
                 if (desc != null && config.customDescription == null) packDescription = desc
@@ -296,7 +333,12 @@ object ResourcePackConverterEngine {
                     )
                     TextureAtlasGenerator.generateBlocksJson(
                         processedBlockTextures,
-                        File(targetDir, "blocks.json")
+                        File(targetDir, "blocks.json"),
+                        JavaModelHandler.resolveDefinitions(
+                            javaModels,
+                            javaBlockStates,
+                            processedBlockTextures
+                        )
                     )
                 }
 
@@ -317,7 +359,7 @@ object ResourcePackConverterEngine {
 
             if (config.convertAnimations && flipbookEntries.isNotEmpty()) {
                 FlipbookAnimationHandler.writeFlipbookTexturesJson(
-                    flipbookEntries,
+                    flipbookEntries.distinctBy { it.flipbookTexture },
                     File(targetDir, "textures/flipbook_textures.json")
                 )
             }

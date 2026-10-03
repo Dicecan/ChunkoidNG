@@ -16,6 +16,8 @@ import java.util.zip.ZipOutputStream
 
 object FlatWorldMusicGenerator {
 
+    private const val MAX_WORLD_CHUNKS = 16_384
+
     private val MINIMAL_JPEG = byteArrayOf(
         0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xDB.toByte(), 0x00, 0x43, 0x00, 0x08,
         0x06, 0x06, 0x07, 0x06, 0x05, 0x08, 0x07, 0x07, 0x07, 0x09, 0x09, 0x08,
@@ -46,7 +48,11 @@ object FlatWorldMusicGenerator {
             val layout = StructureExporter.buildContraption(song)
 
             onProgress?.invoke("正在写入 levelname.txt 与 level.dat 超平坦元数据...")
-            val cleanTitle = song.title.trim { it <= ' ' || it == '\u0000' }.ifBlank { "Redstone Music" }
+            val cleanTitle = song.title
+                .replace(Regex("[\\u0000-\\u001F]"), " ")
+                .trim()
+                .take(80)
+                .ifBlank { "Redstone Music" }
             File(tempDir, "levelname.txt").writeText("Redstone Music - $cleanTitle")
             File(tempDir, "world_icon.jpeg").writeBytes(MINIMAL_JPEG)
 
@@ -99,6 +105,11 @@ object FlatWorldMusicGenerator {
                 val maxChunkX = maxOf(0, ((layout.blocks.maxOfOrNull { it.x } ?: 0) shr 4) + 1)
                 val minChunkZ = minOf(-1, ((layout.blocks.minOfOrNull { it.z } ?: 0) shr 4) - 1)
                 val maxChunkZ = maxOf(0, ((layout.blocks.maxOfOrNull { it.z } ?: 0) shr 4) + 1)
+                val chunkCount = (maxChunkX.toLong() - minChunkX + 1L) *
+                    (maxChunkZ.toLong() - minChunkZ + 1L)
+                require(chunkCount in 1..MAX_WORLD_CHUNKS) {
+                    "Generated world would contain too many chunks"
+                }
 
                 for (cx in minChunkX..maxChunkX) {
                     for (cz in minChunkZ..maxChunkZ) {

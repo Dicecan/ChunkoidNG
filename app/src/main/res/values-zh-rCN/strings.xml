@@ -693,6 +693,7 @@
     <string name="pack_conv_success_desc">已成功转换 %1$d 个资源文件</string>
     <string name="pack_conv_save_pack">保存转换后的材质包</string>
     <string name="pack_conv_no_file">请先选择需要转换的材质包</string>
+    <string name="pack_conv_save_failed">保存转换后的材质包失败</string>
 
     <string name="midi_conv_title">MIDI 红石音乐工坊</string>
     <string name="midi_conv_subtitle">将标准 MIDI 转换为游戏内实体音符盒红石机械、即听世界与指令</string>
