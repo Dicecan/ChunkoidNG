@@ -6,10 +6,12 @@ import com.noches.chunkoidng.R
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarDefaults
@@ -44,7 +46,7 @@ fun MainAppScaffold() {
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Features.route
     val currentScreen = Screen.topLevelScreens.find { it.route == currentRoute } ?: Screen.Features
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -55,6 +57,11 @@ fun MainAppScaffold() {
         modifier = Modifier
             .fillMaxSize()
             .then(if (isTopLevelScreen) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier),
+        contentWindowInsets = if (isTopLevelScreen) {
+            ScaffoldDefaults.contentWindowInsets
+        } else {
+            WindowInsets(0, 0, 0, 0)
+        },
         topBar = {
             if (isTopLevelScreen) {
                 ChunkoidTopAppBar(

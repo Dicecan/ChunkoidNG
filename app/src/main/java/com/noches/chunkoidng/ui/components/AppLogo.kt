@@ -23,7 +23,7 @@ import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 fun AppLogo(
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
-    iconSize: Dp = size * 0.65f,
+    iconSize: Dp = size * 0.58f,
     shape: Shape = ExpressiveShapes.medium,
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,

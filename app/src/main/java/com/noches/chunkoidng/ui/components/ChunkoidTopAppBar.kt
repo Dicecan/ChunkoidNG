@@ -15,8 +15,8 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -40,18 +40,18 @@ fun ChunkoidTopAppBar(
     onOpenWiki: () -> Unit = {},
     onOpenTerminal: () -> Unit = {}
 ) {
-    MediumTopAppBar(
+    TopAppBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (currentScreen == Screen.Features) {
                     AppLogo(
-                        size = 30.dp,
-                        iconSize = 19.dp,
+                        size = 28.dp,
+                        iconSize = 16.dp,
                         shape = ExpressiveShapes.small
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(
                     text = when (currentScreen) {
@@ -61,7 +61,9 @@ fun ChunkoidTopAppBar(
                         Screen.About -> stringResource(R.string.nav_about)
                     },
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.5).sp
+                    fontSize = 19.sp,
+                    letterSpacing = (-0.5).sp,
+                    maxLines = 1
                 )
                 if (currentScreen == Screen.Features) {
                     Spacer(modifier = Modifier.width(8.dp))
@@ -69,13 +71,15 @@ fun ChunkoidTopAppBar(
                         modifier = Modifier
                             .clip(ChipBadgeShape)
                             .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.app_version_badge),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
@@ -88,12 +92,13 @@ fun ChunkoidTopAppBar(
                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(38.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Terminal,
                         contentDescription = stringResource(R.string.nav_terminal),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(19.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(6.dp))
@@ -102,18 +107,19 @@ fun ChunkoidTopAppBar(
                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(38.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Language,
                         contentDescription = stringResource(R.string.nav_tutorial),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(19.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
             }
         },
-        colors = TopAppBarDefaults.mediumTopAppBarColors(
+        colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
