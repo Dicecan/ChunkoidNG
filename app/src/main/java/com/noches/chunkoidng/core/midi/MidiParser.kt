@@ -178,7 +178,7 @@ object MidiParser {
                                         }
                                     }
                                     0x03 -> {
-                                        val name = String(metaBytes, Charsets.UTF_8).trim()
+                                        val name = String(metaBytes, Charsets.UTF_8).trim { it <= ' ' || it == '\u0000' }
                                         if (name.isNotEmpty()) {
                                             trackName = name
                                             if (trackIdx == 0 && songTitle == defaultTitle) {

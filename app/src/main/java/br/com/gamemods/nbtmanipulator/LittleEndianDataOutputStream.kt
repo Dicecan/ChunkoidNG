@@ -54,11 +54,12 @@ public class LittleEndianDataOutputStream(out: OutputStream) : FilterOutputStrea
     }
 
     override fun writeUTF(s: String) {
-        val length = s.length
+        val bytes = s.toByteArray(Charsets.UTF_8)
+        val length = bytes.size
         if (length > 65535) {
             throw UTFDataFormatException("encoded string too long: $length bytes")
         }
         writeShort(length)
-        write(s.toByteArray(Charsets.UTF_8))
+        write(bytes)
     }
 }

@@ -46,13 +46,14 @@ object FlatWorldMusicGenerator {
             val layout = StructureExporter.buildContraption(song)
 
             onProgress?.invoke("正在写入 levelname.txt 与 level.dat 超平坦元数据...")
-            File(tempDir, "levelname.txt").writeText("Redstone Music - ${song.title.ifBlank { "Untitled" }}")
+            val cleanTitle = song.title.trim { it <= ' ' || it == '\u0000' }.ifBlank { "Redstone Music" }
+            File(tempDir, "levelname.txt").writeText("Redstone Music - $cleanTitle")
             File(tempDir, "world_icon.jpeg").writeBytes(MINIMAL_JPEG)
 
             val flatLayersJson = """{"biome_id":1,"block_layers":[{"block_name":"minecraft:bedrock","count":1},{"block_name":"minecraft:dirt","count":2},{"block_name":"minecraft:grass_block","count":1}],"encoding_version":6,"structure_options":null,"world_version":"version.post_1_18"}"""
 
             val levelCompound = NbtCompound().apply {
-                this["LevelName"] = NbtString(song.title.ifBlank { "Redstone Music" })
+                this["LevelName"] = NbtString(cleanTitle)
                 this["StorageVersion"] = NbtInt(10)
                 this["NetworkVersion"] = NbtInt(0)
                 this["Platform"] = NbtInt(2)

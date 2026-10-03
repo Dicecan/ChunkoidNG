@@ -50,4 +50,26 @@ class BedrockNbtLoadingTest {
             BedrockLevelDbHelper.readBedrockNbt(encoded, isMultiple = true)
         }
     }
+
+    @Test
+    fun testLittleEndianUtf8WithNonAsciiCharacters() {
+        val original = NbtFile(
+            "",
+            NbtCompound(
+                "LevelName" to br.com.gamemods.nbtmanipulator.NbtString("钢琴, Addictive keys"),
+                "StorageVersion" to NbtInt(10),
+                "Generator" to NbtInt(2)
+            )
+        )
+        val tempFile = java.io.File.createTempFile("test_nbt_utf8", ".dat").apply { deleteOnExit() }
+        NbtIO.writeNbtFile(tempFile, original, compressed = false, littleEndian = true, writeHeaders = true)
+
+        val loaded = tempFile.inputStream().use {
+            NbtIO.readNbtFile(it, compressed = false, littleEndian = true, readHeaders = true)
+        }
+
+        assertEquals("钢琴, Addictive keys", (loaded.compound["LevelName"] as br.com.gamemods.nbtmanipulator.NbtString).value)
+        assertEquals(10, (loaded.compound["StorageVersion"] as NbtInt).value)
+        assertEquals(2, (loaded.compound["Generator"] as NbtInt).value)
+    }
 }

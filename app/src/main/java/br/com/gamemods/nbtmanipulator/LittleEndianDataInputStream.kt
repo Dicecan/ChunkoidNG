@@ -118,7 +118,10 @@ public class LittleEndianDataInputStream(`in`: InputStream) : FilterInputStream(
     }
 
     override fun readUTF(): String {
-        return DataInputStream.readUTF(this)
+        val utflen = readUnsignedShort()
+        val bytearr = ByteArray(utflen)
+        readFully(bytearr, 0, utflen)
+        return String(bytearr, Charsets.UTF_8)
     }
 
 }
