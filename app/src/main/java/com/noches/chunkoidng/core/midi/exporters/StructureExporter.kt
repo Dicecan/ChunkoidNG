@@ -51,7 +51,7 @@ object StructureExporter {
                 x = 0, y = 3, z = 0,
                 bedrockName = "minecraft:stone_button",
                 javaStateString = "minecraft:stone_button[face=floor,facing=north,powered=false]",
-                bedrockStates = mapOf("facing_direction" to 1)
+                bedrockStates = mapOf("facing_direction" to 1, "button_pressed_bit" to false)
             )
         )
 
@@ -76,7 +76,11 @@ object StructureExporter {
                         x = 0, y = 2, z = currentZ,
                         bedrockName = "minecraft:unpowered_repeater",
                         javaStateString = "minecraft:repeater[delay=$rDelay,facing=south,powered=false]",
-                        bedrockStates = mapOf("repeater_delay" to (rDelay - 1), "direction" to 0)
+                        bedrockStates = mapOf(
+                            "repeater_delay" to (rDelay - 1),
+                            "direction" to 2,
+                            "minecraft:cardinal_direction" to "north"
+                        )
                     )
                 )
                 currentZ++
@@ -137,7 +141,11 @@ object StructureExporter {
                         x = xOffset, y = 2, z = busZ + 1,
                         bedrockName = "minecraft:unpowered_repeater",
                         javaStateString = "minecraft:repeater[delay=1,facing=south,powered=false]",
-                        bedrockStates = mapOf("repeater_delay" to 0, "direction" to 0)
+                        bedrockStates = mapOf(
+                            "repeater_delay" to 0,
+                            "direction" to 2,
+                            "minecraft:cardinal_direction" to "north"
+                        )
                     )
                 )
 

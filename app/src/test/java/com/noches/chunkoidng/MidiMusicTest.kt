@@ -219,8 +219,38 @@ class MidiMusicTest {
         val buttonBlock = layout.blocks.find { it.bedrockName == "minecraft:stone_button" }
         assertNotNull(buttonBlock)
         assertEquals(2, buttonBlock!!.y)
+        assertEquals(1, buttonBlock.bedrockStates["facing_direction"])
+        assertEquals(false, buttonBlock.bedrockStates["button_pressed_bit"])
         val buttonPedestal = blockMap[Triple(buttonBlock.x, 1, buttonBlock.z)]
         assertNotNull(buttonPedestal)
         assertEquals("minecraft:stone", buttonPedestal!!.bedrockName)
+
+        val repeaters = layout.blocks.filter { it.bedrockName == "minecraft:unpowered_repeater" }
+        assertTrue(repeaters.isNotEmpty())
+        for (repeater in repeaters) {
+            assertEquals(2, repeater.bedrockStates["direction"])
+            assertEquals("north", repeater.bedrockStates["minecraft:cardinal_direction"])
+        }
+    }
+
+    @Test
+    fun testRealMidiContraptionRepeaters() {
+        val midiFile = File("C:/Users/Administrator/Downloads/春风来-洛天依.mid")
+        if (!midiFile.exists()) return
+
+        val parsed = MidiParser.parse(midiFile)
+        val song = RedstoneQuantizer.quantize(parsed)
+        val layout = StructureExporter.buildContraption(song)
+        val repeaters = layout.blocks.filter { it.bedrockName == "minecraft:unpowered_repeater" }
+        assertTrue(repeaters.isNotEmpty())
+        for (repeater in repeaters) {
+            assertEquals(2, repeater.bedrockStates["direction"])
+            assertEquals("north", repeater.bedrockStates["minecraft:cardinal_direction"])
+        }
+
+        val outMcworld = File("C:/Users/Administrator/Downloads/春风来-洛天依.mcworld")
+        FlatWorldMusicGenerator.generateFlatWorld(song, outMcworld)
+        assertTrue(outMcworld.exists())
+        assertTrue(outMcworld.length() > 0)
     }
 }
