@@ -101,7 +101,7 @@ object StructureExporter {
             )
 
             noteList.forEachIndexed { index, note ->
-                val xOffset = if (index % 2 == 0) (index / 2 + 1) else -(index / 2 + 1)
+                val xOffset = if (index % 2 == 0) (index / 2 + 2) else -(index / 2 + 2)
 
                 val xStart = if (xOffset > 0) 1 else -1
                 val xStep = if (xOffset > 0) 1 else -1
@@ -159,6 +159,37 @@ object StructureExporter {
                 )
             }
 
+            blocks.add(
+                BlockPlacement(
+                    x = 0, y = 1, z = busZ + 1,
+                    bedrockName = "minecraft:stone",
+                    javaStateString = "minecraft:stone"
+                )
+            )
+            blocks.add(
+                BlockPlacement(
+                    x = 0, y = 2, z = busZ + 1,
+                    bedrockName = "minecraft:redstone_wire",
+                    javaStateString = "minecraft:redstone_wire[power=0]",
+                    bedrockStates = mapOf("redstone_signal" to 0)
+                )
+            )
+            blocks.add(
+                BlockPlacement(
+                    x = 0, y = 1, z = busZ + 2,
+                    bedrockName = "minecraft:stone",
+                    javaStateString = "minecraft:stone"
+                )
+            )
+            blocks.add(
+                BlockPlacement(
+                    x = 0, y = 2, z = busZ + 2,
+                    bedrockName = "minecraft:redstone_wire",
+                    javaStateString = "minecraft:redstone_wire[power=0]",
+                    bedrockStates = mapOf("redstone_signal" to 0)
+                )
+            )
+
             currentZ = busZ + 3
             lastTick = tick
         }
@@ -174,7 +205,7 @@ object StructureExporter {
         val shiftY = -minY
         val shiftZ = -minZ
 
-        val shiftedBlocks = blocks.map {
+        val shiftedBlocks = blocks.distinctBy { Triple(it.x, it.y, it.z) }.map {
             it.copy(x = it.x + shiftX, y = it.y + shiftY, z = it.z + shiftZ)
         }
 

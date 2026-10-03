@@ -60,9 +60,9 @@ object FlatWorldMusicGenerator {
                 this["GameType"] = NbtInt(1)
                 this["Difficulty"] = NbtInt(1)
                 this["Generator"] = NbtInt(2)
-                this["SpawnX"] = NbtInt(0)
-                this["SpawnY"] = NbtInt(-59)
-                this["SpawnZ"] = NbtInt(-3)
+                this["SpawnX"] = NbtInt(layout.buttonPos.first)
+                this["SpawnY"] = NbtInt(-60)
+                this["SpawnZ"] = NbtInt(layout.buttonPos.third - 3)
                 this["RandomSeed"] = NbtLong(123456789L)
                 this["Time"] = NbtLong(1000L)
                 this["DayCycleStopTime"] = NbtLong(-1L)
@@ -94,10 +94,10 @@ object FlatWorldMusicGenerator {
             val db = DbImpl(dbOptions, dbDir.absolutePath, SafeEnv())
 
             try {
-                val minChunkX = minOf(0, (layout.blocks.minOfOrNull { it.x } ?: 0) shr 4)
-                val maxChunkX = maxOf(0, (layout.blocks.maxOfOrNull { it.x } ?: 0) shr 4)
-                val minChunkZ = minOf(-1, (layout.blocks.minOfOrNull { it.z } ?: 0) shr 4)
-                val maxChunkZ = maxOf(0, (layout.blocks.maxOfOrNull { it.z } ?: 0) shr 4)
+                val minChunkX = minOf(0, ((layout.blocks.minOfOrNull { it.x } ?: 0) shr 4) - 1)
+                val maxChunkX = maxOf(0, ((layout.blocks.maxOfOrNull { it.x } ?: 0) shr 4) + 1)
+                val minChunkZ = minOf(-1, ((layout.blocks.minOfOrNull { it.z } ?: 0) shr 4) - 1)
+                val maxChunkZ = maxOf(0, ((layout.blocks.maxOfOrNull { it.z } ?: 0) shr 4) + 1)
 
                 for (cx in minChunkX..maxChunkX) {
                     for (cz in minChunkZ..maxChunkZ) {
@@ -122,7 +122,7 @@ object FlatWorldMusicGenerator {
 
                         for (block in layout.blocks) {
                             val worldX = block.x
-                            val worldY = -60 + block.y
+                            val worldY = -61 + block.y
                             val worldZ = block.z
 
                             if ((worldX shr 4) == cx && (worldZ shr 4) == cz) {

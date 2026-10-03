@@ -187,4 +187,40 @@ class MidiMusicTest {
             extractedDir.deleteRecursively()
         }
     }
+
+    @Test
+    fun testBlockLayeringAndSupport() {
+        val song = NoteBlockSong(
+            title = "Layer Test",
+            notes = listOf(
+                NoteBlockNote(tick = 0, instrument = NoteBlockInstrument.HARP, key = 12),
+                NoteBlockNote(tick = 0, instrument = NoteBlockInstrument.BASS, key = 8),
+                NoteBlockNote(tick = 4, instrument = NoteBlockInstrument.BASEDRUM, key = 6),
+                NoteBlockNote(tick = 8, instrument = NoteBlockInstrument.SNARE, key = 10)
+            ),
+            lengthTicks = 10
+        )
+
+        val layout = StructureExporter.buildContraption(song)
+        val blockMap = layout.blocks.associateBy { Triple(it.x, it.y, it.z) }
+
+        for (block in layout.blocks) {
+            if (block.bedrockName == "minecraft:redstone_wire" ||
+                block.bedrockName == "minecraft:unpowered_repeater" ||
+                block.bedrockName == "minecraft:noteblock"
+            ) {
+                assertEquals(1, block.y)
+                val base = blockMap[Triple(block.x, 0, block.z)]
+                assertNotNull("Missing support block under ${block.bedrockName} at (${block.x}, ${block.y}, ${block.z})", base)
+                assertTrue(base!!.bedrockName != "minecraft:air")
+            }
+        }
+
+        val buttonBlock = layout.blocks.find { it.bedrockName == "minecraft:stone_button" }
+        assertNotNull(buttonBlock)
+        assertEquals(2, buttonBlock!!.y)
+        val buttonPedestal = blockMap[Triple(buttonBlock.x, 1, buttonBlock.z)]
+        assertNotNull(buttonPedestal)
+        assertEquals("minecraft:stone", buttonPedestal!!.bedrockName)
+    }
 }
