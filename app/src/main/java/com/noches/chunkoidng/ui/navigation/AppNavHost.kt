@@ -46,7 +46,7 @@ fun MainAppScaffold() {
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Features.route
     val currentScreen = Screen.topLevelScreens.find { it.route == currentRoute } ?: Screen.Features
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current

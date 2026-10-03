@@ -741,6 +741,7 @@
     <string name="settings_battery_desc">允许应用在后台持续运行，防止系统在锁屏或息屏时终止大型世界转换</string>
     <string name="settings_battery_granted">已忽略</string>
     <string name="settings_battery_grant">申请忽略</string>
+    <string name="settings_battery_opened_tip">已打开电池设置，请将应用设为「无限制」或「允许后台活动」</string>
     <string name="settings_category_diagnostics">诊断与日志</string>
     <string name="settings_crash_logs_title">崩溃日志记录</string>
     <string name="settings_crash_logs_desc">查看本地记录的应用异常崩溃日志报告</string>

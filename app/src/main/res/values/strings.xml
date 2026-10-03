@@ -741,6 +741,7 @@
     <string name="settings_battery_desc">Allow continuous background execution to prevent process kill during screen lock on heavy conversions</string>
     <string name="settings_battery_granted">Ignored</string>
     <string name="settings_battery_grant">Request Exemption</string>
+    <string name="settings_battery_opened_tip">Opened battery settings. Please set battery usage to \"Unrestricted\".</string>
     <string name="settings_category_diagnostics">Diagnostics &amp; Logs</string>
     <string name="settings_crash_logs_title">Crash Logs</string>
     <string name="settings_crash_logs_desc">View locally recorded crash diagnostic reports</string>

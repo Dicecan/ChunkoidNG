@@ -88,6 +88,21 @@ fun SettingsScreen(
         mutableIntStateOf(CrashLogManager.listCrashLogs(context).size)
     }
 
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                hasNotificationPermission = PermissionHelper.hasNotificationPermission(context)
+                isIgnoringBattery = PermissionHelper.isIgnoringBatteryOptimizations(context)
+                crashLogsCount = CrashLogManager.listCrashLogs(context).size
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -267,9 +282,7 @@ fun SettingsScreen(
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                     } else {
-                                        try {
-                                            context.startActivity(PermissionHelper.createNotificationSettingsIntent(context))
-                                        } catch (_: Exception) {}
+                                        PermissionHelper.openNotificationSettings(context)
                                     }
                                 },
                                 shape = ExpressiveShapes.small,
@@ -336,9 +349,14 @@ fun SettingsScreen(
                         } else {
                             OutlinedButton(
                                 onClick = {
-                                    try {
-                                        context.startActivity(PermissionHelper.createBatteryOptimizationIntent(context))
-                                    } catch (_: Exception) {}
+                                    val opened = PermissionHelper.requestIgnoreBatteryOptimizations(context)
+                                    if (opened) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            R.string.settings_battery_opened_tip,
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
                                 },
                                 shape = ExpressiveShapes.small,
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)

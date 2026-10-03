@@ -15,8 +15,8 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -40,7 +40,7 @@ fun ChunkoidTopAppBar(
     onOpenWiki: () -> Unit = {},
     onOpenTerminal: () -> Unit = {}
 ) {
-    TopAppBar(
+    MediumTopAppBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -61,17 +61,16 @@ fun ChunkoidTopAppBar(
                         Screen.About -> stringResource(R.string.nav_about)
                     },
                     fontWeight = FontWeight.Bold,
-                    fontSize = 19.sp,
                     letterSpacing = (-0.5).sp,
                     maxLines = 1
                 )
                 if (currentScreen == Screen.Features) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Box(
                         modifier = Modifier
                             .clip(ChipBadgeShape)
                             .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.app_version_badge),
@@ -92,34 +91,34 @@ fun ChunkoidTopAppBar(
                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Terminal,
                         contentDescription = stringResource(R.string.nav_terminal),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(19.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 FilledTonalIconButton(
                     onClick = onOpenWiki,
                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Language,
                         contentDescription = stringResource(R.string.nav_tutorial),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(19.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
+        colors = TopAppBarDefaults.mediumTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),

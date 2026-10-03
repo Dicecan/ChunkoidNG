@@ -741,6 +741,7 @@
     <string name="settings_battery_desc">画面消灯時に変換プロセスが強制終了されるのを防ぎます</string>
     <string name="settings_battery_granted">許可済み</string>
     <string name="settings_battery_grant">免除をリクエスト</string>
+    <string name="settings_battery_opened_tip">バッテリー設定を開きました。アプリを「制限なし」に設定してください。</string>
     <string name="settings_category_diagnostics">診断とログ</string>
     <string name="settings_crash_logs_title">クラッシュログ</string>
     <string name="settings_crash_logs_desc">端末に保存されたクラッシュレポートを確認します</string>
