@@ -8,14 +8,28 @@ import java.util.UUID
 object PackManifestHandler {
 
     fun detectPlatform(paths: Collection<String>): PackPlatform? {
-        val normalized = paths.map { it.replace('\\', '/') }
-        if (normalized.any { it == "pack.mcmeta" || it.startsWith("assets/minecraft/") }) {
+        val normalized = paths.map { normalizePath(it) }
+        if (normalized.any {
+                it == "pack.mcmeta" ||
+                    it.endsWith("/pack.mcmeta") ||
+                    it.startsWith("assets/minecraft/") ||
+                    it.contains("/assets/minecraft/")
+            }) {
             return PackPlatform.JAVA
         }
-        if (normalized.any { it == "manifest.json" || (it.startsWith("textures/") && !it.startsWith("assets/")) }) {
+        if (normalized.any {
+                it == "manifest.json" ||
+                    it.endsWith("/manifest.json") ||
+                    it.startsWith("textures/") ||
+                    it.contains("/textures/")
+            }) {
             return PackPlatform.BEDROCK
         }
         return null
+    }
+
+    private fun normalizePath(path: String): String {
+        return path.replace('\\', '/').trimStart('/').lowercase()
     }
 
     fun parseJavaPackMcmeta(mcmetaContent: String): Pair<Int?, String?> {

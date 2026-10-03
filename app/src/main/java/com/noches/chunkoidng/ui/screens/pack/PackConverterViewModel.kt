@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.zip.ZipFile
 
 data class PackConverterUiState(
@@ -55,7 +56,10 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                     selectedPackSizeBytes = sizeBytes,
                     isConverting = true,
                     currentStepText = "Staging pack file...",
-                    errorMessage = null
+                    errorMessage = null,
+                    convertedFile = null,
+                    convertedFileSizeBytes = 0L,
+                    filesConvertedCount = 0
                 )
             }
 
@@ -63,13 +67,16 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                 val file = withContext(Dispatchers.IO) {
                     val context = getApplication<Application>()
                     val temp = File(context.cacheDir, "pack_input_${System.currentTimeMillis()}.tmp")
-                    context.contentResolver.openInputStream(uri)?.use { input ->
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IOException("Unable to open selected pack")
+                    inputStream.use { input ->
                         FileOutputStream(temp).use { output ->
                             input.copyTo(output)
                         }
                     }
                     temp
                 }
+                stagedInputFile?.takeIf { it != file }?.delete()
                 stagedInputFile = file
 
                 val detected = withContext(Dispatchers.IO) {
@@ -98,8 +105,13 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                     )
                 }
             } catch (e: Exception) {
+                stagedInputFile?.delete()
+                stagedInputFile = null
                 _uiState.update {
                     it.copy(
+                        selectedPackUri = null,
+                        selectedPackName = "",
+                        selectedPackSizeBytes = 0L,
                         isConverting = false,
                         errorMessage = e.message ?: "Failed to read pack file"
                     )
@@ -139,8 +151,12 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun startConversion() {
-        val input = stagedInputFile ?: return
+        val input = stagedInputFile ?: run {
+            _uiState.update { it.copy(errorMessage = "Select a valid resource pack first") }
+            return
+        }
         val state = _uiState.value
+        state.convertedFile?.delete()
 
         viewModelScope.launch {
             _uiState.update {
@@ -149,18 +165,23 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                     progressCurrent = 0,
                     progressTotal = 100,
                     currentStepText = "Extracting pack...",
-                    errorMessage = null
+                    errorMessage = null,
+                    convertedFile = null,
+                    convertedFileSizeBytes = 0L,
+                    filesConvertedCount = 0
                 )
             }
 
-            try {
-                val cacheDir = getApplication<Application>().cacheDir
-                val unpackedInput = File(cacheDir, "pack_unpacked_in_${System.currentTimeMillis()}")
-                val unpackedOutput = File(cacheDir, "pack_unpacked_out_${System.currentTimeMillis()}")
+            val cacheDir = getApplication<Application>().cacheDir
+            val unpackedInput = File(cacheDir, "pack_unpacked_in_${System.currentTimeMillis()}")
+            val unpackedOutput = File(cacheDir, "pack_unpacked_out_${System.currentTimeMillis()}")
+            var outputFile: File? = null
 
+            try {
                 val outputExt = if (state.targetPlatform == PackPlatform.BEDROCK) ".mcpack" else ".zip"
-                val baseName = state.selectedPackName.substringBeforeLast('.')
-                val outputFile = File(cacheDir, "${baseName}_converted$outputExt")
+                val baseName = sanitizePackFileName(state.selectedPackName)
+                outputFile = File(cacheDir, "${baseName}_converted$outputExt")
+                outputFile!!.delete()
 
                 withContext(Dispatchers.IO) {
                     ResourcePackConverterEngine.extractArchive(input, unpackedInput)
@@ -190,13 +211,11 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                         }
                     )
 
-                    ResourcePackConverterEngine.createArchive(unpackedOutput, outputFile)
+                    ResourcePackConverterEngine.createArchive(unpackedOutput, outputFile!!)
                 }
 
                 val convertedCount = withContext(Dispatchers.IO) {
                     val count = unpackedOutput.walkTopDown().filter { it.isFile }.count()
-                    unpackedInput.deleteRecursively()
-                    unpackedOutput.deleteRecursively()
                     count
                 }
 
@@ -204,20 +223,36 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
                     it.copy(
                         isConverting = false,
                         convertedFile = outputFile,
-                        convertedFileSizeBytes = outputFile.length(),
+                        convertedFileSizeBytes = outputFile!!.length(),
                         filesConvertedCount = convertedCount,
                         currentStepText = ""
                     )
                 }
             } catch (e: Exception) {
+                outputFile?.delete()
                 _uiState.update {
                     it.copy(
                         isConverting = false,
                         errorMessage = e.message ?: "Pack conversion failed"
                     )
                 }
+            } finally {
+                withContext(Dispatchers.IO) {
+                    unpackedInput.deleteRecursively()
+                    unpackedOutput.deleteRecursively()
+                }
             }
         }
+    }
+
+    private fun sanitizePackFileName(displayName: String): String {
+        val baseName = displayName.substringBeforeLast('.', displayName)
+        return baseName
+            .replace(Regex("[^A-Za-z0-9._ -]"), "_")
+            .trim()
+            .trim('.')
+            .take(80)
+            .ifBlank { "pack" }
     }
 
     fun saveConvertedPack(destinationUri: Uri, onFinished: (Boolean) -> Unit) {
@@ -225,10 +260,10 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    getApplication<Application>().contentResolver.openOutputStream(destinationUri)?.use { out ->
-                        file.inputStream().use { input ->
-                            input.copyTo(out)
-                        }
+                    val out = getApplication<Application>().contentResolver.openOutputStream(destinationUri)
+                        ?: throw IOException("Unable to open destination")
+                    out.use { output ->
+                        file.inputStream().use { input -> input.copyTo(output) }
                     }
                 }
                 onFinished(true)

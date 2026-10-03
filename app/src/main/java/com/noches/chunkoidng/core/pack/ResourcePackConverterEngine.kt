@@ -7,20 +7,27 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 object ResourcePackConverterEngine {
 
-    suspend fun scanPack(sourceDir: File): PackMetadata = withContext(Dispatchers.IO) {
-        val files = mutableListOf<File>()
-        sourceDir.walkTopDown().filter { it.isFile }.forEach { files.add(it) }
+    private const val MAX_ARCHIVE_ENTRIES = 100_000
+    private const val MAX_ENTRY_UNCOMPRESSED_BYTES = 256L * 1024L * 1024L
+    private const val MAX_ARCHIVE_UNCOMPRESSED_BYTES = 1L * 1024L * 1024L * 1024L
+    private const val MAX_ENTRY_NAME_LENGTH = 512
 
-        val relativePaths = files.map { it.relativeTo(sourceDir).path.replace('\\', '/') }
+    suspend fun scanPack(sourceDir: File): PackMetadata = withContext(Dispatchers.IO) {
+        val packRoot = resolvePackRoot(sourceDir)
+        val files = mutableListOf<File>()
+        packRoot.walkTopDown().filter { it.isFile }.forEach { files.add(it) }
+
+        val relativePaths = files.map { it.relativeTo(packRoot).path.replace('\\', '/') }
         val platform = PackManifestHandler.detectPlatform(relativePaths) ?: PackPlatform.JAVA
 
-        var name = sourceDir.name
+        var name = packRoot.name
         var description = ""
         var javaFormat: Int? = null
         var bedrockEngineVersion: BedrockEngineVersion? = null
@@ -34,7 +41,7 @@ object ResourcePackConverterEngine {
         var soundCount = 0
 
         for (rel in relativePaths) {
-            val file = File(sourceDir, rel)
+            val file = File(packRoot, rel)
             val lower = rel.lowercase()
 
             if (lower == "pack.png" || lower == "pack_icon.png") {
@@ -104,8 +111,9 @@ object ResourcePackConverterEngine {
         }
         targetDir.mkdirs()
 
+        val packRoot = resolvePackRoot(sourceDir)
         val allFiles = mutableListOf<File>()
-        sourceDir.walkTopDown().filter { it.isFile }.forEach { allFiles.add(it) }
+        packRoot.walkTopDown().filter { it.isFile }.forEach { allFiles.add(it) }
 
         onProgress(PackConversionProgress("SCANNING", 0, allFiles.size, "Scanning assets: ${allFiles.size} files"))
 
@@ -115,7 +123,7 @@ object ResourcePackConverterEngine {
         val flipbookEntries = mutableListOf<FlipbookAnimationHandler.FlipbookEntry>()
         val detectedLocales = mutableListOf<String>()
 
-        var packName = config.customPackName ?: sourceDir.name
+        var packName = config.customPackName ?: packRoot.name
         var packDescription = config.customDescription ?: "Converted by ChunkoidNG"
 
         var currentIdx = 0
@@ -123,29 +131,30 @@ object ResourcePackConverterEngine {
 
         for (sourceFile in allFiles) {
             currentIdx++
-            val relative = sourceFile.relativeTo(sourceDir).path.replace('\\', '/')
+            val relative = sourceFile.relativeTo(packRoot).path.replace('\\', '/')
+            val relativeLower = relative.lowercase()
             val targetRel = if (isJavaToBedrock) {
                 PackAssetMapper.mapJavaToBedrock(relative)
             } else {
                 PackAssetMapper.mapBedrockToJava(relative, config.targetJavaFormat)
             }
 
-            if (relative == "pack.mcmeta" && isJavaToBedrock) {
+            if (relativeLower == "pack.mcmeta" && isJavaToBedrock) {
                 val (_, desc) = PackManifestHandler.parseJavaPackMcmeta(sourceFile.readText())
                 if (desc != null && config.customDescription == null) packDescription = desc
                 continue
             }
 
-            if (relative == "manifest.json" && !isJavaToBedrock) {
+            if (relativeLower == "manifest.json" && !isJavaToBedrock) {
                 val (name, desc, _) = PackManifestHandler.parseBedrockManifest(sourceFile.readText())
                 if (name != null && config.customPackName == null) packName = name
                 if (desc != null && config.customDescription == null) packDescription = desc
                 continue
             }
 
-            if (relative.endsWith(".png.mcmeta") && isJavaToBedrock) {
+            if (relativeLower.endsWith(".png.mcmeta") && isJavaToBedrock) {
                 if (config.convertAnimations) {
-                    val rawPngPath = relative.removeSuffix(".mcmeta")
+                    val rawPngPath = relative.substring(0, relative.length - ".mcmeta".length)
                     val mappedPngPath = PackAssetMapper.mapJavaToBedrock(rawPngPath)
                     if (mappedPngPath != null) {
                         val entry = FlipbookAnimationHandler.parseJavaAnimationMcmeta(sourceFile.readText(), mappedPngPath)
@@ -157,7 +166,7 @@ object ResourcePackConverterEngine {
                 continue
             }
 
-            if (relative == "textures/flipbook_textures.json" && !isJavaToBedrock) {
+            if (relativeLower == "textures/flipbook_textures.json" && !isJavaToBedrock) {
                 if (config.convertAnimations) {
                     val extractedMcmetas = FlipbookAnimationHandler.parseBedrockFlipbookJson(sourceFile.readText())
                     for ((mcmetaRel, content) in extractedMcmetas) {
@@ -178,17 +187,22 @@ object ResourcePackConverterEngine {
 
                 if (isJavaToBedrock) {
                     when {
-                        targetRel.startsWith("texts/") && targetRel.endsWith(".lang") -> {
+                        targetRel.lowercase().startsWith("texts/") && targetRel.lowercase().endsWith(".lang") -> {
                             if (config.convertLanguages) {
+                                validateJson(sourceFile, "Java language file")
                                 val langContent = PackLangHandler.convertJavaJsonToBedrockLang(sourceFile.readText())
                                 destFile.writeText(langContent)
                                 val localeName = targetRel.substringAfterLast('/').removeSuffix(".lang")
                                 detectedLocales.add(localeName)
                             }
                         }
-                        targetRel == "sounds/sound_definitions.json" -> {
+                        targetRel.lowercase() == "sounds/sound_definitions.json" -> {
                             if (config.convertSounds) {
+                                validateJson(sourceFile, "Java sounds.json")
                                 val bedrockSounds = PackSoundHandler.convertJavaSoundsToBedrock(sourceFile.readText())
+                                if (bedrockSounds.isBlank()) {
+                                    throw IllegalArgumentException("Failed to convert Java sounds.json")
+                                }
                                 destFile.writeText(bedrockSounds)
                             }
                         }
@@ -207,26 +221,31 @@ object ResourcePackConverterEngine {
                         }
                     }
 
-                    if (targetRel.startsWith("textures/blocks/")) {
+                    val targetLower = targetRel.lowercase()
+                    if (targetLower.startsWith("textures/blocks/")) {
                         processedBlockTextures.add(targetRel)
                     }
-                    if (targetRel.startsWith("textures/items/")) {
+                    if (targetLower.startsWith("textures/items/")) {
                         processedItemTextures.add(targetRel)
                     }
-                    if (targetRel.endsWith(".png") || targetRel.endsWith(".tga")) {
+                    if (targetLower.endsWith(".png") || targetLower.endsWith(".tga")) {
                         allTargetTextures.add(targetRel)
                     }
                 } else {
                     when {
-                        targetRel.startsWith("assets/minecraft/lang/") && targetRel.endsWith(".json") -> {
+                        targetRel.lowercase().startsWith("assets/minecraft/lang/") && targetRel.lowercase().endsWith(".json") -> {
                             if (config.convertLanguages) {
                                 val jsonContent = PackLangHandler.convertBedrockLangToJavaJson(sourceFile.readText())
                                 destFile.writeText(jsonContent)
                             }
                         }
-                        targetRel == "assets/minecraft/sounds.json" -> {
+                        targetRel.lowercase() == "assets/minecraft/sounds.json" -> {
                             if (config.convertSounds) {
+                                validateJson(sourceFile, "Bedrock sound definitions")
                                 val javaSounds = PackSoundHandler.convertBedrockSoundsToJava(sourceFile.readText())
+                                if (javaSounds.isBlank()) {
+                                    throw IllegalArgumentException("Failed to convert Bedrock sound definitions")
+                                }
                                 destFile.writeText(javaSounds)
                             }
                         }
@@ -321,25 +340,106 @@ object ResourcePackConverterEngine {
         targetDir
     }
 
+    private fun resolvePackRoot(sourceDir: File): File {
+        var root = sourceDir
+        while (true) {
+            val children = root.listFiles()
+                ?.filterNot { it.name.equals("__MACOSX", ignoreCase = true) }
+                ?: break
+            if (children.size != 1 || !children[0].isDirectory) break
+
+            val candidate = children[0]
+            val paths = candidate.walkTopDown()
+                .filter { it.isFile }
+                .map { it.relativeTo(candidate).path.replace('\\', '/') }
+                .toList()
+            // Only flatten a wrapper when its contents look like a pack. This
+            // preserves a legitimate pack containing only a textures folder.
+            if (PackManifestHandler.detectPlatform(paths) == null) break
+            root = candidate
+        }
+        return root
+    }
+
+    private fun validateJson(file: File, description: String) {
+        try {
+            JSONObject(file.readText())
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid $description: ${file.name}", cause)
+        }
+    }
+
     suspend fun extractArchive(archiveFile: File, destinationDir: File) = withContext(Dispatchers.IO) {
         if (destinationDir.exists()) destinationDir.deleteRecursively()
         destinationDir.mkdirs()
 
+        val destinationRoot = destinationDir.canonicalFile
+        val seenEntries = HashSet<String>()
+        var entryCount = 0
+        var totalBytes = 0L
+        var sawEntry = false
+
         ZipInputStream(FileInputStream(archiveFile).buffered()).use { zis ->
             var entry = zis.nextEntry
             while (entry != null) {
-                val targetFile = File(destinationDir, entry.name)
+                sawEntry = true
+                entryCount++
+                if (entryCount > MAX_ARCHIVE_ENTRIES) {
+                    throw IOException("Archive contains too many entries")
+                }
+
+                val entryName = entry.name.replace('\\', '/')
+                if (entryName.isBlank() || entryName.length > MAX_ENTRY_NAME_LENGTH || entryName.contains('\u0000')) {
+                    throw IOException("Invalid archive entry name")
+                }
+                val segments = entryName.split('/')
+                if (segments.any { it == ".." } || entryName.startsWith('/') ||
+                    Regex("^[A-Za-z]:/").containsMatchIn(entryName)) {
+                    throw IOException("Archive entry escapes destination: ${entry.name}")
+                }
+                val relativeName = segments.filter { it.isNotEmpty() && it != "." }.joinToString("/")
+                if (relativeName.isBlank()) {
+                    zis.closeEntry()
+                    entry = zis.nextEntry
+                    continue
+                }
+                if (!seenEntries.add(relativeName.lowercase())) {
+                    throw IOException("Duplicate archive entry: $entryName")
+                }
+
+                val targetFile = File(destinationRoot, relativeName).canonicalFile
+                val rootPath = destinationRoot.path
+                if (targetFile.path != rootPath && !targetFile.path.startsWith(rootPath + File.separator)) {
+                    throw IOException("Archive entry escapes destination: ${entry.name}")
+                }
                 if (entry.isDirectory) {
                     targetFile.mkdirs()
                 } else {
+                    if (entry.size > MAX_ENTRY_UNCOMPRESSED_BYTES) {
+                        throw IOException("Archive entry is too large: $entryName")
+                    }
                     targetFile.parentFile?.mkdirs()
                     FileOutputStream(targetFile).buffered().use { fos ->
-                        zis.copyTo(fos)
+                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                        var entryBytes = 0L
+                        while (true) {
+                            val read = zis.read(buffer)
+                            if (read < 0) break
+                            entryBytes += read
+                            totalBytes += read
+                            if (entryBytes > MAX_ENTRY_UNCOMPRESSED_BYTES || totalBytes > MAX_ARCHIVE_UNCOMPRESSED_BYTES) {
+                                throw IOException("Archive expands beyond the allowed size")
+                            }
+                            fos.write(buffer, 0, read)
+                        }
                     }
                 }
                 zis.closeEntry()
                 entry = zis.nextEntry
             }
+        }
+        if (!sawEntry) {
+            throw IOException("Archive is empty or invalid")
         }
     }
 

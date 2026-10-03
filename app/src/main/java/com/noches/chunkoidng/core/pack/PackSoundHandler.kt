@@ -22,6 +22,7 @@ object PackSoundHandler {
                 if (eventObj.has("category")) {
                     bedrockEvent.put("category", eventObj.getString("category"))
                 }
+                copyFields(eventObj, bedrockEvent, listOf("subtitle", "replace"))
 
                 if (eventObj.has("sounds")) {
                     val soundsArr = eventObj.getJSONArray("sounds")
@@ -44,6 +45,7 @@ object PackSoundHandler {
                                 if (soundItem.has("volume")) convertedItem.put("volume", soundItem.getDouble("volume"))
                                 if (soundItem.has("pitch")) convertedItem.put("pitch", soundItem.getDouble("pitch"))
                                 if (soundItem.has("weight")) convertedItem.put("weight", soundItem.getInt("weight"))
+                                copyFields(soundItem, convertedItem, listOf("stream", "preload", "attenuation_distance", "type"))
                                 bedrockSoundsArr.put(convertedItem)
                             }
                         }
@@ -56,8 +58,8 @@ object PackSoundHandler {
 
             result.put("sound_definitions", soundDefinitions)
             result.toString(2)
-        } catch (_: Exception) {
-            "{\"format_version\": \"1.14.0\", \"sound_definitions\": {}}"
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid Java sounds.json", cause)
         }
     }
 
@@ -76,6 +78,7 @@ object PackSoundHandler {
                 if (eventObj.has("category")) {
                     javaEvent.put("category", eventObj.getString("category"))
                 }
+                copyFields(eventObj, javaEvent, listOf("subtitle", "replace"))
 
                 if (eventObj.has("sounds")) {
                     val soundsArr = eventObj.getJSONArray("sounds")
@@ -97,6 +100,7 @@ object PackSoundHandler {
                                 if (soundItem.has("volume")) convertedItem.put("volume", soundItem.getDouble("volume"))
                                 if (soundItem.has("pitch")) convertedItem.put("pitch", soundItem.getDouble("pitch"))
                                 if (soundItem.has("weight")) convertedItem.put("weight", soundItem.getInt("weight"))
+                                copyFields(soundItem, convertedItem, listOf("stream", "preload", "attenuation_distance", "type"))
                                 javaSoundsArr.put(convertedItem)
                             }
                         }
@@ -108,8 +112,14 @@ object PackSoundHandler {
             }
 
             result.toString(2)
-        } catch (_: Exception) {
-            "{}"
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid Bedrock sound definitions", cause)
+        }
+    }
+
+    private fun copyFields(source: JSONObject, target: JSONObject, names: List<String>) {
+        for (name in names) {
+            if (source.has(name)) target.put(name, source.get(name))
         }
     }
 }

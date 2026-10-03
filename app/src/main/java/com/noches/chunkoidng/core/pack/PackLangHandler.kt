@@ -24,8 +24,8 @@ object PackLangHandler {
                 builder.append("$bedrockKey=$sanitizedValue\n")
             }
             builder.toString()
-        } catch (_: Exception) {
-            ""
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid Java language JSON", cause)
         }
     }
 
@@ -35,7 +35,7 @@ object PackLangHandler {
             val lines = langContent.lines()
             for (line in lines) {
                 val trimmed = line.trim()
-                if (trimmed.isEmpty() || trimmed.startsWith("##") || !trimmed.contains('=')) {
+                if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//") || !trimmed.contains('=')) {
                     continue
                 }
                 val equalIndex = trimmed.indexOf('=')
@@ -45,8 +45,8 @@ object PackLangHandler {
                 json.put(javaKey, value)
             }
             json.toString(2)
-        } catch (_: Exception) {
-            "{}"
+        } catch (cause: Exception) {
+            throw IllegalArgumentException("Invalid Bedrock language file", cause)
         }
     }
 

@@ -386,7 +386,14 @@ fun PackConverterScreen(
                         Button(
                             onClick = {
                                 val ext = if (uiState.targetPlatform == PackPlatform.BEDROCK) "mcpack" else "zip"
-                                val defaultName = "${uiState.selectedPackName.substringBeforeLast('.')}_converted.$ext"
+                                val safeName = uiState.selectedPackName
+                                    .substringBeforeLast('.', uiState.selectedPackName)
+                                    .replace(Regex("[^A-Za-z0-9._ -]"), "_")
+                                    .trim()
+                                    .trim('.')
+                                    .take(80)
+                                    .ifBlank { "pack" }
+                                val defaultName = "${safeName}_converted.$ext"
                                 saveFileLauncher.launch(defaultName)
                             },
                             modifier = Modifier.fillMaxWidth()

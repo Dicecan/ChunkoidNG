@@ -6,6 +6,8 @@ import java.io.File
 
 object FlipbookAnimationHandler {
 
+    private const val MAX_EXPANDED_FRAMES = 100_000
+
     data class FlipbookEntry(
         val flipbookTexture: String,
         val atlasTile: String,
@@ -20,34 +22,50 @@ object FlipbookAnimationHandler {
             if (!root.has("animation")) return null
 
             val anim = root.getJSONObject("animation")
-            val frametime = if (anim.has("frametime")) anim.getInt("frametime") else 1
+            val frametime = if (anim.has("frametime")) anim.getInt("frametime").coerceIn(1, 1024) else 1
             val interpolate = if (anim.has("interpolate")) anim.getBoolean("interpolate") else false
 
-            val frameList = mutableListOf<Int>()
+            val frameSpecs = mutableListOf<Pair<Int, Int>>()
             if (anim.has("frames")) {
                 val framesArr = anim.getJSONArray("frames")
                 for (i in 0 until framesArr.length()) {
                     val item = framesArr.get(i)
                     when (item) {
-                        is Int -> frameList.add(item)
+                        is Int -> frameSpecs.add(item to frametime)
                         is JSONObject -> {
                             if (item.has("index")) {
-                                frameList.add(item.getInt("index"))
+                                val index = item.getInt("index")
+                                val frameTime = item.optInt("time", frametime).coerceIn(1, 1024)
+                                frameSpecs.add(index to frameTime)
                             }
                         }
                     }
                 }
             }
+            val hasPerFrameTiming = frameSpecs.any { it.second != frametime }
+            val frameList = if (hasPerFrameTiming) {
+                buildList {
+                    frameSpecs.forEach { (index, frameTime) ->
+                        repeat(frameTime) {
+                            if (size < MAX_EXPANDED_FRAMES) add(index)
+                        }
+                    }
+                }
+            } else {
+                frameSpecs.map { it.first }
+            }
 
             val textureWithoutExt = bedrockTexturePath.substringBeforeLast('.')
-            val atlasTile = textureWithoutExt.substringAfterLast('/')
+            val atlasTile = TextureAtlasGenerator.atlasKeyForPath(bedrockTexturePath)
 
             FlipbookEntry(
                 flipbookTexture = textureWithoutExt,
                 atlasTile = atlasTile,
-                ticksPerFrame = if (frametime > 0) frametime else 1,
+                // Bedrock has one duration for the whole flipbook. Expand
+                // Java's per-frame durations above and use one tick per entry.
+                ticksPerFrame = if (hasPerFrameTiming) 1 else frametime.coerceAtLeast(1),
                 interpolate = interpolate,
-                frames = if (frameList.isNotEmpty()) frameList else null
+                frames = frameList.takeIf { it.isNotEmpty() }
             )
         } catch (_: Exception) {
             null

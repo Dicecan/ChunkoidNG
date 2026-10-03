@@ -2,6 +2,9 @@ package com.noches.chunkoidng.core.pack
 
 object PackAssetMapper {
 
+    private const val JAVA_TEXTURE_ROOT = "assets/minecraft/"
+    private const val BEDROCK_TEXTURE_UI_ROOT = "textures/ui/"
+
     private val JAVA_TO_BEDROCK_BLOCK_NAMES = mapOf(
         "grass_block_top" to "grass_top",
         "grass_block_side" to "grass_side",
@@ -77,12 +80,13 @@ object PackAssetMapper {
 
     fun mapJavaToBedrock(relativePath: String): String? {
         val normalized = relativePath.replace('\\', '/')
+        val lower = normalized.lowercase()
 
-        if (normalized == "pack.png") {
+        if (lower == "pack.png") {
             return "pack_icon.png"
         }
 
-        val armorRegex = Regex("^assets/minecraft/textures/models/armor/([a-zA-Z0-9_]+)_layer_([12])\\.png$")
+        val armorRegex = Regex("^assets/minecraft/textures/models/armor/([a-zA-Z0-9_]+)_layer_([12])\\.png$", RegexOption.IGNORE_CASE)
         val armorMatch = armorRegex.find(normalized)
         if (armorMatch != null) {
             val mat = armorMatch.groupValues[1]
@@ -90,60 +94,60 @@ object PackAssetMapper {
             return "textures/models/armor/${mat}_$layer.png"
         }
 
-        val blockRegex = Regex("^assets/minecraft/textures/(?:block|blocks)/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$")
+        val blockRegex = Regex("^assets/minecraft/textures/(?:block|blocks)/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$", RegexOption.IGNORE_CASE)
         val blockMatch = blockRegex.find(normalized)
         if (blockMatch != null) {
-            val rawName = blockMatch.groupValues[1]
-            val ext = blockMatch.groupValues[2]
+            val rawName = blockMatch.groupValues[1].lowercase()
+            val ext = blockMatch.groupValues[2].lowercase()
             val mappedName = JAVA_TO_BEDROCK_BLOCK_NAMES[rawName] ?: rawName
             return "textures/blocks/$mappedName$ext"
         }
 
-        val itemRegex = Regex("^assets/minecraft/textures/(?:item|items)/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$")
+        val itemRegex = Regex("^assets/minecraft/textures/(?:item|items)/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$", RegexOption.IGNORE_CASE)
         val itemMatch = itemRegex.find(normalized)
         if (itemMatch != null) {
-            val rawName = itemMatch.groupValues[1]
-            val ext = itemMatch.groupValues[2]
+            val rawName = itemMatch.groupValues[1].lowercase()
+            val ext = itemMatch.groupValues[2].lowercase()
             val mappedName = JAVA_TO_BEDROCK_ITEM_NAMES[rawName] ?: rawName
             return "textures/items/$mappedName$ext"
         }
 
-        if (normalized.startsWith("assets/minecraft/textures/entity/")) {
-            return normalized.removePrefix("assets/minecraft/")
+        if (lower.startsWith("assets/minecraft/textures/entity/")) {
+            return normalized.substring(JAVA_TEXTURE_ROOT.length)
         }
 
-        if (normalized.startsWith("assets/minecraft/textures/environment/")) {
-            return normalized.removePrefix("assets/minecraft/")
+        if (lower.startsWith("assets/minecraft/textures/environment/")) {
+            return normalized.substring(JAVA_TEXTURE_ROOT.length)
         }
 
-        if (normalized.startsWith("assets/minecraft/textures/particle/")) {
-            return normalized.removePrefix("assets/minecraft/")
+        if (lower.startsWith("assets/minecraft/textures/particle/")) {
+            return normalized.substring(JAVA_TEXTURE_ROOT.length)
         }
 
-        if (normalized.startsWith("assets/minecraft/textures/gui/")) {
-            return "textures/ui/" + normalized.removePrefix("assets/minecraft/textures/gui/")
+        if (lower.startsWith("assets/minecraft/textures/gui/")) {
+            return "textures/ui/" + normalized.substring("assets/minecraft/textures/gui/".length)
         }
 
-        if (normalized.startsWith("assets/minecraft/textures/")) {
-            return normalized.removePrefix("assets/minecraft/")
+        if (lower.startsWith("assets/minecraft/textures/")) {
+            return normalized.substring(JAVA_TEXTURE_ROOT.length)
         }
 
-        if (normalized.startsWith("assets/minecraft/sounds/")) {
-            return normalized.removePrefix("assets/minecraft/")
+        if (lower.startsWith("assets/minecraft/sounds/")) {
+            return normalized.substring(JAVA_TEXTURE_ROOT.length)
         }
 
-        if (normalized.startsWith("assets/minecraft/lang/")) {
+        if (lower.startsWith("assets/minecraft/lang/")) {
             val fileName = normalized.substringAfterLast('/')
-            val localeCode = fileName.removeSuffix(".json")
+            val localeCode = fileName.substringBeforeLast('.', fileName)
             val bedrockLocale = mapJavaLocaleToBedrock(localeCode)
             return "texts/$bedrockLocale.lang"
         }
 
-        if (normalized == "assets/minecraft/texts/splashes.txt") {
+        if (lower == "assets/minecraft/texts/splashes.txt") {
             return "splashes.json"
         }
 
-        if (normalized == "assets/minecraft/sounds.json") {
+        if (lower == "assets/minecraft/sounds.json") {
             return "sounds/sound_definitions.json"
         }
 
@@ -152,12 +156,13 @@ object PackAssetMapper {
 
     fun mapBedrockToJava(relativePath: String, targetJavaFormat: Int = 34): String? {
         val normalized = relativePath.replace('\\', '/')
+        val lower = normalized.lowercase()
 
-        if (normalized == "pack_icon.png") {
+        if (lower == "pack_icon.png") {
             return "pack.png"
         }
 
-        val armorRegex = Regex("^textures/models/armor/([a-zA-Z0-9_]+)_([12])\\.png$")
+        val armorRegex = Regex("^textures/models/armor/([a-zA-Z0-9_]+)_([12])\\.png$", RegexOption.IGNORE_CASE)
         val armorMatch = armorRegex.find(normalized)
         if (armorMatch != null) {
             val mat = armorMatch.groupValues[1]
@@ -168,60 +173,60 @@ object PackAssetMapper {
         val blockDir = if (targetJavaFormat <= 3) "blocks" else "block"
         val itemDir = if (targetJavaFormat <= 3) "items" else "item"
 
-        val blockRegex = Regex("^textures/blocks/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$")
+        val blockRegex = Regex("^textures/blocks/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$", RegexOption.IGNORE_CASE)
         val blockMatch = blockRegex.find(normalized)
         if (blockMatch != null) {
-            val rawName = blockMatch.groupValues[1]
-            val ext = blockMatch.groupValues[2]
+            val rawName = blockMatch.groupValues[1].lowercase()
+            val ext = blockMatch.groupValues[2].lowercase()
             val mappedName = BEDROCK_TO_JAVA_BLOCK_NAMES[rawName] ?: rawName
             return "assets/minecraft/textures/$blockDir/$mappedName$ext"
         }
 
-        val itemRegex = Regex("^textures/items/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$")
+        val itemRegex = Regex("^textures/items/([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_.]+)$", RegexOption.IGNORE_CASE)
         val itemMatch = itemRegex.find(normalized)
         if (itemMatch != null) {
-            val rawName = itemMatch.groupValues[1]
-            val ext = itemMatch.groupValues[2]
+            val rawName = itemMatch.groupValues[1].lowercase()
+            val ext = itemMatch.groupValues[2].lowercase()
             val mappedName = BEDROCK_TO_JAVA_ITEM_NAMES[rawName] ?: rawName
             return "assets/minecraft/textures/$itemDir/$mappedName$ext"
         }
 
-        if (normalized.startsWith("textures/entity/")) {
+        if (lower.startsWith("textures/entity/")) {
             return "assets/minecraft/$normalized"
         }
 
-        if (normalized.startsWith("textures/environment/")) {
+        if (lower.startsWith("textures/environment/")) {
             return "assets/minecraft/$normalized"
         }
 
-        if (normalized.startsWith("textures/particle/")) {
+        if (lower.startsWith("textures/particle/")) {
             return "assets/minecraft/$normalized"
         }
 
-        if (normalized.startsWith("textures/ui/")) {
-            return "assets/minecraft/textures/gui/" + normalized.removePrefix("textures/ui/")
+        if (lower.startsWith("textures/ui/")) {
+            return "assets/minecraft/textures/gui/" + normalized.substring(BEDROCK_TEXTURE_UI_ROOT.length)
         }
 
-        if (normalized.startsWith("textures/")) {
+        if (lower.startsWith("textures/")) {
             return "assets/minecraft/$normalized"
         }
 
-        if (normalized.startsWith("sounds/") && normalized != "sounds/sound_definitions.json") {
+        if (lower.startsWith("sounds/") && lower != "sounds/sound_definitions.json") {
             return "assets/minecraft/$normalized"
         }
 
-        if (normalized.startsWith("texts/") && normalized.endsWith(".lang")) {
+        if (lower.startsWith("texts/") && lower.endsWith(".lang")) {
             val fileName = normalized.substringAfterLast('/')
-            val localeCode = fileName.removeSuffix(".lang")
+            val localeCode = fileName.substringBeforeLast('.', fileName)
             val javaLocale = mapBedrockLocaleToJava(localeCode)
             return "assets/minecraft/lang/$javaLocale.json"
         }
 
-        if (normalized == "splashes.json") {
+        if (lower == "splashes.json") {
             return "assets/minecraft/texts/splashes.txt"
         }
 
-        if (normalized == "sounds/sound_definitions.json") {
+        if (lower == "sounds/sound_definitions.json") {
             return "assets/minecraft/sounds.json"
         }
 
