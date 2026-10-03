@@ -32,173 +32,215 @@ object StructureExporter {
         val blocks = mutableListOf<BlockPlacement>()
         val notesByTick = song.notes.groupBy { it.tick }.toSortedMap()
 
-        blocks.add(
-            BlockPlacement(
-                x = 0, y = 1, z = 0,
-                bedrockName = "minecraft:stone",
-                javaStateString = "minecraft:stone"
-            )
-        )
-        blocks.add(
-            BlockPlacement(
-                x = 0, y = 2, z = 0,
-                bedrockName = "minecraft:stone",
-                javaStateString = "minecraft:stone"
-            )
-        )
-        blocks.add(
-            BlockPlacement(
-                x = 0, y = 3, z = 0,
-                bedrockName = "minecraft:stone_button",
-                javaStateString = "minecraft:stone_button[face=floor,facing=north,powered=false]",
-                bedrockStates = mapOf("facing_direction" to 1, "button_pressed_bit" to false)
-            )
-        )
+        val laneLength = 100
+        val laneSpacing = 10
 
+        fun addBlock(
+            x: Int, y: Int, z: Int,
+            bedrockName: String,
+            javaStateString: String,
+            bedrockStates: Map<String, Any> = emptyMap(),
+            notePitch: Int? = null,
+            instrument: NoteBlockInstrument? = null
+        ) {
+            blocks.add(
+                BlockPlacement(
+                    x = x, y = y, z = z,
+                    bedrockName = bedrockName,
+                    javaStateString = javaStateString,
+                    bedrockStates = bedrockStates,
+                    notePitch = notePitch,
+                    instrument = instrument
+                )
+            )
+        }
+
+        fun addWire(x: Int, z: Int) {
+            addBlock(
+                x = x, y = 1, z = z,
+                bedrockName = "minecraft:stone",
+                javaStateString = "minecraft:stone"
+            )
+            addBlock(
+                x = x, y = 2, z = z,
+                bedrockName = "minecraft:redstone_wire",
+                javaStateString = "minecraft:redstone_wire[power=0]",
+                bedrockStates = mapOf("redstone_signal" to 0)
+            )
+        }
+
+        fun addRepeater(x: Int, z: Int, dirZ: Int, delay: Int) {
+            val d = delay.coerceIn(1, 4)
+            val dir = if (dirZ > 0) 2 else 0
+            val card = if (dirZ > 0) "north" else "south"
+            val javaFacing = if (dirZ > 0) "south" else "north"
+            addBlock(
+                x = x, y = 1, z = z,
+                bedrockName = "minecraft:stone",
+                javaStateString = "minecraft:stone"
+            )
+            addBlock(
+                x = x, y = 2, z = z,
+                bedrockName = "minecraft:unpowered_repeater",
+                javaStateString = "minecraft:repeater[delay=$d,facing=$javaFacing,powered=false]",
+                bedrockStates = mapOf(
+                    "repeater_delay" to (d - 1),
+                    "direction" to dir,
+                    "minecraft:cardinal_direction" to card
+                )
+            )
+        }
+
+        addBlock(
+            x = 0, y = 1, z = 0,
+            bedrockName = "minecraft:stone",
+            javaStateString = "minecraft:stone"
+        )
+        addBlock(
+            x = 0, y = 2, z = 0,
+            bedrockName = "minecraft:stone",
+            javaStateString = "minecraft:stone"
+        )
+        addBlock(
+            x = 0, y = 3, z = 0,
+            bedrockName = "minecraft:stone_button",
+            javaStateString = "minecraft:stone_button[face=floor,facing=north,powered=false]",
+            bedrockStates = mapOf("facing_direction" to 1, "button_pressed_bit" to false)
+        )
+        addWire(0, 1)
+
+        var currentX = 0
         var currentZ = 1
+        var dirZ = 1
+
+        fun doUTurn() {
+            if (dirZ > 0) {
+                val turnZ = laneLength + 2
+                addWire(currentX, currentZ + 1)
+                addWire(currentX, turnZ)
+                for (x in (currentX + 1)..(currentX + laneSpacing)) {
+                    addWire(x, turnZ)
+                }
+                addWire(currentX + laneSpacing, turnZ - 1)
+                currentX += laneSpacing
+                currentZ = laneLength
+                dirZ = -1
+            } else {
+                val turnZ = 0
+                addWire(currentX, 1)
+                addWire(currentX, 0)
+                for (x in (currentX + 1)..(currentX + laneSpacing)) {
+                    addWire(x, 0)
+                }
+                addWire(currentX + laneSpacing, 1)
+                currentX += laneSpacing
+                currentZ = 2
+                dirZ = 1
+            }
+        }
+
+        fun stepTrack(isRepeater: Boolean, delay: Int) {
+            if (dirZ > 0) {
+                if (currentZ >= laneLength) {
+                    doUTurn()
+                } else {
+                    currentZ += dirZ
+                }
+            } else {
+                if (currentZ <= 2) {
+                    doUTurn()
+                } else {
+                    currentZ += dirZ
+                }
+            }
+
+            if (isRepeater) {
+                addRepeater(currentX, currentZ, dirZ, delay)
+            } else {
+                addWire(currentX, currentZ)
+            }
+        }
+
         var lastTick = 0
 
         for ((tick, noteList) in notesByTick) {
-            val delta = (tick - lastTick).coerceIn(1, 8)
-            var remainingDelay = delta
+            val delta = (tick - lastTick).coerceAtLeast(1)
 
-            while (remainingDelay > 0) {
-                val rDelay = minOf(remainingDelay, 4)
-                blocks.add(
-                    BlockPlacement(
-                        x = 0, y = 1, z = currentZ,
-                        bedrockName = "minecraft:stone",
-                        javaStateString = "minecraft:stone"
-                    )
-                )
-                blocks.add(
-                    BlockPlacement(
-                        x = 0, y = 2, z = currentZ,
-                        bedrockName = "minecraft:unpowered_repeater",
-                        javaStateString = "minecraft:repeater[delay=$rDelay,facing=south,powered=false]",
-                        bedrockStates = mapOf(
-                            "repeater_delay" to (rDelay - 1),
-                            "direction" to 2,
-                            "minecraft:cardinal_direction" to "north"
-                        )
-                    )
-                )
-                currentZ++
-                remainingDelay -= rDelay
+            if (dirZ > 0 && currentZ >= laneLength - 2) {
+                while (currentZ < laneLength) {
+                    stepTrack(false, 0)
+                }
+                doUTurn()
+            } else if (dirZ < 0 && currentZ <= 4) {
+                while (currentZ > 2) {
+                    stepTrack(false, 0)
+                }
+                doUTurn()
             }
 
+            if (delta <= 4) {
+                stepTrack(true, delta)
+                stepTrack(false, 0)
+            } else if (delta in 5..8) {
+                stepTrack(true, 4)
+                stepTrack(true, delta - 4)
+            } else {
+                var rem = delta
+                while (rem > 0) {
+                    val rDelay = minOf(rem, 4)
+                    stepTrack(true, rDelay)
+                    rem -= rDelay
+                }
+            }
+
+            stepTrack(false, 0)
             val busZ = currentZ
-            blocks.add(
-                BlockPlacement(
-                    x = 0, y = 1, z = busZ,
-                    bedrockName = "minecraft:stone",
-                    javaStateString = "minecraft:stone"
-                )
-            )
-            blocks.add(
-                BlockPlacement(
-                    x = 0, y = 2, z = busZ,
-                    bedrockName = "minecraft:redstone_wire",
-                    javaStateString = "minecraft:redstone_wire[power=0]",
-                    bedrockStates = mapOf("redstone_signal" to 0)
-                )
-            )
 
             noteList.forEachIndexed { index, note ->
                 val xOffset = if (index % 2 == 0) (index / 2 + 2) else -(index / 2 + 2)
+                val targetX = currentX + xOffset
+                val stepX = if (xOffset > 0) 1 else -1
 
-                val xStart = if (xOffset > 0) 1 else -1
-                val xStep = if (xOffset > 0) 1 else -1
-                var wireX = xStart
-                while (if (xStep > 0) wireX <= xOffset else wireX >= xOffset) {
-                    blocks.add(
-                        BlockPlacement(
-                            x = wireX, y = 1, z = busZ,
-                            bedrockName = "minecraft:stone",
-                            javaStateString = "minecraft:stone"
-                        )
-                    )
-                    blocks.add(
-                        BlockPlacement(
-                            x = wireX, y = 2, z = busZ,
-                            bedrockName = "minecraft:redstone_wire",
-                            javaStateString = "minecraft:redstone_wire[power=0]",
-                            bedrockStates = mapOf("redstone_signal" to 0)
-                        )
-                    )
-                    wireX += xStep
+                var wireX = currentX + stepX
+                while (if (stepX > 0) wireX <= targetX else wireX >= targetX) {
+                    addWire(wireX, busZ)
+                    wireX += stepX
                 }
 
-                blocks.add(
-                    BlockPlacement(
-                        x = xOffset, y = 1, z = busZ + 1,
-                        bedrockName = "minecraft:stone",
-                        javaStateString = "minecraft:stone"
-                    )
+                val repDir = if (dirZ > 0) 2 else 0
+                val repCard = if (dirZ > 0) "north" else "south"
+                val repJava = if (dirZ > 0) "south" else "north"
+
+                addBlock(
+                    x = targetX, y = 1, z = busZ + dirZ,
+                    bedrockName = "minecraft:stone",
+                    javaStateString = "minecraft:stone"
                 )
-                blocks.add(
-                    BlockPlacement(
-                        x = xOffset, y = 2, z = busZ + 1,
-                        bedrockName = "minecraft:unpowered_repeater",
-                        javaStateString = "minecraft:repeater[delay=1,facing=south,powered=false]",
-                        bedrockStates = mapOf(
-                            "repeater_delay" to 0,
-                            "direction" to 2,
-                            "minecraft:cardinal_direction" to "north"
-                        )
+                addBlock(
+                    x = targetX, y = 2, z = busZ + dirZ,
+                    bedrockName = "minecraft:unpowered_repeater",
+                    javaStateString = "minecraft:repeater[delay=1,facing=$repJava,powered=false]",
+                    bedrockStates = mapOf(
+                        "repeater_delay" to 0,
+                        "direction" to repDir,
+                        "minecraft:cardinal_direction" to repCard
                     )
                 )
 
-                blocks.add(
-                    BlockPlacement(
-                        x = xOffset, y = 1, z = busZ + 2,
-                        bedrockName = note.instrument.baseBlockId,
-                        javaStateString = note.instrument.baseBlockId
-                    )
+                addBlock(
+                    x = targetX, y = 1, z = busZ + 2 * dirZ,
+                    bedrockName = note.instrument.baseBlockId,
+                    javaStateString = note.instrument.baseBlockId
                 )
-                blocks.add(
-                    BlockPlacement(
-                        x = xOffset, y = 2, z = busZ + 2,
-                        bedrockName = "minecraft:noteblock",
-                        javaStateString = "minecraft:note_block[instrument=${note.instrument.name.lowercase()},note=${note.key},powered=false]",
-                        notePitch = note.key,
-                        instrument = note.instrument
-                    )
+                addBlock(
+                    x = targetX, y = 2, z = busZ + 2 * dirZ,
+                    bedrockName = "minecraft:noteblock",
+                    javaStateString = "minecraft:note_block[instrument=${note.instrument.name.lowercase()},note=${note.key},powered=false]",
+                    notePitch = note.key,
+                    instrument = note.instrument
                 )
             }
 
-            blocks.add(
-                BlockPlacement(
-                    x = 0, y = 1, z = busZ + 1,
-                    bedrockName = "minecraft:stone",
-                    javaStateString = "minecraft:stone"
-                )
-            )
-            blocks.add(
-                BlockPlacement(
-                    x = 0, y = 2, z = busZ + 1,
-                    bedrockName = "minecraft:redstone_wire",
-                    javaStateString = "minecraft:redstone_wire[power=0]",
-                    bedrockStates = mapOf("redstone_signal" to 0)
-                )
-            )
-            blocks.add(
-                BlockPlacement(
-                    x = 0, y = 1, z = busZ + 2,
-                    bedrockName = "minecraft:stone",
-                    javaStateString = "minecraft:stone"
-                )
-            )
-            blocks.add(
-                BlockPlacement(
-                    x = 0, y = 2, z = busZ + 2,
-                    bedrockName = "minecraft:redstone_wire",
-                    javaStateString = "minecraft:redstone_wire[power=0]",
-                    bedrockStates = mapOf("redstone_signal" to 0)
-                )
-            )
-
-            currentZ = busZ + 3
             lastTick = tick
         }
 

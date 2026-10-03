@@ -240,13 +240,22 @@ class MidiMusicTest {
 
         val parsed = MidiParser.parse(midiFile)
         val song = RedstoneQuantizer.quantize(parsed)
+        val notesByTick = song.notes.groupBy { it.tick }
+        println("MIDI_DIAG: durationMs=${parsed.durationMs}, bpm=${parsed.initialBpm}, noteCount=${parsed.notes.size}")
+        println("MIDI_DIAG: lengthTicks=${song.lengthTicks}, songNoteCount=${song.notes.size}")
+        println("CHORD_STATS: maxNotesPerTick=${notesByTick.values.maxOf { it.size }}, count=${notesByTick.size}")
         val layout = StructureExporter.buildContraption(song)
+        println("MIDI_DIAG: sizeX=${layout.sizeX}, sizeY=${layout.sizeY}, sizeZ=${layout.sizeZ}")
         val repeaters = layout.blocks.filter { it.bedrockName == "minecraft:unpowered_repeater" }
         assertTrue(repeaters.isNotEmpty())
         for (repeater in repeaters) {
-            assertEquals(2, repeater.bedrockStates["direction"])
-            assertEquals("north", repeater.bedrockStates["minecraft:cardinal_direction"])
+            val dir = repeater.bedrockStates["direction"] as Int
+            assertTrue(dir == 0 || dir == 2)
+            val card = repeater.bedrockStates["minecraft:cardinal_direction"] as String
+            assertTrue(card == "north" || card == "south")
         }
+        assertTrue(layout.sizeZ in 80..115)
+        assertTrue(layout.sizeX >= 50)
 
         val outMcworld = File("C:/Users/Administrator/Downloads/春风来-洛天依.mcworld")
         FlatWorldMusicGenerator.generateFlatWorld(song, outMcworld)
