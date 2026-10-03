@@ -46,13 +46,15 @@ object FlipbookAnimationHandler {
                 }
             }
             val hasPerFrameTiming = frameSpecs.any { it.second != frametime }
+            if (hasPerFrameTiming) {
+                val expandedSize = frameSpecs.sumOf { it.second.toLong() }
+                require(expandedSize <= MAX_EXPANDED_FRAMES) {
+                    "Expanded animation frame list is too large"
+                }
+            }
             val frameList = if (hasPerFrameTiming) {
                 buildList {
-                    frameSpecs.forEach { (index, frameTime) ->
-                        repeat(frameTime) {
-                            if (size < MAX_EXPANDED_FRAMES) add(index)
-                        }
-                    }
+                    frameSpecs.forEach { (index, frameTime) -> repeat(frameTime) { add(index) } }
                 }
             } else {
                 frameSpecs.map { it.first }
