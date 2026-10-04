@@ -90,12 +90,12 @@ data class CrashReport(
             } catch (_: Exception) {
                 null
             }
-            val versionName = pInfo?.versionName ?: "CANARY 0.4"
+            val versionName = pInfo?.versionName ?: "CANARY 0.5"
             val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                pInfo?.longVersionCode ?: 4L
+                pInfo?.longVersionCode ?: 5L
             } else {
                 @Suppress("DEPRECATION")
-                pInfo?.versionCode?.toLong() ?: 4L
+                pInfo?.versionCode?.toLong() ?: 5L
             }
 
             val sw = StringWriter()

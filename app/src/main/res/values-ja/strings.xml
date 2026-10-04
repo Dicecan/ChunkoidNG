@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Android向けオープンソースのMinecraftワールド変換ツール</string>
-    <string name="app_version_display">Next-Generation · CANARY 0.4 (Compose MD3E)</string>
-    <string name="app_version_badge">CANARY 0.4</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.5 (Compose MD3E)</string>
+    <string name="app_version_badge">CANARY 0.5</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">キャンセル</string>
@@ -176,7 +176,13 @@
     <string name="about_team_org">保守組織</string>
     <string name="about_team_contributors">主要貢献者</string>
     <string name="about_team_license">オープンソースライセンス</string>
-    <string name="about_features_title">CANARY 0.4 実装機能と特徴</string>
+    <string name="about_features_title">CANARY 0.5 実装機能と特徴</string>
+    <string name="about_feature_pack">リソースパック双方向変換ワークショップ</string>
+    <string name="about_feature_pack_desc">Java版と統合版リソースパックの双方向変換、モデルとブロック状態のマッピング、テクスチャ適応、安全なMCMETAアニメーション展開に対応</string>
+    <string name="about_feature_midi">MIDIからレッドストーン音楽・ワールド生成</string>
+    <string name="about_feature_midi_desc">マルチトラック音符ブロックマッピング、原曲テンポを維持する蛇行レイアウト、LevelDB直接書き込み、1.21+ブロック状態互換に対応</string>
+    <string name="about_feature_crash">クラッシュ診断と安全なエクスポートシステム</string>
+    <string name="about_feature_crash_desc">独立した:crashプロセスによる例外捕捉、端末・スタック診断、Binderオーバーフローを防ぐ4KB安全要約、FileProviderによる安全な共有</string>
     <string name="about_feature_nbt">全機能 NBT・LevelDB ビジュアルエディタ</string>
     <string name="about_feature_nbt_desc">全フォーマットのツリー編集、Minecraft セマンティックタグ、大容量配列ページング、2D チャンクグリッド軽量化</string>
     <string name="about_feature_convert">ワールド相互変換とエクスポート</string>

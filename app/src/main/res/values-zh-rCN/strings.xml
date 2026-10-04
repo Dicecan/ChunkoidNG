@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">首个专为安卓打造的开源 Minecraft 世界转换工具</string>
-    <string name="app_version_display">Next-Generation · CANARY 0.4 (Compose MD3E)</string>
-    <string name="app_version_badge">CANARY 0.4</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.5 (Compose MD3E)</string>
+    <string name="app_version_badge">CANARY 0.5</string>
 
     <string name="common_ok">确定</string>
     <string name="common_cancel">取消</string>
@@ -176,7 +176,13 @@
     <string name="about_team_org">现维护组织</string>
     <string name="about_team_contributors">核心贡献者</string>
     <string name="about_team_license">开源协议</string>
-    <string name="about_features_title">CANARY 0.4 实装功能与特性</string>
+    <string name="about_features_title">CANARY 0.5 实装功能与特性</string>
+    <string name="about_feature_pack">材质包双版本双向深度转换工坊</string>
+    <string name="about_feature_pack_desc">支持 Java 版与基岩版材质包全双向转换、模型与 Blockstates 映射重构、贴图格式自动适配、MCMETA 动画帧安全展开与熔断保护</string>
+    <string name="about_feature_midi">MIDI 音乐转红石机械与超平坦工坊</string>
+    <string name="about_feature_midi_desc">多音轨多乐器音符盒解析、蛇形回路布线保证原速播放无失真、LevelDB 区块直写超平坦与实体红石音乐机械生成，兼容 1.21+ 方块状态</string>
+    <string name="about_feature_crash">独立崩溃诊断与安全导出系统</string>
+    <string name="about_feature_crash_desc">独立 :crash 进程异常捕获、软硬件与堆栈诊断快照、防止 Binder 事务溢出的 4KB 安全摘要截断与 FileProvider 完整日志安全分享</string>
     <string name="about_feature_nbt">全能 NBT 与 LevelDB 可视化编辑器</string>
     <string name="about_feature_nbt_desc">支持全格式树结构编辑、Minecraft 智能语义作用标签、大数组分页与 2D 区块栅格可视化精准瘦身</string>
     <string name="about_feature_convert">世界存档双向互转与导出</string>

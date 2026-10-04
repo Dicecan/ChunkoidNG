@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.4-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.5-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -31,8 +31,8 @@
 ---
 
 > [!WARNING]
-> ### 🚧 Early Canary 0.4 Preview Phase
-> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, smart version upgrade/downgrade mapping & risk alerts, standardized multi-language architecture (ZH/EN/JA), NetEase world decryption & passive encryption, standalone dimension pruning workbench, and full-featured NBT / LevelDB visual editor with smart semantic tagging, big data paging, and 2D chunk grid slimming have been fully implemented.
+> ### 🚧 Early Canary 0.5 Preview Phase
+> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, smart version upgrade/downgrade mapping & risk alerts, standardized multi-language architecture (ZH/EN/JA), NetEase world decryption & passive encryption, standalone dimension pruning workbench, full-featured NBT / LevelDB visual editor (smart semantic tagging, big data paging, 2D chunk grid slimming), and brand new Canary 0.5 features including bidirectional resource pack conversion, MIDI-to-redstone music workshop, isolated crash diagnostics & export, and background persistent permission management have been fully implemented.
 
 ---
 
@@ -60,6 +60,18 @@
   * Built entirely on Material Design 3 Expressive standards, featuring Squircle container interactions, system window inset adaptation, and collapsible cards to maximize screen real estate.
 * ⚡ **Ultra-Slim RootFS & Sandbox Console**:
   * Heavily pruned payload down to 57 binaries with 50% storage savings; built-in terminal console for debugging OpenJDK 17 and Shell commands.
+* 🎨 **Bidirectional Resource Pack Converter Workshop**:
+  * **Full Bidirectional Conversion**: Supports converting resource packs between Java Edition and Bedrock Edition with live progress feedback and logs.
+  * **Deep Model & Texture Mapping**: Automatically converts Blockstates and custom entity/block models, reconciling naming differences across editions.
+  * **Safe MCMETA Frame Expansion**: Automatically renders Java `.png.mcmeta` animations into Bedrock vertical sprite sheets with built-in frame and dimension safety fuses to eliminate OOM crashes.
+* 🎵 **MIDI to Redstone Music & World Workshop**:
+  * **High-Fidelity Noteblock Parsing**: Accurately parses MIDI tracks, mapping pitch and instruments to corresponding Minecraft blocks (dirt, planks, sand, etc.) and noteblock pitches (0-24).
+  * **Serpentine (S-Curve) Circuit Layout**: Replaces conventional single-line layouts with an ultra-compact serpentine layout, eliminating corner breakages and guaranteeing 1:1 true-tempo playback.
+  * **LevelDB Direct Chunk Injection**: Writes directly into LevelDB chunk databases to generate flat music worlds or inject redstone music contraptions into existing worlds, with full 1.21+ modern blockstate support.
+* 🛡️ **Isolated Crash Diagnostics & Safe Export System**:
+  * **Isolated :crash Process**: Fatal main process crashes are caught by an isolated process, offering an instant MD3 UI for rebooting or exiting safely without silent ANRs.
+  * **Complete Hardware & Stack Snapshot**: Captures Android OS, device model, memory heap, available disk space, exception thread, and unabridged stack traces.
+  * **Binder Safety & FileProvider Export**: Uses 4KB safe text truncation for IPC and exports unabridged log reports via temporary FileProvider sharing to eliminate Android `TransactionTooLargeException`.
 
 ---
 
@@ -74,7 +86,10 @@
 * ✅ **NBT / LevelDB Visual Explorer**: `Implemented (Canary 0.4)` (Tree manipulation, LevelDB category query, big data paging, full format support)
 * ✅ **Minecraft Smart Semantic Analysis & Tags**: `Implemented (Canary 0.4)` (Player/entity/tile entity semantic tags, beginner-friendly value guides)
 * ✅ **2D Chunk Visualizer & Precise Slimming**: `Implemented (Canary 0.4)` (Pinch/pan grid, InhabitedTime analysis, 0-tick chunk pruning)
-* ⏳ **Resource Pack Converter**: `In Development` (Pending migration)
+* ✅ **Bidirectional Resource Pack Converter**: `Implemented (Canary 0.5)` (Java/Bedrock pack conversion, Blockstates/models restructuring, MCMETA animation safety)
+* ✅ **MIDI to Redstone Music & World Workshop**: `Implemented (Canary 0.5)` (Multi-track noteblock mapping, serpentine layout, LevelDB chunk injection, 1.21+ compatibility)
+* ✅ **Isolated Crash Diagnostics & Export**: `Implemented (Canary 0.5)` (Isolated :crash process, Binder overflow guard, 4KB truncation & FileProvider export)
+* ✅ **Background Persistence & Battery Exemption**: `Implemented (Canary 0.5)` (Foreground service notification permission, anti-spam prompts, cascading battery settings)
 
 ---
 

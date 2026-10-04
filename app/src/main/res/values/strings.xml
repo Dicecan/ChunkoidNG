@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
-    <string name="app_version_display">Next-Generation · CANARY 0.4 (Compose MD3E)</string>
-    <string name="app_version_badge">CANARY 0.4</string>
+    <string name="app_version_display">Next-Generation · CANARY 0.5 (Compose MD3E)</string>
+    <string name="app_version_badge">CANARY 0.5</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">Cancel</string>
@@ -176,7 +176,13 @@
     <string name="about_team_org">Current Maintainer</string>
     <string name="about_team_contributors">Core Contributors</string>
     <string name="about_team_license">Open Source License</string>
-    <string name="about_features_title">CANARY 0.4 Features &amp; Highlights</string>
+    <string name="about_features_title">CANARY 0.5 Features &amp; Highlights</string>
+    <string name="about_feature_pack">Bidirectional Resource Pack Converter</string>
+    <string name="about_feature_pack_desc">Full bidirectional Java &amp; Bedrock resource pack conversion, model &amp; blockstates mapping, texture adaptation, and safe MCMETA frame expansion</string>
+    <string name="about_feature_midi">MIDI to Redstone Music &amp; World Workshop</string>
+    <string name="about_feature_midi_desc">Multi-track noteblock mapping, serpentine layout for 1:1 true-tempo playback, LevelDB direct chunk injection, and 1.21+ blockstate compatibility</string>
+    <string name="about_feature_crash">Crash Diagnostic &amp; Safe Export System</string>
+    <string name="about_feature_crash_desc">Isolated :crash process reporting, device &amp; stack diagnostics, 4KB Binder-safe intent truncation, and FileProvider log sharing</string>
     <string name="about_feature_nbt">NBT &amp; LevelDB Visual Explorer</string>
     <string name="about_feature_nbt_desc">Full-format tree manipulation, Minecraft smart semantic tags, big data paging, and 2D chunk grid slimming</string>
     <string name="about_feature_convert">Bidirectional World Conversion</string>

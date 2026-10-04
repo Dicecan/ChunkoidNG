@@ -19,8 +19,8 @@ class CrashReportTest {
     fun testCrashReportFormatting() {
         val report = CrashReport(
             timestamp = 1700000000000L,
-            appVersionName = "CANARY 0.4",
-            appVersionCode = 4L,
+            appVersionName = "CANARY 0.5",
+            appVersionCode = 5L,
             packageName = "com.noches.chunkoidng",
             threadName = "main",
             isMainThread = true,
@@ -32,7 +32,7 @@ class CrashReportTest {
         val text = report.formatFormattedText()
         assertTrue(text.contains("CHUNKOID CRASH REPORT"))
         assertTrue(text.contains("com.noches.chunkoidng"))
-        assertTrue(text.contains("CANARY 0.4"))
+        assertTrue(text.contains("CANARY 0.5"))
         assertTrue(text.contains("java.lang.IllegalStateException"))
         assertTrue(text.contains("Test crash occurred"))
         assertTrue(text.contains("Main.kt:10"))
@@ -45,8 +45,8 @@ class CrashReportTest {
     fun testCrashReportSummaryWithNullMessage() {
         val report = CrashReport(
             timestamp = 1700000000000L,
-            appVersionName = "CANARY 0.4",
-            appVersionCode = 4L,
+            appVersionName = "CANARY 0.5",
+            appVersionCode = 5L,
             packageName = "com.noches.chunkoidng",
             threadName = "pool-1-thread-1",
             isMainThread = false,
