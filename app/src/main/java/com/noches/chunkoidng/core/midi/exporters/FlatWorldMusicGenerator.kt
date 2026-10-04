@@ -97,7 +97,10 @@ object FlatWorldMusicGenerator {
 
             onProgress?.invoke("正在写入 LevelDB 世界区块与实体红石音乐方块...")
             val dbDir = File(tempDir, "db").apply { mkdirs() }
-            val dbOptions = Options().apply { createIfMissing(true) }
+            val dbOptions = Options().apply {
+                createIfMissing(true)
+                cacheSize(0)
+            }
             val db = DbImpl(dbOptions, dbDir.absolutePath, SafeEnv())
 
             try {

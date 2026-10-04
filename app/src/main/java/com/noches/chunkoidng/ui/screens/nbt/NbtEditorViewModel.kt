@@ -11,6 +11,7 @@ import com.noches.chunkoidng.core.leveldb.BedrockLevelDbHelper
 import com.noches.chunkoidng.core.leveldb.LevelDbCategory
 import com.noches.chunkoidng.core.leveldb.LevelDbRecord
 import com.noches.chunkoidng.core.nbt.MinecraftSemanticDescriptor
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -166,12 +167,13 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         parseNbtBytes(bytes, fileName)
                     }
                 }
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            userMessage = "${context.getString(R.string.nbt_load_failed)}: ${e.message}"
+                            userMessage = "${context.getString(R.string.nbt_load_failed)}: ${t.message ?: t.javaClass.simpleName}"
                         )
                     }
                 }
@@ -220,12 +222,13 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         parseNbtBytes(bytes, file.name)
                     }
                 }
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            userMessage = "${context.getString(R.string.nbt_load_failed)}: ${e.message}"
+                            userMessage = "${context.getString(R.string.nbt_load_failed)}: ${t.message ?: t.javaClass.simpleName}"
                         )
                     }
                 }
@@ -314,9 +317,10 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             levelDbHelper = BedrockLevelDbHelper(cacheFolder)
             records = try {
                 levelDbHelper?.getAllRecords() ?: emptyList()
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
                 cacheFolder.deleteRecursively()
-                throw IOException("Unable to open LevelDB", e)
+                throw IOException("Unable to open LevelDB: ${t.message ?: t.javaClass.simpleName}", t)
             }
             allLevelDbRecords = records
         }
@@ -364,9 +368,10 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
         val records = try {
             levelDbHelper?.getAllRecords() ?: emptyList()
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
             cacheFolder.deleteRecursively()
-            throw IOException("Unable to open LevelDB", e)
+            throw IOException("Unable to open LevelDB: ${t.message ?: t.javaClass.simpleName}", t)
         }
         allLevelDbRecords = records
 
@@ -493,20 +498,20 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             }
             viewModelScope.launch(Dispatchers.IO) {
-                val rawBytes = helper.get(record.key)
-                if (rawBytes == null) {
-                    withContext(Dispatchers.Main) {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                userMessage = context.getString(R.string.nbt_load_failed)
-                            )
-                        }
-                    }
-                    return@launch
-                }
-
                 try {
+                    val rawBytes = helper.get(record.key)
+                    if (rawBytes == null) {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    userMessage = context.getString(R.string.nbt_load_failed)
+                                )
+                            }
+                        }
+                        return@launch
+                    }
+
                     val nbtFile = BedrockLevelDbHelper.readBedrockNbt(rawBytes, record.hasMultipleCompounds)
                     withContext(Dispatchers.Main) {
                         _uiState.update {
@@ -526,12 +531,13 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         }
                         setupNbtTree(nbtFile, record.displayName)
                     }
-                } catch (e: Exception) {
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
                     withContext(Dispatchers.Main) {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                userMessage = "${context.getString(R.string.nbt_load_failed)}: ${e.message}"
+                                userMessage = "${context.getString(R.string.nbt_load_failed)}: ${t.message}"
                             )
                         }
                     }
@@ -1076,9 +1082,10 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         it.copy(userMessage = context.getString(R.string.nbt_leveldb_delete_key_success, record.displayName))
                     }
                 }
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
                 withContext(Dispatchers.Main) {
-                    _uiState.update { it.copy(userMessage = e.message) }
+                    _uiState.update { it.copy(userMessage = t.message) }
                 }
             }
         }
@@ -1106,12 +1113,13 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
                 withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            userMessage = e.message
+                            userMessage = t.message
                         )
                     }
                 }
@@ -1129,22 +1137,34 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val chunkSummary = helper.getChunkCoordinateSummary(0)
-            withContext(Dispatchers.Main) {
-                _uiState.update {
-                    it.copy(
-                        mode = NbtEditorMode.CHUNK_GRID,
-                        title = "LevelDB 2D Map",
-                        subtitle = "Overworld",
-                        isLoading = false,
-                        isWorldChunkMode = true,
-                        populatedWorldChunks = chunkSummary.populated,
-                        blockEntityWorldChunks = chunkSummary.blockEntities,
-                        currentDimensionId = 0,
-                        selectedChunkSet = emptySet(),
-                        selectedChunkLocalX = -1,
-                        selectedChunkLocalZ = -1
-                    )
+            try {
+                val chunkSummary = helper.getChunkCoordinateSummary(0)
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            mode = NbtEditorMode.CHUNK_GRID,
+                            title = "LevelDB 2D Map",
+                            subtitle = "Overworld",
+                            isLoading = false,
+                            isWorldChunkMode = true,
+                            populatedWorldChunks = chunkSummary.populated,
+                            blockEntityWorldChunks = chunkSummary.blockEntities,
+                            currentDimensionId = 0,
+                            selectedChunkSet = emptySet(),
+                            selectedChunkLocalX = -1,
+                            selectedChunkLocalZ = -1
+                        )
+                    }
+                }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = t.message ?: "Failed to scan chunks"
+                        )
+                    }
                 }
             }
         }
@@ -1160,24 +1180,36 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val chunkSummary = helper.getChunkCoordinateSummary(dimId)
-            val dimName = when (dimId) {
-                1 -> "Nether"
-                2 -> "The End"
-                else -> "Overworld"
-            }
-            withContext(Dispatchers.Main) {
-                _uiState.update {
-                    it.copy(
-                        subtitle = dimName,
-                        isLoading = false,
-                        populatedWorldChunks = chunkSummary.populated,
-                        blockEntityWorldChunks = chunkSummary.blockEntities,
-                        currentDimensionId = dimId,
-                        selectedChunkSet = emptySet(),
-                        selectedChunkLocalX = -1,
-                        selectedChunkLocalZ = -1
-                    )
+            try {
+                val chunkSummary = helper.getChunkCoordinateSummary(dimId)
+                val dimName = when (dimId) {
+                    1 -> "Nether"
+                    2 -> "The End"
+                    else -> "Overworld"
+                }
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            subtitle = dimName,
+                            isLoading = false,
+                            populatedWorldChunks = chunkSummary.populated,
+                            blockEntityWorldChunks = chunkSummary.blockEntities,
+                            currentDimensionId = dimId,
+                            selectedChunkSet = emptySet(),
+                            selectedChunkLocalX = -1,
+                            selectedChunkLocalZ = -1
+                        )
+                    }
+                }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = t.message ?: "Failed to load dimension"
+                        )
+                    }
                 }
             }
         }
@@ -1224,12 +1256,13 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
                 withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            userMessage = e.message
+                            userMessage = t.message
                         )
                     }
                 }
@@ -1328,10 +1361,11 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             )
                         }
                     }
-                } catch (e: Exception) {
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
                     withContext(Dispatchers.Main) {
                         _uiState.update {
-                            it.copy(isLoading = false, userMessage = e.message)
+                            it.copy(isLoading = false, userMessage = t.message)
                         }
                     }
                 }
@@ -1432,10 +1466,11 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             )
                         }
                     }
-                } catch (e: Exception) {
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
                     withContext(Dispatchers.Main) {
                         _uiState.update {
-                            it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, e.message)}")
+                            it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, t.message)}")
                         }
                     }
                 }
@@ -1752,7 +1787,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val helper = levelDbHelper ?: return
         val records = try {
             helper.getAllRecords()
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             emptyList()
         }
         allLevelDbRecords = records

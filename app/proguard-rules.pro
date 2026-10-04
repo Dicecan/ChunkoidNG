@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# LevelDB (pure Java) & Guava Cache
+-keep class org.iq80.leveldb.** { *; }
+-dontwarn org.iq80.leveldb.**
+-keep class com.google.common.cache.** { *; }
+-dontwarn com.google.common.cache.**
+-keepclassmembers class com.google.common.cache.** { *; }

@@ -35,6 +35,34 @@ class BedrockLevelDbHelperTest {
         }
     }
 
+    @Test
+    fun bulkScanningWithoutBlockCacheDoesNotThrow() {
+        val folder = Files.createTempDirectory("chunkoid-leveldb-cache-test").toFile()
+        try {
+            DbImpl(Options().apply { createIfMissing(true); writeBufferSize(4 * 1024) }, folder.absolutePath, SafeEnv()).use { database ->
+                for (i in 0 until 500) {
+                    val key = chunkKey(i % 50, i / 50, 0x31)
+                    val value = ByteArray(1024) { (it % 128).toByte() }
+                    database.put(key, value)
+                }
+            }
+
+            BedrockLevelDbHelper(folder).use { helper ->
+                val records = helper.getAllRecords()
+                assertEquals(500, records.size)
+
+                val summary = helper.getChunkCoordinateSummary(0)
+                assertEquals(500, summary.blockEntities.size)
+
+                val record = helper.get(chunkKey(0, 0, 0x31))
+                assertNotNull(record)
+                assertEquals(1024, record?.size)
+            }
+        } finally {
+            folder.deleteRecursively()
+        }
+    }
+
     private fun chunkKey(x: Int, z: Int, tag: Int): ByteArray {
         return coordinateOnlyKey(x, z) + byteArrayOf(tag.toByte())
     }

@@ -7,6 +7,7 @@ import br.com.gamemods.nbtmanipulator.NbtIO
 import com.noches.chunkoidng.R
 import org.iq80.leveldb.DB
 import org.iq80.leveldb.Options
+import org.iq80.leveldb.ReadOptions
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
@@ -64,11 +65,17 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
     private var db: DB? = null
     private val dbLock = Any()
 
+    private val noCacheReadOptions = ReadOptions().apply {
+        fillCache(false)
+        verifyChecksums(false)
+    }
+
     fun open(readOnly: Boolean = false): DB {
         synchronized(dbLock) {
             if (db == null) {
                 val options = Options().apply {
                     createIfMissing(false)
+                    cacheSize(0)
                 }
                 db = org.iq80.leveldb.impl.DbImpl(options, dbFolder.absolutePath, SafeEnv())
             }
@@ -79,7 +86,7 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
     fun getAllRecords(onProgress: ((scannedCount: Int) -> Unit)? = null): List<LevelDbRecord> {
         val list = mutableListOf<LevelDbRecord>()
         synchronized(dbLock) {
-            val iterator = open().iterator()
+            val iterator = open().iterator(noCacheReadOptions)
             var count = 0
             try {
                 iterator.seekToFirst()
@@ -106,7 +113,7 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
     }
 
     fun get(key: ByteArray): ByteArray? {
-        return synchronized(dbLock) { open().get(key) }
+        return synchronized(dbLock) { open().get(key, noCacheReadOptions) }
     }
 
     fun put(key: ByteArray, value: ByteArray) {
@@ -158,7 +165,7 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
         synchronized(dbLock) {
             val database = open()
             val keys = mutableListOf<ByteArray>()
-            val iterator = database.iterator()
+            val iterator = database.iterator(noCacheReadOptions)
             try {
                 iterator.seekToFirst()
                 while (iterator.hasNext()) {
@@ -200,7 +207,7 @@ class BedrockLevelDbHelper(val dbFolder: File) : Closeable, AutoCloseable {
         val populated = mutableSetOf<Pair<Int, Int>>()
         val blockEntities = mutableSetOf<Pair<Int, Int>>()
         synchronized(dbLock) {
-            val iterator = open().iterator()
+            val iterator = open().iterator(noCacheReadOptions)
             try {
                 iterator.seekToFirst()
                 while (iterator.hasNext()) {
