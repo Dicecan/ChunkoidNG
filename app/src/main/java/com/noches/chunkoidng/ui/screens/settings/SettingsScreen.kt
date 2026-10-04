@@ -1,7 +1,9 @@
 package com.noches.chunkoidng.ui.screens.settings
 
 import android.Manifest
+import android.app.Activity
 import android.os.Build
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -65,6 +67,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.crash.CrashLogManager
 import com.noches.chunkoidng.core.permission.PermissionHelper
+import com.noches.chunkoidng.core.settings.AppPreferences
 import com.noches.chunkoidng.ui.screens.crash.CrashLogsDialog
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
@@ -76,6 +79,8 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = LocalActivityResultRegistryOwner.current as? Activity
+    val preferences = remember(context) { AppPreferences(context) }
 
     var hasNotificationPermission by remember {
         mutableStateOf(PermissionHelper.hasNotificationPermission(context))
@@ -105,8 +110,8 @@ fun SettingsScreen(
 
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        hasNotificationPermission = granted || PermissionHelper.hasNotificationPermission(context)
+    ) { _ ->
+        hasNotificationPermission = PermissionHelper.hasNotificationPermission(context)
     }
 
     if (showCrashLogsDialog) {
@@ -279,7 +284,14 @@ fun SettingsScreen(
                         } else {
                             OutlinedButton(
                                 onClick = {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                        !PermissionHelper.hasNotificationRuntimePermission(context) &&
+                                        (!preferences.notificationPermissionRequested ||
+                                            activity?.shouldShowRequestPermissionRationale(
+                                                Manifest.permission.POST_NOTIFICATIONS
+                                            ) == true)
+                                    ) {
+                                        preferences.notificationPermissionRequested = true
                                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                     } else {
                                         PermissionHelper.openNotificationSettings(context)

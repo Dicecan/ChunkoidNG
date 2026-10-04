@@ -150,7 +150,6 @@ fun NbtEditorScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },
-                windowInsets = WindowInsets(0.dp),
                 actions = {
                     when (state.mode) {
                         NbtEditorMode.NBT_TREE -> {
@@ -234,7 +233,6 @@ fun NbtEditorScreen(
                 }
             )
         },
-        contentWindowInsets = WindowInsets(0.dp),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(

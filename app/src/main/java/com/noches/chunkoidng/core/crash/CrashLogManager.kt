@@ -37,6 +37,14 @@ object CrashLogManager {
 
     fun listCrashLogs(context: Context): List<File> {
         val dir = getCrashDirectory(context)
+        val logs = listCrashLogsInDirectory(dir)
+        // Keep an older, orphaned latest report visible so it can still be deleted.
+        return logs.ifEmpty {
+            listOfNotNull(File(dir, LATEST_LOG_NAME).takeIf { it.isFile })
+        }
+    }
+
+    private fun listCrashLogsInDirectory(dir: File): List<File> {
         val files = dir.listFiles { file ->
             file.isFile && file.name.startsWith("crash_") && file.name.endsWith(".log")
         } ?: emptyArray()
@@ -62,7 +70,16 @@ object CrashLogManager {
 
     fun deleteCrashLog(file: File): Boolean {
         return try {
-            file.delete()
+            if (!file.delete()) return false
+            val dir = file.parentFile ?: return true
+            val latestFile = File(dir, LATEST_LOG_NAME)
+            val remaining = listCrashLogsInDirectory(dir).firstOrNull()
+            if (remaining != null) {
+                remaining.copyTo(latestFile, overwrite = true)
+                true
+            } else {
+                !latestFile.exists() || latestFile.delete()
+            }
         } catch (_: Exception) {
             false
         }

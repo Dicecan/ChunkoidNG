@@ -33,5 +33,9 @@ class AppPreferences(context: Context) {
     var appLanguage: String
         get() = prefs.getString("app_language", "system") ?: "system"
         set(value) = prefs.edit().putString("app_language", value).apply()
+
+    var notificationPermissionRequested: Boolean
+        get() = prefs.getBoolean("notification_permission_requested", false)
+        set(value) = prefs.edit().putBoolean("notification_permission_requested", value).apply()
 }
 

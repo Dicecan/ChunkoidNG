@@ -732,6 +732,9 @@
     <string name="crash_action_restart">アプリを再起動</string>
     <string name="crash_action_exit">終了</string>
     <string name="crash_log_copied">クラッシュログをクリップボードにコピーしました</string>
+    <string name="crash_log_copy_failed">ログをコピーできませんでした。全文を送るにはログファイルを共有してください。</string>
+    <string name="crash_log_share_failed">ログファイルを共有できませんでした。もう一度お試しください。</string>
+    <string name="crash_log_action_failed">一部のログを削除できませんでした。もう一度お試しください。</string>
     <string name="settings_category_background">バックグラウンドと通知</string>
     <string name="settings_notification_title">通知の権限</string>
     <string name="settings_notification_desc">バックグラウンド変換時に進行状況を表示しプロセスの強制終了を防ぐために通知を許可します</string>

@@ -10,10 +10,16 @@ import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationManagerCompat
 
 object PermissionHelper {
 
     fun hasNotificationPermission(context: Context): Boolean {
+        return hasNotificationRuntimePermission(context) &&
+            NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    fun hasNotificationRuntimePermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,

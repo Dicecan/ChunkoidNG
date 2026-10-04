@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.noches.chunkoidng.core.permission.PermissionHelper
+import com.noches.chunkoidng.core.settings.AppPreferences
 import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.ui.navigation.MainAppScaffold
 import com.noches.chunkoidng.ui.screens.settings.SettingsViewModel
@@ -41,7 +42,11 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    if (!PermissionHelper.hasNotificationPermission(baseContext)) {
+                    val preferences = AppPreferences(baseContext)
+                    if (!preferences.notificationPermissionRequested &&
+                        !PermissionHelper.hasNotificationRuntimePermission(baseContext)
+                    ) {
+                        preferences.notificationPermissionRequested = true
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }

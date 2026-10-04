@@ -83,4 +83,82 @@ class CrashReportTest {
         assertFalse(file1.exists())
         assertTrue(file2.exists())
     }
+
+    @Test
+    fun largeSummaryStaysSmallWhileFullReportRetainsTheException() {
+        val message = "x".repeat(600_000) + "END_OF_MESSAGE"
+        val trace = "at first.frame(First.kt:1)\n" + "at frame(Frame.kt:2)\n".repeat(40_000) + "END_OF_TRACE"
+        val report = CrashReport(
+            appVersionName = "test",
+            appVersionCode = 1L,
+            packageName = "com.noches.chunkoidng",
+            threadName = "main",
+            isMainThread = true,
+            exceptionClass = "java.lang.IllegalStateException",
+            exceptionMessage = message,
+            stackTrace = trace
+        )
+
+        assertTrue(report.formatSummary().length <= CrashReport.MAX_INTENT_TEXT_LENGTH)
+        assertTrue(report.formatSummary().endsWith("…"))
+        val fullReport = report.formatFormattedText()
+        assertTrue(fullReport.contains(message))
+        assertTrue(fullReport.contains(trace))
+    }
+
+    @Test
+    fun shortenedIntentTextDoesNotSplitAnEmoji() {
+        val prefix = "x".repeat(CrashReport.MAX_INTENT_TEXT_LENGTH - 2)
+        val result = CrashReport.abbreviateForIntent(prefix + "😀tail")
+        assertEquals(prefix + "…", result)
+    }
+
+    @Test
+    fun deletingNewestLogUpdatesLatestCopyAndDeletingLastLogRemovesIt() {
+        val dir = tempFolder.newFolder("latest_crash_logs")
+        val older = File(dir, "crash_older.log").apply {
+            writeText("older crash")
+            setLastModified(1000L)
+        }
+        val newer = File(dir, "crash_newer.log").apply {
+            writeText("newer crash")
+            setLastModified(2000L)
+        }
+        val latest = File(dir, "latest_crash.log").apply { writeText("newer crash") }
+        val other = File(dir, "other.txt").apply { writeText("keep this") }
+
+        assertTrue(CrashLogManager.deleteCrashLog(newer))
+        assertFalse(newer.exists())
+        assertEquals("older crash", latest.readText())
+        assertTrue(CrashLogManager.deleteCrashLog(older))
+        assertFalse(older.exists())
+        assertFalse(latest.exists())
+        assertTrue(other.exists())
+    }
+
+    @Test
+    fun deletingOlderLogKeepsTheNewestReportInLatestCopy() {
+        val dir = tempFolder.newFolder("delete_older")
+        val older = File(dir, "crash_older.log").apply {
+            writeText("older crash")
+            setLastModified(1000L)
+        }
+        File(dir, "crash_newer.log").apply {
+            writeText("newer crash")
+            setLastModified(2000L)
+        }
+        val latest = File(dir, "latest_crash.log").apply { writeText("newer crash") }
+
+        assertTrue(CrashLogManager.deleteCrashLog(older))
+        assertEquals("newer crash", latest.readText())
+    }
+
+    @Test
+    fun orphanedLatestCopyCanBeDeleted() {
+        val dir = tempFolder.newFolder("orphaned_latest")
+        val latest = File(dir, "latest_crash.log").apply { writeText("orphaned crash") }
+
+        assertTrue(CrashLogManager.deleteCrashLog(latest))
+        assertFalse(latest.exists())
+    }
 }

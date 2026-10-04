@@ -1,13 +1,8 @@
 package com.noches.chunkoidng.ui.screens.crash
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.Process
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -47,17 +42,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import com.noches.chunkoidng.MainActivity
 import com.noches.chunkoidng.R
+import com.noches.chunkoidng.core.crash.CrashLogActions
+import com.noches.chunkoidng.core.crash.CrashLogManager
+import com.noches.chunkoidng.core.settings.AppPreferences
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.ui.components.AppLogo
 import com.noches.chunkoidng.ui.theme.ChunkoidNGTheme
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
@@ -73,59 +73,43 @@ class CrashActivity : ComponentActivity() {
         val filePath = intent.getStringExtra(EXTRA_CRASH_FILE)
         val summary = intent.getStringExtra(EXTRA_CRASH_SUMMARY) ?: "Unknown exception"
         val crashFile = filePath?.let { File(it) }?.takeIf { it.exists() }
-        val fullReportText = crashFile?.readText() ?: summary
+        val fullReportText = crashFile?.let(CrashLogManager::readCrashLog)?.ifEmpty { summary } ?: summary
+        val preferences = AppPreferences(this)
+        val localizedContext = LocaleHelper.applyLocale(this, preferences.appLanguage)
 
         setContent {
-            ChunkoidNGTheme {
-                CrashScreen(
-                    summary = summary,
-                    fullReportText = fullReportText,
-                    onCopyLog = {
-                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Chunkoid Crash Log", fullReportText)
-                        clipboard.setPrimaryClip(clip)
-                        Toast.makeText(this, R.string.crash_log_copied, Toast.LENGTH_SHORT).show()
-                    },
-                    onShareLog = {
-                        shareCrashLog(crashFile, fullReportText)
-                    },
-                    onRestartApp = {
-                        val restartIntent = Intent(this, MainActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalConfiguration provides localizedContext.resources.configuration
+            ) {
+                ChunkoidNGTheme(dynamicColor = preferences.dynamicColorEnabled) {
+                    CrashScreen(
+                        summary = summary,
+                        fullReportText = fullReportText,
+                        onCopyLog = {
+                            CrashLogActions.copyLog(localizedContext, fullReportText)
+                        },
+                        onShareLog = {
+                            CrashLogActions.shareLog(localizedContext, crashFile, fullReportText)
+                        },
+                        onRestartApp = {
+                            val restartIntent = Intent(this, MainActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            }
+                            startActivity(restartIntent)
+                            finish()
+                            Process.killProcess(Process.myPid())
+                            exitProcess(0)
+                        },
+                        onExitApp = {
+                            finishAffinity()
+                            Process.killProcess(Process.myPid())
+                            exitProcess(0)
                         }
-                        startActivity(restartIntent)
-                        finish()
-                        Process.killProcess(Process.myPid())
-                        exitProcess(0)
-                    },
-                    onExitApp = {
-                        finishAffinity()
-                        Process.killProcess(Process.myPid())
-                        exitProcess(0)
-                    }
-                )
-            }
-        }
-    }
-
-    private fun shareCrashLog(file: File?, text: String) {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "ChunkoidNG Crash Log")
-            putExtra(Intent.EXTRA_TEXT, text)
-            if (file != null && file.exists()) {
-                try {
-                    val uri: Uri = FileProvider.getUriForFile(
-                        this@CrashActivity,
-                        "${packageName}.fileprovider",
-                        file
                     )
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                } catch (_: Exception) {}
+                }
             }
         }
-        startActivity(Intent.createChooser(shareIntent, getString(R.string.crash_action_share)))
     }
 
     companion object {

@@ -71,10 +71,19 @@ data class CrashReport(
     }
 
     fun formatSummary(): String {
-        return "$exceptionClass: ${exceptionMessage ?: "No message"}"
+        return abbreviateForIntent("$exceptionClass: ${exceptionMessage ?: "No message"}")
     }
 
     companion object {
+        internal const val MAX_INTENT_TEXT_LENGTH = 4096
+
+        internal fun abbreviateForIntent(text: String): String {
+            if (text.length <= MAX_INTENT_TEXT_LENGTH) return text
+            var end = MAX_INTENT_TEXT_LENGTH - 1
+            if (text[end - 1].isHighSurrogate() && text[end].isLowSurrogate()) end--
+            return text.substring(0, end) + "…"
+        }
+
         fun buildFromThrowable(context: Context, thread: Thread, throwable: Throwable): CrashReport {
             val pInfo = try {
                 context.packageManager.getPackageInfo(context.packageName, 0)

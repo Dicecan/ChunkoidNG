@@ -732,6 +732,9 @@
     <string name="crash_action_restart">重启应用</string>
     <string name="crash_action_exit">退出应用</string>
     <string name="crash_log_copied">崩溃日志已复制到剪贴板</string>
+    <string name="crash_log_copy_failed">无法复制日志，请分享日志文件以发送完整内容。</string>
+    <string name="crash_log_share_failed">无法分享日志文件，请重试。</string>
+    <string name="crash_log_action_failed">部分日志未能删除，请重试。</string>
     <string name="settings_category_background">后台与通知</string>
     <string name="settings_notification_title">通知栏权限</string>
     <string name="settings_notification_desc">允许发送通知以在后台转换时常驻显示实时进度，防止系统意外终止任务</string>

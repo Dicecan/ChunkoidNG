@@ -1,10 +1,5 @@
 package com.noches.chunkoidng.ui.screens.crash
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -22,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BugReport
@@ -32,7 +28,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,8 +47,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import com.noches.chunkoidng.R
+import com.noches.chunkoidng.core.crash.CrashLogActions
 import com.noches.chunkoidng.core.crash.CrashLogManager
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 import java.io.File
@@ -71,24 +66,6 @@ fun CrashLogsDialog(
     var logContent by remember { mutableStateOf("") }
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
-
-    fun shareLog(file: File, text: String) {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, file.name)
-            putExtra(Intent.EXTRA_TEXT, text)
-            try {
-                val uri: Uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    file
-                )
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } catch (_: Exception) {}
-        }
-        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.crash_action_share)))
-    }
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -131,6 +108,7 @@ fun CrashLogsDialog(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val hScroll = rememberScrollState()
+                    val vScroll = rememberScrollState()
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -144,6 +122,7 @@ fun CrashLogsDialog(
                             Box(
                                 modifier = Modifier
                                     .padding(8.dp)
+                                    .verticalScroll(vScroll)
                                     .horizontalScroll(hScroll)
                             ) {
                                 Text(
@@ -163,10 +142,7 @@ fun CrashLogsDialog(
                     ) {
                         Button(
                             onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("Crash Log", logContent)
-                                clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, R.string.crash_log_copied, Toast.LENGTH_SHORT).show()
+                                CrashLogActions.copyLog(context, logContent)
                             },
                             modifier = Modifier.weight(1f),
                             shape = ExpressiveShapes.small
@@ -178,7 +154,7 @@ fun CrashLogsDialog(
 
                         OutlinedButton(
                             onClick = {
-                                selectedLog?.let { shareLog(it, logContent) }
+                                selectedLog?.let { CrashLogActions.shareLog(context, it, logContent) }
                             },
                             modifier = Modifier.weight(1f),
                             shape = ExpressiveShapes.small
@@ -244,8 +220,11 @@ fun CrashLogsDialog(
                                 }
                                 IconButton(
                                     onClick = {
-                                        CrashLogManager.deleteCrashLog(file)
+                                        val deleted = CrashLogManager.deleteCrashLog(file)
                                         logs = CrashLogManager.listCrashLogs(context)
+                                        if (!deleted) {
+                                            Toast.makeText(context, R.string.crash_log_action_failed, Toast.LENGTH_SHORT).show()
+                                        }
                                     },
                                     modifier = Modifier.size(32.dp)
                                 ) {
@@ -270,9 +249,10 @@ fun CrashLogsDialog(
             } else if (logs.isNotEmpty()) {
                 TextButton(
                     onClick = {
-                        CrashLogManager.clearAllCrashLogs(context)
-                        logs = emptyList()
-                        Toast.makeText(context, R.string.settings_crash_logs_cleared, Toast.LENGTH_SHORT).show()
+                        val cleared = CrashLogManager.clearAllCrashLogs(context)
+                        logs = CrashLogManager.listCrashLogs(context)
+                        val message = if (cleared) R.string.settings_crash_logs_cleared else R.string.crash_log_action_failed
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
                 ) {
                     Text(stringResource(R.string.settings_crash_logs_clear), color = MaterialTheme.colorScheme.error)

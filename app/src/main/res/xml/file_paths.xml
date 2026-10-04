@@ -2,4 +2,5 @@
 <paths>
     <external-files-path name="crash_logs" path="crash_logs/" />
     <files-path name="crash_logs_internal" path="crash_logs/" />
+    <cache-path name="crash_log_exports" path="crash_share/" />
 </paths>

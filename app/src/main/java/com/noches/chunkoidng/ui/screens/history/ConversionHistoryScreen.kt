@@ -89,7 +89,6 @@ fun ConversionHistoryScreen(onNavigateBack: () -> Unit) {
                         }
                     }
                 },
-                windowInsets = WindowInsets(0.dp)
             )
         }
     ) { innerPadding ->

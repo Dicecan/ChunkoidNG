@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.R
@@ -54,6 +55,7 @@ fun ChunkoidTopAppBar(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(
+                    modifier = Modifier.weight(1f, fill = false),
                     text = when (currentScreen) {
                         Screen.Features -> stringResource(R.string.app_name)
                         Screen.Tutorial -> stringResource(R.string.nav_tutorial)
@@ -62,7 +64,9 @@ fun ChunkoidTopAppBar(
                     },
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.5).sp,
-                    maxLines = 1
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (currentScreen == Screen.Features) {
                     Spacer(modifier = Modifier.width(6.dp))
