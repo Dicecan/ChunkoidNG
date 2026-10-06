@@ -864,7 +864,6 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             else -> {}
         }
 
-        node.tag = updatedTag
         _uiState.update { it.copy(isDirty = true, showEditValueDialog = null) }
         rebuildTreeNodes()
         return true
@@ -959,7 +958,6 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
         val tag = parent.remove(node.key) ?: return false
         parent[newKey] = tag
-        node.key = newKey
         _uiState.update { it.copy(isDirty = true, showRenameTagDialog = null) }
         rebuildTreeNodes()
         return true

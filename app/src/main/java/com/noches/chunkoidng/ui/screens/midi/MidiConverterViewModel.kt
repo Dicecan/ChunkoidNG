@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.noches.chunkoidng.core.world.ArchiveManager
 import com.noches.chunkoidng.core.midi.*
 import com.noches.chunkoidng.core.midi.exporters.*
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,7 @@ data class MidiConverterUiState(
     val selectedExportMode: MidiExportMode = MidiExportMode.FLAT_WORLD,
     val targetWorldDir: File? = null,
     val targetWorldName: String = "",
+    val isStagingWorld: Boolean = false,
     val coordX: Int = 0,
     val coordY: Int = 64,
     val coordZ: Int = 0,
@@ -57,6 +59,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
 
     private val _uiState = MutableStateFlow(MidiConverterUiState())
     val uiState: StateFlow<MidiConverterUiState> = _uiState.asStateFlow()
+    private val archiveManager = ArchiveManager(application)
 
     private fun addLog(message: String) {
         val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
@@ -155,6 +158,80 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
         addLog("已选择目标世界存档: ${dir.name}")
     }
 
+    fun onTargetWorldTreeSelected(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isStagingWorld = true,
+                    statusMessage = "正在通过 SAF 准备目标世界存档文件夹...",
+                    errorMessage = null
+                )
+            }
+            addLog("选择目标世界文件夹 (SAF): $uri")
+            val stagingDir = File(getApplication<Application>().cacheDir, "midi_target_world")
+            val result = archiveManager.stageTreeUriToDir(uri, stagingDir) { _, status ->
+                _uiState.update { it.copy(statusMessage = status) }
+            }
+            result.onSuccess { worldInfo ->
+                addLog("成功加载目标世界: ${worldInfo.name} (${worldInfo.platform.name})")
+                _uiState.update {
+                    it.copy(
+                        targetWorldDir = stagingDir,
+                        targetWorldName = worldInfo.name,
+                        isStagingWorld = false,
+                        statusMessage = "目标世界准备就绪"
+                    )
+                }
+            }.onFailure { e ->
+                addLog("加载目标世界失败: ${e.message}")
+                _uiState.update {
+                    it.copy(
+                        isStagingWorld = false,
+                        errorMessage = e.message ?: "Failed to stage target world",
+                        statusMessage = "目标世界加载失败"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onTargetWorldArchiveSelected(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isStagingWorld = true,
+                    statusMessage = "正在解压目标世界压缩包...",
+                    errorMessage = null
+                )
+            }
+            addLog("选择目标世界压缩包: $uri")
+            val stagingDir = File(getApplication<Application>().cacheDir, "midi_target_world")
+            val result = archiveManager.extractArchiveToDir(uri, stagingDir) { _, status ->
+                _uiState.update { it.copy(statusMessage = status) }
+            }
+            result.onSuccess { worldInfo ->
+                addLog("成功加载目标世界: ${worldInfo.name} (${worldInfo.platform.name})")
+                _uiState.update {
+                    it.copy(
+                        targetWorldDir = stagingDir,
+                        targetWorldName = worldInfo.name,
+                        isStagingWorld = false,
+                        statusMessage = "目标世界准备就绪"
+                    )
+                }
+            }.onFailure { e ->
+                addLog("加载目标世界压缩包失败: ${e.message}")
+                _uiState.update {
+                    it.copy(
+                        isStagingWorld = false,
+                        errorMessage = e.message ?: "Failed to stage target world archive",
+                        statusMessage = "目标世界加载失败"
+                    )
+                }
+            }
+        }
+    }
+
     fun setCoordinates(x: Int, y: Int, z: Int) {
         _uiState.update { it.copy(coordX = x, coordY = y, coordZ = z) }
     }
@@ -232,8 +309,25 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                         }
                         addLog(result.message)
                         addLog("游戏内触发命令: ${result.inGameCommand}")
+                        var exportedWorldFile: File? = null
+                        if (result.success) {
+                            val safeWorldName = state.targetWorldName.ifBlank { "injected_world" }
+                                .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                            val outputWorld = File(cacheDir, "${safeWorldName}_injected.mcworld")
+                            addLog("正在打包已注入的世界存档为 .mcworld...")
+                            withContext(Dispatchers.IO) {
+                                archiveManager.zipDirectoryToFile(targetDir, outputWorld)
+                            }
+                            exportedWorldFile = outputWorld
+                            addLog("已生成注入世界导出文件: ${outputWorld.name} (${outputWorld.length() / 1024} KB)")
+                        }
                         _uiState.update {
-                            it.copy(isGenerating = false, injectionResult = result, statusMessage = "注入完成")
+                            it.copy(
+                                isGenerating = false,
+                                injectionResult = result,
+                                generatedFile = exportedWorldFile,
+                                statusMessage = if (result.success) "注入完成，可导出世界" else "注入失败"
+                            )
                         }
                     }
 

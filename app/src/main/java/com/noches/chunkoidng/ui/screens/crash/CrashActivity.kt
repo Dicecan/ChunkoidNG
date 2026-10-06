@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -101,6 +102,34 @@ class CrashActivity : ComponentActivity() {
                             Process.killProcess(Process.myPid())
                             exitProcess(0)
                         },
+                        onSafeModeRestart = {
+                            try {
+                                val workspaceDir = File(filesDir, "workspace")
+                                if (workspaceDir.exists()) {
+                                    workspaceDir.deleteRecursively()
+                                }
+                                cacheDir.listFiles()?.forEach { file ->
+                                    if (file.name.startsWith("nbt_") || file.name.startsWith("midi_") || file.name.endsWith(".tmp")) {
+                                        file.deleteRecursively()
+                                    }
+                                }
+                                getSharedPreferences("chunkoid_nbt_prefs", MODE_PRIVATE).edit().clear().apply()
+                                getSharedPreferences("chunkoid_prefs", MODE_PRIVATE).edit().apply {
+                                    remove("last_open_file")
+                                    remove("last_selected_source")
+                                    apply()
+                                }
+                            } catch (_: Exception) {}
+
+                            val restartIntent = Intent(this, MainActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                putExtra("safe_mode", true)
+                            }
+                            startActivity(restartIntent)
+                            finish()
+                            Process.killProcess(Process.myPid())
+                            exitProcess(0)
+                        },
                         onExitApp = {
                             finishAffinity()
                             Process.killProcess(Process.myPid())
@@ -126,6 +155,7 @@ private fun CrashScreen(
     onCopyLog: () -> Unit,
     onShareLog: () -> Unit,
     onRestartApp: () -> Unit,
+    onSafeModeRestart: () -> Unit,
     onExitApp: () -> Unit
 ) {
     Scaffold(
@@ -292,6 +322,24 @@ private fun CrashScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(stringResource(R.string.crash_action_share))
                         }
+                    }
+
+                    FilledTonalButton(
+                        onClick = onSafeModeRestart,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = ExpressiveShapes.small,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Shield,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.crash_action_safe_restart))
                     }
 
                     Row(

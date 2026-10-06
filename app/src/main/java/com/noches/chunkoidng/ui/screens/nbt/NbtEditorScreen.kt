@@ -743,7 +743,7 @@ private fun NbtWorkspaceView(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.filteredLevelDbRecords, key = { it.key.contentHashCode() }) { record ->
+                    items(state.filteredLevelDbRecords, key = { it.keyToHex() }) { record ->
                         val catColor = getCategoryColor(record.category)
                         Card(
                             modifier = Modifier

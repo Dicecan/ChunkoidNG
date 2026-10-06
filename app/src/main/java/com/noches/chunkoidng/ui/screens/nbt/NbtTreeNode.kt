@@ -16,13 +16,13 @@ import br.com.gamemods.nbtmanipulator.NbtString
 import br.com.gamemods.nbtmanipulator.NbtTag
 
 data class NbtTreeNode(
-    var key: String,
-    var tag: NbtTag,
+    val key: String,
+    val tag: NbtTag,
     val parentTag: NbtTag?,
     val depth: Int,
-    var isExpanded: Boolean = false,
+    val isExpanded: Boolean = false,
     val path: String,
-    var listIndex: Int = -1
+    val listIndex: Int = -1
 ) {
     val isContainer: Boolean
         get() = tag is NbtCompound || tag is NbtList<*> || tag is NbtByteArray || tag is NbtIntArray || tag is NbtLongArray
@@ -42,7 +42,6 @@ data class NbtTreeNode(
             is NbtIntArray -> "IntArray"
             is NbtLongArray -> "LongArray"
             is NbtEnd -> "End"
-            else -> tag::class.java.simpleName.removePrefix("Nbt")
         }
 
     val displayValue: String

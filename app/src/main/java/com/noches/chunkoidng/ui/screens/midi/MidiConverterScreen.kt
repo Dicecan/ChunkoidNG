@@ -56,10 +56,15 @@ fun MidiConverterScreen(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         if (uri != null) {
-            val path = uri.path ?: "world"
-            val lastSegment = path.substringAfterLast(':').substringAfterLast('/')
-            val resolvedDir = File(context.filesDir, lastSegment)
-            viewModel.setTargetWorld(resolvedDir)
+            viewModel.onTargetWorldTreeSelected(uri)
+        }
+    }
+
+    val worldArchiveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.onTargetWorldArchiveSelected(uri)
         }
     }
 
@@ -258,25 +263,61 @@ fun MidiConverterScreen(
 
                     if (uiState.selectedExportMode == MidiExportMode.INJECT_WORLD) {
                         HorizontalDivider()
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = if (uiState.targetWorldName.isNotBlank()) uiState.targetWorldName else stringResource(R.string.midi_conv_select_world),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = stringResource(R.string.midi_conv_world_target_coord, uiState.coordX, uiState.coordY, uiState.coordZ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (uiState.targetWorldName.isNotBlank()) uiState.targetWorldName else stringResource(R.string.midi_conv_select_world),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.midi_conv_world_target_coord, uiState.coordX, uiState.coordY, uiState.coordZ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                            OutlinedButton(onClick = { worldFolderLauncher.launch(null) }) {
-                                Text(stringResource(R.string.common_select))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { worldFolderLauncher.launch(null) },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !uiState.isStagingWorld
+                                ) {
+                                    Text(stringResource(R.string.source_picker_folder_title), maxLines = 1)
+                                }
+                                OutlinedButton(
+                                    onClick = { worldArchiveLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !uiState.isStagingWorld
+                                ) {
+                                    Text(stringResource(R.string.source_picker_zip_title), maxLines = 1)
+                                }
+                            }
+
+                            if (uiState.isStagingWorld) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                    Text(
+                                        text = if (uiState.statusMessage.isNotBlank()) uiState.statusMessage else stringResource(R.string.midi_staging_world),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
 

@@ -727,6 +727,11 @@
     <string name="midi_conv_logs_title">Execution Logs</string>
     <string name="midi_conv_logs_empty">No logs yet. Select a MIDI file to begin.</string>
     <string name="midi_conv_clear_logs">Clear Logs</string>
+    <string name="midi_target_world_picker_folder">Select Target World Folder</string>
+    <string name="midi_target_world_picker_archive">Select Target World Archive (.zip / .mcworld)</string>
+    <string name="midi_staging_world">Preparing target world...</string>
+    <string name="midi_export_injected_world">Export Injected World</string>
+    <string name="midi_export_injected_success">Injected world exported successfully!</string>
 
     <string name="crash_screen_title">Application Crashed</string>
     <string name="crash_title">ChunkoidNG encountered an unhandled exception</string>
@@ -736,6 +741,7 @@
     <string name="crash_action_copy">Copy Log</string>
     <string name="crash_action_share">Share Log</string>
     <string name="crash_action_restart">Restart App</string>
+    <string name="crash_action_safe_restart">Safe Mode Restart</string>
     <string name="crash_action_exit">Exit</string>
     <string name="crash_log_copied">Crash log copied to clipboard</string>
     <string name="crash_log_copy_failed">Could not copy the log. Share the log file to send its full contents.</string>

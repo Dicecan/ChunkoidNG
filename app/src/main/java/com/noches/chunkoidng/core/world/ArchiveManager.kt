@@ -62,10 +62,16 @@ class ArchiveManager(private val context: Context) {
     suspend fun extractArchive(
         archiveUri: Uri,
         onProgress: (progress: Int, status: String) -> Unit
+    ): Result<WorldInfo> = extractArchiveToDir(archiveUri, inputDir, onProgress)
+
+    suspend fun extractArchiveToDir(
+        archiveUri: Uri,
+        destDir: File,
+        onProgress: (progress: Int, status: String) -> Unit = { _, _ -> }
     ): Result<WorldInfo> = withContext(Dispatchers.IO) {
         try {
-            if (inputDir.exists()) inputDir.deleteRecursively()
-            inputDir.mkdirs()
+            if (destDir.exists()) destDir.deleteRecursively()
+            destDir.mkdirs()
 
             onProgress(5, context.getString(R.string.archive_staging_extracting))
 
@@ -75,7 +81,7 @@ class ArchiveManager(private val context: Context) {
             val buffer = ByteArray(64 * 1024)
             var extractedCount = 0
             var totalExtractedBytes = 0L
-            val inputCanonicalPath = inputDir.canonicalPath + File.separator
+            val destCanonicalPath = destDir.canonicalPath + File.separator
 
             inputStream.use { rawIn ->
                 ZipInputStream(rawIn).use { zis ->
@@ -90,10 +96,10 @@ class ArchiveManager(private val context: Context) {
                             throw IllegalArgumentException(context.getString(R.string.archive_error_entry_limit))
                         }
                         val entryName = entry.name
-                        val entryFile = File(inputDir, entryName)
+                        val entryFile = File(destDir, entryName)
                         val canonicalEntry = entryFile.canonicalFile
-                        if (canonicalEntry.path != inputDir.canonicalPath &&
-                            !canonicalEntry.path.startsWith(inputCanonicalPath)) {
+                        if (canonicalEntry.path != destDir.canonicalPath &&
+                            !canonicalEntry.path.startsWith(destCanonicalPath)) {
                             throw SecurityException(context.getString(R.string.archive_error_invalid_path, entryName))
                         }
 
@@ -125,18 +131,18 @@ class ArchiveManager(private val context: Context) {
             }
 
             onProgress(80, context.getString(R.string.archive_staging_searching_structure))
-            val levelDat = findFileRecursive(inputDir, "level.dat")
+            val levelDat = findFileRecursive(destDir, "level.dat")
                 ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_no_level_dat)))
 
-            val actualWorldDir = levelDat.parentFile ?: inputDir
-            if (actualWorldDir.canonicalPath != inputDir.canonicalPath) {
+            val actualWorldDir = levelDat.parentFile ?: destDir
+            if (actualWorldDir.canonicalPath != destDir.canonicalPath) {
                 onProgress(85, context.getString(R.string.archive_staging_organizing))
-                moveDirectoryContents(actualWorldDir, inputDir)
+                moveDirectoryContents(actualWorldDir, destDir)
             }
 
             onProgress(95, context.getString(R.string.archive_staging_parsing_metadata))
             val rawName = getUriDisplayName(archiveUri).removeSuffix(".mcworld").removeSuffix(".zip")
-            val worldInfo = WorldMetadataReader.inspectWorld(inputDir, fallbackName = rawName).copy(
+            val worldInfo = WorldMetadataReader.inspectWorld(destDir, fallbackName = rawName).copy(
                 sourceUri = archiveUri,
                 isArchive = true
             )
@@ -144,7 +150,7 @@ class ArchiveManager(private val context: Context) {
             onProgress(100, context.getString(R.string.archive_staging_ready))
             Result.success(worldInfo)
         } catch (e: Exception) {
-            if (inputDir.exists()) inputDir.deleteRecursively()
+            if (destDir.exists()) destDir.deleteRecursively()
             Result.failure(e)
         }
     }
@@ -152,10 +158,16 @@ class ArchiveManager(private val context: Context) {
     suspend fun stageTreeUri(
         treeUri: Uri,
         onProgress: (progress: Int, status: String) -> Unit
+    ): Result<WorldInfo> = stageTreeUriToDir(treeUri, inputDir, onProgress)
+
+    suspend fun stageTreeUriToDir(
+        treeUri: Uri,
+        destDir: File,
+        onProgress: (progress: Int, status: String) -> Unit = { _, _ -> }
     ): Result<WorldInfo> = withContext(Dispatchers.IO) {
         try {
-            if (inputDir.exists()) inputDir.deleteRecursively()
-            inputDir.mkdirs()
+            if (destDir.exists()) destDir.deleteRecursively()
+            destDir.mkdirs()
 
             onProgress(5, context.getString(R.string.archive_staging_reading_dir))
             val treeDoc = DocumentFile.fromTreeUri(context, treeUri)
@@ -166,7 +178,7 @@ class ArchiveManager(private val context: Context) {
             }
 
             var copiedCount = 0
-            val copyResult = copyDocumentDirectory(treeDoc, inputDir) { count ->
+            val copyResult = copyDocumentDirectory(treeDoc, destDir) { count ->
                 copiedCount = count
                 val pct = (10 + count / 2).coerceIn(10, 85)
                 onProgress(pct, context.getString(R.string.archive_staging_copying, copiedCount))
@@ -176,18 +188,18 @@ class ArchiveManager(private val context: Context) {
             }
 
             onProgress(90, context.getString(R.string.archive_staging_verifying))
-            val levelDat = findFileRecursive(inputDir, "level.dat")
+            val levelDat = findFileRecursive(destDir, "level.dat")
                 ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_no_level_dat_dir)))
 
-            val actualWorldDir = levelDat.parentFile ?: inputDir
-            if (actualWorldDir.canonicalPath != inputDir.canonicalPath) {
+            val actualWorldDir = levelDat.parentFile ?: destDir
+            if (actualWorldDir.canonicalPath != destDir.canonicalPath) {
                 onProgress(93, context.getString(R.string.archive_staging_organizing))
-                moveDirectoryContents(actualWorldDir, inputDir)
+                moveDirectoryContents(actualWorldDir, destDir)
             }
 
             onProgress(97, context.getString(R.string.archive_staging_parsing_metadata))
             val folderName = treeDoc.name ?: "Minecraft_World"
-            val worldInfo = WorldMetadataReader.inspectWorld(inputDir, fallbackName = folderName).copy(
+            val worldInfo = WorldMetadataReader.inspectWorld(destDir, fallbackName = folderName).copy(
                 sourceUri = treeUri,
                 isArchive = false
             )
@@ -195,8 +207,18 @@ class ArchiveManager(private val context: Context) {
             onProgress(100, context.getString(R.string.archive_staging_ready))
             Result.success(worldInfo)
         } catch (e: Exception) {
-            if (inputDir.exists()) inputDir.deleteRecursively()
+            if (destDir.exists()) destDir.deleteRecursively()
             Result.failure(e)
+        }
+    }
+
+    suspend fun zipDirectoryToFile(sourceDir: File, zipFile: File) = withContext(Dispatchers.IO) {
+        if (zipFile.exists()) zipFile.delete()
+        zipFile.parentFile?.mkdirs()
+        FileOutputStream(zipFile).buffered(64 * 1024).use { fos ->
+            ZipOutputStream(fos).use { zos ->
+                zipDirectory(sourceDir, sourceDir, zos)
+            }
         }
     }
 
@@ -293,19 +315,27 @@ class ArchiveManager(private val context: Context) {
 
             if (packAsArchive) {
                 val extension = if (isBedrock) ".mcworld" else ".zip"
-                val docFile = treeDoc.createFile("application/zip", ".${safeName}.${System.currentTimeMillis()}.tmp")
+                val mimeType = if (isBedrock) "application/octet-stream" else "application/zip"
+                val docFile = treeDoc.createFile(mimeType, "$safeName$extension")
                     ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_create_archive)))
 
-                context.contentResolver.openOutputStream(docFile.uri)?.use { out ->
-                    ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
-                        zipDirectory(outputDir, outputDir, zos)
+                try {
+                    val streamSuccess = context.contentResolver.openOutputStream(docFile.uri)?.use { out ->
+                        ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
+                            zipDirectory(outputDir, outputDir, zos)
+                        }
+                        true
+                    } ?: false
+
+                    if (!streamSuccess) {
+                        docFile.delete()
+                        return@withContext Result.failure(Exception(context.getString(R.string.archive_error_open_stream)))
                     }
-                } ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_open_stream)))
-                if (!docFile.renameTo("$safeName$extension")) {
+                    Result.success(docFile.uri)
+                } catch (e: Exception) {
                     docFile.delete()
-                    return@withContext Result.failure(Exception(context.getString(R.string.archive_error_finish_export)))
+                    throw e
                 }
-                Result.success(docFile.uri)
             } else {
                 val destDirDoc = treeDoc.createDirectory(safeName)
                     ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_create_folder)))

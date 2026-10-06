@@ -74,7 +74,7 @@ fun FeaturesScreen(
     modifier: Modifier = Modifier
 ) {
     LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Fixed(2),
+        columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -230,8 +230,15 @@ private fun HeroStatusBanner() {
 
                                     if (rootfsReady) {
                                         terminalLogs = terminalLogs + context.getString(R.string.cli_log_ready)
-                                        processManager.runCliJar(File("dummy"), "-version").collect { logLine ->
+                                        processManager.executeShellCommand("java -version").collect { logLine ->
                                              terminalLogs = (terminalLogs + logLine).takeLast(MAX_SELF_CHECK_LOG_LINES)
+                                        }
+                                        val cliJar = File(context.filesDir, "cli.jar")
+                                        if (!cliJar.exists()) {
+                                            runtimeEnv.ensureCliJar()
+                                        }
+                                        if (cliJar.exists() && cliJar.length() > 0) {
+                                            terminalLogs = (terminalLogs + "[SYSTEM] cli.jar verified (${cliJar.length() / 1024} KB)").takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         }
                                         terminalLogs = terminalLogs + context.getString(R.string.cli_log_test_done)
 

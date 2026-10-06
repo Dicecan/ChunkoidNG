@@ -727,6 +727,11 @@
     <string name="midi_conv_logs_title">実行ログ</string>
     <string name="midi_conv_logs_empty">ログはまだありません。MIDIファイルを選択してください。</string>
     <string name="midi_conv_clear_logs">ログをクリア</string>
+    <string name="midi_target_world_picker_folder">対象のワールドフォルダを選択</string>
+    <string name="midi_target_world_picker_archive">対象のワールドアーカイブを選択 (.zip / .mcworld)</string>
+    <string name="midi_staging_world">対象ワールドを準備中...</string>
+    <string name="midi_export_injected_world">注入済みワールドをエクスポート</string>
+    <string name="midi_export_injected_success">音楽を注入したワールドを正常にエクスポートしました！</string>
 
     <string name="crash_screen_title">アプリがクラッシュしました</string>
     <string name="crash_title">ChunkoidNGで予期しない例外が発生しました</string>
@@ -736,6 +741,7 @@
     <string name="crash_action_copy">ログをコピー</string>
     <string name="crash_action_share">ログを共有</string>
     <string name="crash_action_restart">アプリを再起動</string>
+    <string name="crash_action_safe_restart">セーフモードで再起動</string>
     <string name="crash_action_exit">終了</string>
     <string name="crash_log_copied">クラッシュログをクリップボードにコピーしました</string>
     <string name="crash_log_copy_failed">ログをコピーできませんでした。全文を送るにはログファイルを共有してください。</string>

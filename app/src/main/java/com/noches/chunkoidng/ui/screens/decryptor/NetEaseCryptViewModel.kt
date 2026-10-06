@@ -258,17 +258,27 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                     }
                     if (packAsArchive) {
                         val extension = if (s.mode == CryptMode.PASSIVE_ENCRYPT) ".zip" else ".mcworld"
-                        val tempName = ".${safeName}.${System.currentTimeMillis()}.tmp"
-                        val docFile = treeDoc.createFile("application/zip", tempName)
+                        val mimeType = if (extension == ".mcworld") "application/octet-stream" else "application/zip"
+                        val docFile = treeDoc.createFile(mimeType, "$safeName$extension")
                             ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.crypt_error_create_archive)))
 
-                        getApplication<Application>().contentResolver.openOutputStream(docFile.uri)?.use { out ->
-                            ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
-                                zipDirectory(outputDir, outputDir, zos)
+                        try {
+                            val streamSuccess = getApplication<Application>().contentResolver.openOutputStream(docFile.uri)?.use { out ->
+                                ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
+                                    zipDirectory(outputDir, outputDir, zos)
+                                }
+                                true
+                            } ?: false
+
+                            if (!streamSuccess) {
+                                docFile.delete()
+                                return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.decrypt_err_export)))
                             }
+                            Result.success(docFile.uri)
+                        } catch (e: Exception) {
+                            docFile.delete()
+                            throw e
                         }
-                        check(docFile.renameTo("$safeName$extension")) { getApplication<Application>().getString(R.string.decrypt_err_export) }
-                        Result.success(docFile.uri)
                     } else {
                         val destDir = treeDoc.createDirectory(safeName)
                             ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.decrypt_err_target_dir)))

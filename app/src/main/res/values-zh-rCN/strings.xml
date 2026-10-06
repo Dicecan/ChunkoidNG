@@ -727,6 +727,11 @@
     <string name="midi_conv_logs_title">执行日志</string>
     <string name="midi_conv_logs_empty">暂无日志。选择 MIDI 文件后开始生成。</string>
     <string name="midi_conv_clear_logs">清空日志</string>
+    <string name="midi_target_world_picker_folder">选择目标世界存档文件夹</string>
+    <string name="midi_target_world_picker_archive">选择目标世界压缩包 (.zip / .mcworld)</string>
+    <string name="midi_staging_world">正在准备目标世界存档...</string>
+    <string name="midi_export_injected_world">导出已注入世界</string>
+    <string name="midi_export_injected_success">已成功导出注入红石音乐的世界！</string>
 
     <string name="crash_screen_title">应用异常退出</string>
     <string name="crash_title">ChunkoidNG 遇到了未捕获的异常</string>
@@ -736,6 +741,7 @@
     <string name="crash_action_copy">复制日志</string>
     <string name="crash_action_share">分享日志</string>
     <string name="crash_action_restart">重启应用</string>
+    <string name="crash_action_safe_restart">安全模式重启</string>
     <string name="crash_action_exit">退出应用</string>
     <string name="crash_log_copied">崩溃日志已复制到剪贴板</string>
     <string name="crash_log_copy_failed">无法复制日志，请分享日志文件以发送完整内容。</string>
