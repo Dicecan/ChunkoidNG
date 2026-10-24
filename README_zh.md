@@ -1,15 +1,15 @@
 <div align="center">
-  <h1>Chunkoid NG (Next-Generation)</h1>
-  <p><strong>EncoreTeam 对 Chunkoid 的全新现代化重构工程</strong></p>
+  <h1>Chunkoid NG</h1>
+  <p><strong>Android 端 Minecraft 世界与资源包工具箱</strong></p>
 
   <p>
-    <a href="README_zh.md"><strong>简体中文 (Chinese)</strong></a> | 
-    <a href="README_en.md"><strong>English (英文)</strong></a> | 
-    <a href="https://chunkoid.top"><strong>官方网站</strong></a>
+    <a href="README_zh.md">简体中文</a> | 
+    <a href="README_en.md">English</a> | 
+    <a href="https://chunkoid.top">官方网站</a>
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.5-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-Beta%200.6-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -20,105 +20,57 @@
 
 ---
 
-> [!IMPORTANT]
-> ### 📢 项目背景与 EncoreTeam Recode 声明
-> 
-> **Chunkoid NG (Next-Generation)** 是 **EncoreTeam** 对 **Dozener (DozenesStudio)** 独立原创开发的 Android 端 Minecraft 世界转换工具 **Chunkoid** 的全面现代化重构版（Recode）。
-> 
-> * **项目交接与授权**：原作者 Dozener 同学在进入大学之际，为使项目持续保持活力与维护，正式无偿交接给 **DICECAN (EncoreTeam)** 继续演进。
-> * **开源协议不变**：本项目完全沿用并严格遵守原版的 **[GNU General Public License v3.0 (GPLv3)](LICENSE)** 协议。
-> * **永久保留署名与致谢**：在所有代码库、文档、发布版与软件关于页面中，永久保留原作者 Dozener 的署名与奠基人致谢！
+## 项目背景
+
+**Chunkoid NG (Next-Generation)** 是由 **EncoreTeam** 接手并基于现代化架构重构的 Android 端 Minecraft 世界与资源包工具。
+
+- **传承与交接**：项目源自 **Dozener (DozenesStudio)** 独立开发的 Chunkoid。在其进入大学后，为保证项目持续维护，由 **DICECAN (EncoreTeam)** 接手继续开发。
+- **开源协议**：本项目沿用并严格遵守 **[GNU General Public License v3.0 (GPLv3)](LICENSE)** 开源协议。
+- **致谢奠基人**：在所有代码库、文档和软件关于界面中永久保留原作者 Dozener 的署名与致谢。
+
+当前项目已由早期预览阶段进入 **Beta 0.6** 测试阶段，各功能模块均已实装可用，重点转向稳定性提升与机型性能调优。
 
 ---
 
-> [!WARNING]
-> ### 🚧 当前处于 Canary 0.5 开发预览阶段
-> 本工程正处于从原版 Chunkoid 向现代架构的全面移植与重构阶段。当前已实装基础 OpenJDK 17 沙箱环境、终端控制台、Minecraft 世界存档双向转换与导出管理、智能版本升降级基础映射与兼容风险评估、规范化中/英/日多语言架构体系、网易版存档加解密与被动加密、独立维度裁剪与存档瘦身工作台、全能 NBT / LevelDB 可视化编辑器（智能数据语义标签分析、大数据分页编辑与 2D 区块栅格精准瘦身），以及 Canary 0.5 全新实装的材质包双版本双向深度转换工坊、MIDI 转红石音乐机械与超平坦工坊、独立崩溃日志诊断与安全导出系统、后台常驻保活与省电策略申请体系。
+## 主要功能
+
+- **世界存档双向转换**：支持 Java 版与基岩版（BE）世界存档互转，提供版本映射、跨版本兼容性提示以及前台常驻服务保活，避免大世界转换被系统后台清理。
+- **NBT 与 LevelDB 可视化编辑器**：支持解析 `.dat`、`.mca`、`level.dat`、LevelDB 数据库记录与整包存档；支持大数组分页浏览与数据字段语义标注。
+- **2D 区块视图与存档瘦身**：网格化平移缩放查看区块分布，支持按维度（主世界/下界/末地）裁剪或清理未驻留废弃区块以压缩存档体积。
+- **材质包双向转换**：支持 Java 版与基岩版材质包互转，自动处理模型、贴图映射及 MCMETA 动画纹理拼接。
+- **MIDI 转红石音乐**：解析 MIDI 音轨并生成紧凑蛇形回路红石音符盒机械，支持直接导出超平坦世界或注入现有存档。
+- **网易版存档支持**：基于 LevelDB 异或算法的存档解密与加密流转。
+- **沙箱环境与硬件性能调优**：内置 OpenJDK 17 运行沙箱；根据设备内存与处理器性能提供自适应调优（低内存 / 均衡 / 激进 / 自定义），防止大型世界解析时发生 OOM。
+- **独立崩溃诊断**：独立 `:crash` 进程接管致命异常，自动抓取设备信息与调用栈，支持日志安全导出与快速重启。
 
 ---
 
-## 🌟 NG (Next-Generation) 核心特性
+## 编译与构建
 
-* 📦 **全能 NBT / LevelDB 可视化编辑器**：
-  * **全格式解析兼容**：支持单文件 NBT (`.dat`, `.nbt`, `level.dat`)、MCA 区域文件 (`.mca`, `.mcr`)、LevelDB 数据库 (`db/` 目录) 以及整包存档 (`.zip`, `.mcworld`) 快速解析与结构树展开。
-  * **智能语义分析与作用标签**：内置 Minecraft 语义描述引擎，自动识别玩家属性（生命、饥饿、经验、背包）、实体/方块实体（箱子内容、熔炉燃烧进度、告示牌文字）与世界核心规则，提供直观的中英双语作用标签与数值合法范围修改引导，大幅降低新手门槛。
-  * **大数据分页与防卡顿优化**：针对大型 `ByteArray`, `IntArray`, `LongArray`（如生物群系网格、高度图、调色板）实现动态虚拟分页加载与十六进制/十进制展示，杜绝大数组展开时的 UI 卡顿与 OOM 内存崩溃。
-  * **高稳定性纯 Java LevelDB 引擎**：补充原生 ZLib 压缩桥接，规避 Android JNI 内存映射 (mmap) 闪退痛点，确保大型基岩版世界安全秒开与原子化安全落盘。
-* 🗺️ **2D 区块栅格可视化与精准瘦身**：
-  * **流式区块网格视口**：支持自由平移缩放、点选与多选矩形框选，直观标定世界区块分布与维度位置。
-  * **InhabitedTime 停滞分析与 0-Tick 清理**：自动分析区块玩家滞留时间，精准标记 0-tick 废弃区块，支持一键安全清理并大幅压缩存档体积。
-* 🔄 **全功能世界转换器 (World Converter)**：
-  * **双向无损互转**：支持 Java 版 (JE) 与基岩版 (BE) 世界双向转换，兼容自定义目标版本。
-  * **版本升降级基础映射体系**：跨平台同代版本等价推荐（如 JE 1.20 ↔ BE 1.20），内置版本关系分析器，智能预警 1.18 负高度截断与 1.13 方块扁平化兼容风险。
-  * **前台服务守护保活**：转换长任务搭载 Android 前台保活通知服务，后台运行防系统杀进程，提供转换历史管理与容灾补救导出。
-* ✂️ **独立存档瘦身与维度裁剪 (Dimension Pruner)**：
-  * 提供「仅保留主世界」、「极速轻量化」、「全维度保留」等灵活预设，支持主世界、下界、末地独立开关与 `-k` 原始 NBT 保留机制。
-* 🔐 **网易版存档还原与被动加密 (NetEase Cryptor)**：
-  * 基于 LevelDB 异或算法流式解密，支持魔数完整性校验，并提供网易版存档被动加密与一键流转世界转换。
-* 🌐 **规范化多语言体系 (i18n)**：
-  * 完整中/英/日（ZH / EN / JA）多语言资源体系，全链路 UTF-8 编码，支持应用内免重启即时动态切换。
-* 🎨 **Jetpack Compose 现代化交互 (MD3E)**：
-  * 全盘基于 Material Design 3 Expressive 规范构建，适配 Squircle 容器交互、动态自适应排版、顶部状态栏安全边距适配与卡片平滑折叠，最大化操作视野。
-* ⚡ **极简 RootFS 沙箱与终端控制台**：
-  * 大幅精简无用依赖，部署文件精简至 57 个，体积减半；内置终端控制台支持 OpenJDK 17 与 Shell 调试。
-* 🎨 **材质包双版本双向深度转换工坊 (Resource Pack Converter)**：
-  * **全链路双向互转**：支持 Java 版与基岩版材质包全双向转换，提供直观的进度条与操作日志反馈。
-  * **深度模型与贴图映射**：自动转换 Blockstates 与自定义方块/实体模型结构，适配双端贴图命名与格式差异。
-  * **MCMETA 动画帧安全展开与熔断**：自动将 Java 版 `.png.mcmeta` 动画贴图合成为基岩版垂直帧带纹理，内置帧数与尺寸溢出安全熔断，彻底杜绝极端高分辨率动画导致 OOM 闪退。
-* 🎵 **MIDI 音乐转红石机械与超平坦工坊 (MIDI to Redstone Music)**：
-  * **高保真音符盒解析**：精准解析 MIDI 音轨，将音高与乐器映射至对应方块（如泥土、木板、沙子等）与音符盒音阶（0-24）。
-  * **蛇形（S型）回路与原速播放**：突破传统单向超长机械布局，采用紧凑的蛇形回路连线，彻底消除红石转弯断路隐患，保持 1:1 源曲拍速不失真播放。
-  * **LevelDB 区块直写超平坦与实体机械**：直接在底层 LevelDB 区块数据库中快速生成超平坦音乐世界或将实体红石机械导入已有存档，全面兼容 1.21+ 现代方块状态。
-* 🛡️ **独立崩溃诊断与安全导出系统 (Crash Diagnostic System)**：
-  * **独立 :crash 进程隔离**：主进程发生致命崩溃时由隔离进程接管展示，避免应用直接闪退无响应，提供一键重启与安全退出。
-  * **全量设备与堆栈快照**：自动收集系统版本、设备型号、内存状态、可用存储、异常线程与完整调用堆栈。
-  * **Binder 溢出防护与安全分享**：采用 4KB 安全摘要截断，完整日志通过 FileProvider 临时安全文件共享导出，彻底防范 Android `TransactionTooLargeException`。
+### 开发环境
+- **Android Studio**：Ladybug (2024.2.1) 或更新版本
+- **JDK**：OpenJDK 17 或 JDK 21
+- **Android SDK**：API 35（最低支持 Android 8.0 / API 26）
+
+### 构建命令
+```bash
+# 编译 Debug APK
+./gradlew assembleDebug
+
+# 执行单元测试
+./gradlew testDebugUnitTest
+```
 
 ---
 
-## 🚀 核心功能规划 (Canary 进度)
+## 开源协议与致谢
 
-* ✅ **沙箱终端控制台**：`已实装`（支持 OpenJDK 17 与 Shell 命令执行）
-* ✅ **世界存档双向互转**：`已实装`（支持 Java/基岩版互转、跨版本选择、前台服务转换、历史记录与补救导出）
-* ✅ **独立维度裁剪与存档瘦身**：`已实装`（独立存档瘦身页面，提供全维度/仅主世界/极速轻量化预设、各维度自定义开关与 `-k` 原始 NBT 保留）
-* ✅ **网易版存档还原与被动加密**：`已实装`（集成 LevelDB 异或流式解密、魔数校验与被动加密，支持无缝流转至世界转换器）
-* ✅ **版本升降级映射与兼容风险评估**：`已实装 (Canary 0.3)`（语义版本模型、等价基线推荐、1.18/1.13 风险告警）
-* ✅ **规范化多语言架构 (ZH / EN / JA)**：`已实装 (Canary 0.3)`（完整中英日文资源、应用内动态语言切换）
-* ✅ **专业 NBT / LevelDB 可视化编辑器**：`已实装 (Canary 0.4)`（全格式解析、NBT 树结构增删改查、大数组分页编辑、LevelDB 记录分类检索）
-* ✅ **Minecraft 智能语义分析与作用标签**：`已实装 (Canary 0.4)`（玩家/实体/方块实体智能语义识别、新手门槛优化、安全修改引导）
-* ✅ **2D 区块栅格可视化与精准瘦身**：`已实装 (Canary 0.4)`（点选/框选区块、InhabitedTime 停滞分析、0-tick 废区块一键清理）
-* ✅ **材质包双版本双向深度转换**：`已实装 (Canary 0.5)`（Java/基岩版材质包互转、Blockstates/模型重构、MCMETA 动画帧安全展开与熔断）
-* ✅ **MIDI 转红石音乐与机械工坊**：`已实装 (Canary 0.5)`（音符盒多音轨解析、蛇形回路原速播放、LevelDB 区块直写超平坦与机械，兼容 1.21+）
-* ✅ **独立崩溃诊断与安全导出系统**：`已实装 (Canary 0.5)`（独立 :crash 进程快照、Binder 溢出防护、4KB 安全截断与 FileProvider 完整导出）
-* ✅ **后台通知权限与省电策略申请**：`已实装 (Canary 0.5)`（前台服务常驻通知授权、防重复弹窗、厂商多级省电策略级联跳转）
-
----
-
-## 🛠️ 技术栈
-
-* **开发语言**：Kotlin 2.0+
-* **UI 框架**：Jetpack Compose (Material Design 3 Expressive)
-* **异步与流**：Kotlinx Coroutines & Flow
-* **沙箱运行时**：OpenJDK 17 (aarch64 Linux RootFS)
-* **核心转换引擎**：[chunker-cli](https://github.com/HiveGamesOSS/Chunker) (The Hive - MIT License)
-
----
-
-## 📜 开源协议
-
-本项目采用 **[GNU General Public License v3.0](LICENSE)** 协议开源。
-
----
-
-## 🤝 致谢与贡献
-
-* **原作者与奠基人**：Dozener (DozenesStudio) (<dozener@outlook.com>)
-* **当前维护与重构团队**：DICECAN (EncoreTeam)
-* **核心贡献者**：Ryan Steven、Dozener
-* **第三方开源组件与算法参考**：
-  * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT License)
-  * [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
-  * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT License)
-  * [iq80 - leveldb](https://github.com/dain/leveldb) (Apache-2.0)
-  * [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
-  * [Dicecan - NetEaseDecryptorSDK](https://github.com/Dicecan/NetEaseDecryptorSDK) (GPL-3.0)
+- **开源协议**：[GNU General Public License v3.0](LICENSE)
+- **原作者与奠基人**：[Dozener (DozenesStudio)](mailto:dozener@outlook.com)
+- **维护与重构团队**：[EncoreTeam](https://chunkoid.top) (DICECAN)
+- **核心组件与算法参考**：
+  - [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT)
+  - [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
+  - [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT)
+  - [iq80 - leveldb](https://github.com/dain/leveldb) (Apache-2.0)
+  - [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)

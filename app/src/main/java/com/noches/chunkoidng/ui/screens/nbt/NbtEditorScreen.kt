@@ -1574,6 +1574,10 @@ private fun NbtArrayEditorDialog(
     onDismiss: () -> Unit,
     onUpdateElement: (index: Int, value: String) -> Boolean
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val pageSize = remember(context) {
+        com.noches.chunkoidng.core.settings.AppPreferences(context).getEffectiveLimits().nbtArrayPageSize
+    }
     val elementCount = when (val tag = node.tag) {
         is NbtByteArray -> tag.value.size
         is NbtIntArray -> tag.value.size
@@ -1581,11 +1585,11 @@ private fun NbtArrayEditorDialog(
         else -> 0
     }
     var page by remember(node.path) { mutableStateOf(0) }
-    val pageCount = maxOf(1, (elementCount + NBT_ARRAY_PAGE_SIZE - 1) / NBT_ARRAY_PAGE_SIZE)
+    val pageCount = maxOf(1, (elementCount + pageSize - 1) / pageSize)
     if (page >= pageCount) page = pageCount - 1
 
-    val start = page * NBT_ARRAY_PAGE_SIZE
-    val end = minOf(elementCount, start + NBT_ARRAY_PAGE_SIZE)
+    val start = page * pageSize
+    val end = minOf(elementCount, start + pageSize)
 
     AlertDialog(
         onDismissRequest = onDismiss,

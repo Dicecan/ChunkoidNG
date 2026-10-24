@@ -69,7 +69,14 @@ class ConversionEngine(
             jvmOpts.add("-XX:MinHeapFreeRatio=10")
             jvmOpts.add("-XX:MaxHeapFreeRatio=20")
             jvmOpts.add("-Djava.util.concurrent.ForkJoinPool.common.parallelism=1")
+        } else {
+            if (config.useSerialGc == true) {
+                jvmOpts.add("-XX:+UseSerialGC")
+            }
+            val threads = (config.parallelism ?: 2).coerceAtLeast(1)
+            jvmOpts.add("-Djava.util.concurrent.ForkJoinPool.common.parallelism=$threads")
         }
+        jvmOpts.addAll(config.customJvmOptions)
 
         val cliArgs = mutableListOf(
             "-i", config.inputDir.absolutePath,

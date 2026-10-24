@@ -15,8 +15,8 @@ object NetEaseCryptor {
     val DEFAULT_KEY: ByteArray = "88329851".toByteArray(StandardCharsets.US_ASCII)
 
     val LEVELDB_MAGIC = byteArrayOf(
-        0xDB.toByte(), 0x47.toByte(), 0x75.toByte(), 0x24.toByte(),
-        0x8B.toByte(), 0x80.toByte(), 0xFB.toByte(), 0x57.toByte()
+        0x57.toByte(), 0xFB.toByte(), 0x80.toByte(), 0x8B.toByte(),
+        0x24.toByte(), 0x75.toByte(), 0x47.toByte(), 0xDB.toByte()
     )
 
     fun hasMagicHeader(data: ByteArray): Boolean {

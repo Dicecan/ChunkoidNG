@@ -100,6 +100,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         const val MAX_ARCHIVE_TOTAL_BYTES = 2L * 1024 * 1024 * 1024
     }
 
+    private val appPreferences by lazy { com.noches.chunkoidng.core.settings.AppPreferences(application) }
     private val _uiState = MutableStateFlow(NbtEditorUiState())
     val uiState: StateFlow<NbtEditorUiState> = _uiState.asStateFlow()
 
@@ -242,6 +243,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         var hasLevelDb = false
         var entryCount = 0
         var totalBytes = 0L
+        val limits = appPreferences.getEffectiveLimits()
 
         val cacheFolder = File(context.cacheDir, "nbt_active_leveldb")
         if (cacheFolder.exists()) cacheFolder.deleteRecursively()
@@ -251,7 +253,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
             ZipInputStream(ByteArrayInputStream(bytes)).use { zis ->
                 var entry = zis.nextEntry
                 while (entry != null) {
-                    if (++entryCount > MAX_ARCHIVE_ENTRIES) throw IOException("Archive contains too many entries")
+                    if (++entryCount > limits.archiveMaxEntries) throw IOException("Archive contains too many entries")
                     val canonicalEntry = File(cacheFolder, entry.name).canonicalFile
                     if (canonicalEntry.path != archiveRoot.path && !canonicalEntry.path.startsWith(archiveRoot.path + File.separator)) {
                         throw SecurityException("Archive contains an invalid path")
@@ -273,7 +275,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                                         if (read < 0) break
                                         entryBytes += read
                                         totalBytes += read
-                                        if (entryBytes > MAX_ARCHIVE_ENTRY_BYTES || totalBytes > MAX_ARCHIVE_TOTAL_BYTES) {
+                                        if (entryBytes > limits.archiveMaxEntryBytes || totalBytes > limits.archiveMaxTotalBytes) {
                                             throw IOException("Archive exceeds extraction limits")
                                         }
                                         out.write(buffer, 0, read)
@@ -289,7 +291,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                         ) {
                             val value = zis.readBytes()
                             totalBytes += value.size
-                            if (value.size > MAX_ARCHIVE_ENTRY_BYTES || totalBytes > MAX_ARCHIVE_TOTAL_BYTES) {
+                            if (value.size > limits.archiveMaxEntryBytes || totalBytes > limits.archiveMaxTotalBytes) {
                                 throw IOException("Archive exceeds extraction limits")
                             }
                             workspaceEntries[name] = value
@@ -787,7 +789,6 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.update { it.copy(showArrayEditorDialog = null) }
     }
 
-    /** Updates one primitive array element without materializing the whole array as tree nodes. */
     fun applyArrayElementUpdate(node: NbtTreeNode, index: Int, input: String): Boolean {
         val tag = node.tag
         val valid = when (tag) {

@@ -58,7 +58,11 @@ class MainActivity : ComponentActivity() {
                 LocalConfiguration provides localizedContext.resources.configuration
             ) {
                 ChunkoidNGTheme(dynamicColor = uiState.dynamicColorEnabled) {
-                    MainAppScaffold()
+                    MainAppScaffold(
+                        onLanguageSelected = { lang ->
+                            settingsViewModel.updateAppLanguage(lang)
+                        }
+                    )
                 }
             }
         }

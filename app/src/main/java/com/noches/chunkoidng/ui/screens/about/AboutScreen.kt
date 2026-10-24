@@ -24,7 +24,6 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -114,80 +113,6 @@ fun AboutScreen(
             }
         }
 
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = ExpressiveShapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Outlined.SwapHoriz,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.about_features_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_pack),
-                        desc = stringResource(R.string.about_feature_pack_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_midi),
-                        desc = stringResource(R.string.about_feature_midi_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_crash),
-                        desc = stringResource(R.string.about_feature_crash_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_nbt),
-                        desc = stringResource(R.string.about_feature_nbt_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_mapping),
-                        desc = stringResource(R.string.about_feature_mapping_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_i18n),
-                        desc = stringResource(R.string.about_feature_i18n_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_convert),
-                        desc = stringResource(R.string.about_feature_convert_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_decrypt),
-                        desc = stringResource(R.string.about_feature_decrypt_desc)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    FeatureHighlightRow(
-                        title = stringResource(R.string.about_feature_prune),
-                        desc = stringResource(R.string.about_feature_prune_desc)
-                    )
-                }
-            }
-        }
 
         item {
             Card(
@@ -437,21 +362,3 @@ private fun DependencyRow(
     }
 }
 
-@Composable
-private fun FeatureHighlightRow(title: String, desc: String) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = desc,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 16.sp
-        )
-    }
-}

@@ -20,11 +20,12 @@ import kotlin.coroutines.coroutineContext
 
 class ArchiveManager(private val context: Context) {
     private companion object {
-        const val MAX_ARCHIVE_ENTRIES = 100_000
+        var MAX_ARCHIVE_ENTRIES = 100_000
         const val MAX_ENTRY_BYTES = 512L * 1024 * 1024
         const val MAX_TOTAL_BYTES = 2L * 1024 * 1024 * 1024
     }
     private val contentResolver: ContentResolver get() = context.contentResolver
+    private val prefs by lazy { com.noches.chunkoidng.core.settings.AppPreferences(context) }
 
     val workspaceDir: File get() = File(context.filesDir, "workspace").apply { mkdirs() }
     val inputDir: File get() = File(workspaceDir, "input")
@@ -92,7 +93,8 @@ class ArchiveManager(private val context: Context) {
                             return@withContext Result.failure(Exception(context.getString(R.string.archive_error_cancelled)))
                         }
 
-                        if (++extractedCount > MAX_ARCHIVE_ENTRIES) {
+                        val limits = prefs.getEffectiveLimits()
+                        if (++extractedCount > limits.archiveMaxEntries) {
                             throw IllegalArgumentException(context.getString(R.string.archive_error_entry_limit))
                         }
                         val entryName = entry.name
@@ -113,7 +115,7 @@ class ArchiveManager(private val context: Context) {
                                 while (zis.read(buffer).also { len = it } != -1) {
                                     entryBytes += len
                                     totalExtractedBytes += len
-                                    if (entryBytes > MAX_ENTRY_BYTES || totalExtractedBytes > MAX_TOTAL_BYTES) {
+                                    if (entryBytes > limits.archiveMaxEntryBytes || totalExtractedBytes > limits.archiveMaxTotalBytes) {
                                         throw IllegalArgumentException(context.getString(R.string.archive_error_size_limit))
                                     }
                                     out.write(buffer, 0, len)

@@ -41,16 +41,22 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainAppScaffold() {
+fun MainAppScaffold(
+    onLanguageSelected: ((String) -> Unit)? = null
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember(context) { com.noches.chunkoidng.core.settings.AppPreferences(context) }
+    val startDestination = remember { if (prefs.isFirstLaunchOrUpdate) "welcome" else Screen.Features.route }
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Features.route
+    val currentRoute = navBackStackEntry?.destination?.route ?: startDestination
+
     val currentScreen = Screen.topLevelScreens.find { it.route == currentRoute } ?: Screen.Features
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     val isTopLevelScreen = Screen.topLevelScreens.any { it.route == currentRoute }
 
@@ -102,7 +108,7 @@ fun MainAppScaffold() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Features.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
             enterTransition = {
                 fadeIn(animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
@@ -206,7 +212,26 @@ fun MainAppScaffold() {
             }
 
             composable(Screen.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(
+                    onNavigateToWelcome = { navController.navigate("welcome") }
+                )
+            }
+
+            composable("welcome") {
+                com.noches.chunkoidng.ui.screens.welcome.WelcomeScreen(
+                    onFinished = {
+                        if (navController.previousBackStackEntry != null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate(Screen.Features.route) {
+                                popUpTo("welcome") { inclusive = true }
+                            }
+                        }
+                    },
+                    onLanguageSelected = onLanguageSelected,
+                    isRevisit = navController.previousBackStackEntry != null,
+                    isUpdate = prefs.isUpdate
+                )
             }
 
             composable(Screen.About.route) {

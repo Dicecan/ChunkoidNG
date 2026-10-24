@@ -18,6 +18,9 @@ data class ConversionConfig(
     val keepOriginalNbt: Boolean = false,
     val lowMemoryMode: Boolean = false,
     val maxMemoryMB: Int = 2048,
+    val parallelism: Int? = null,
+    val useSerialGc: Boolean? = null,
+    val customJvmOptions: List<String> = emptyList(),
 
     val pruningProfile: PruningProfile = PruningProfile.FULL,
     val includeOverworld: Boolean = true,

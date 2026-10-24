@@ -34,6 +34,13 @@ import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
+import com.noches.chunkoidng.core.settings.PerformanceMode
+import com.noches.chunkoidng.core.settings.DevicePerformanceEvaluator
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,6 +53,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -75,6 +83,7 @@ import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
+    onNavigateToWelcome: (() -> Unit)? = null,
     viewModel: SettingsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -382,7 +391,11 @@ fun SettingsScreen(
         }
 
         item {
-            SettingsCategoryHeader(title = stringResource(R.string.settings_category_engine))
+            val hardwareInfo = remember(context) { DevicePerformanceEvaluator.evaluate(context) }
+            val tunedLimits = remember(hardwareInfo) { DevicePerformanceEvaluator.getTunedLimits(hardwareInfo) }
+            val strictLimits = remember(hardwareInfo) { DevicePerformanceEvaluator.getStrictLimits(hardwareInfo) }
+
+            SettingsCategoryHeader(title = stringResource(R.string.settings_profile_title))
             Spacer(modifier = Modifier.height(6.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -390,64 +403,312 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(ExpressiveShapes.small)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Memory,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(R.string.settings_jvm_heap_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_jvm_heap_current, uiState.maxMemoryMb.toInt()),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                text = stringResource(R.string.settings_profile_title),
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
+                            Text(
+                                text = stringResource(R.string.settings_profile_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (onNavigateToWelcome != null) {
+                            FilledTonalButton(
+                                onClick = onNavigateToWelcome,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(Icons.Outlined.Speed, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.settings_rerun_wizard), fontSize = 12.sp)
+                            }
                         }
                     }
 
-                    Slider(
-                        value = uiState.maxMemoryMb,
-                        onValueChange = { viewModel.updateMaxMemory(it) },
-                        valueRange = 1024f..8192f,
-                        steps = 6,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            selected = uiState.performanceMode == PerformanceMode.TUNED.id,
+                            onClick = { viewModel.updatePerformanceMode(PerformanceMode.TUNED.id) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
+                            label = { Text(stringResource(R.string.settings_mode_tuned_short), maxLines = 1, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                        )
+                        SegmentedButton(
+                            selected = uiState.performanceMode == PerformanceMode.STRICT.id,
+                            onClick = { viewModel.updatePerformanceMode(PerformanceMode.STRICT.id) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
+                            label = { Text(stringResource(R.string.settings_mode_strict_short), maxLines = 1, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                        )
+                        SegmentedButton(
+                            selected = uiState.performanceMode == PerformanceMode.CUSTOM.id,
+                            onClick = { viewModel.updatePerformanceMode(PerformanceMode.CUSTOM.id) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+                            label = { Text(stringResource(R.string.settings_mode_custom_short), maxLines = 1, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    when (uiState.performanceMode) {
+                        PerformanceMode.TUNED.id -> {
+                            Surface(
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Outlined.AutoAwesome,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.settings_status_tuned_title),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = stringResource(
+                                            R.string.settings_status_tuned_summary,
+                                            tunedLimits.jvmMaxMemoryMb,
+                                            tunedLimits.parallelism,
+                                            stringResource(if (tunedLimits.useSerialGc) R.string.gc_serial_name else R.string.gc_parallel_name)
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.settings_status_tuned_hint),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        PerformanceMode.STRICT.id -> {
+                            Surface(
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Outlined.Security,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.settings_status_strict_title),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = stringResource(R.string.settings_status_strict_summary),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.settings_status_strict_hint),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        else -> {
+                            
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                
+                                Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.settings_jvm_heap_title),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "${uiState.maxMemoryMb.toInt()} MB",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Slider(
+                                        value = uiState.maxMemoryMb,
+                                        onValueChange = { viewModel.updateMaxMemory(it) },
+                                        valueRange = 1024f..8192f,
+                                        steps = 6,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+
+                                Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.welcome_custom_parallelism),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "${uiState.customParallelism} Threads",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Slider(
+                                        value = uiState.customParallelism.toFloat(),
+                                        onValueChange = { viewModel.updateCustomParallelism(it.toInt()) },
+                                        valueRange = 1f..hardwareInfo.cpuCores.toFloat().coerceAtLeast(1f),
+                                        steps = (hardwareInfo.cpuCores - 2).coerceAtLeast(0),
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+
+                                SettingsSwitchRow(
+                                    icon = Icons.Outlined.CleaningServices,
+                                    title = stringResource(R.string.welcome_custom_serial_gc),
+                                    subtitle = stringResource(R.string.welcome_custom_serial_gc_desc),
+                                    checked = uiState.customUseSerialGc,
+                                    onCheckedChange = { viewModel.updateCustomUseSerialGc(it) }
+                                )
+
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                                Text(
+                                    text = stringResource(R.string.settings_submodule_limits_title),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.welcome_custom_bomb_entry),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = "${uiState.archiveMaxEntryMb} MB",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                com.noches.chunkoidng.ui.screens.welcome.CompactSegmentedRow(
+                                    items = listOf(256 to "256M", 512 to "512M", 1024 to "1G", 2048 to "2G"),
+                                    selectedValue = uiState.archiveMaxEntryMb,
+                                    onSelected = { viewModel.updateArchiveMaxEntryMb(it) }
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.welcome_custom_bomb_total),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = "${uiState.archiveMaxTotalMb} MB",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                com.noches.chunkoidng.ui.screens.welcome.CompactSegmentedRow(
+                                    items = listOf(1024 to "1G", 2048 to "2G", 4096 to "4G", 8192 to "8G"),
+                                    selectedValue = uiState.archiveMaxTotalMb,
+                                    onSelected = { viewModel.updateArchiveMaxTotalMb(it) }
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.welcome_custom_nbt_page),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = "${uiState.nbtArrayPageSize} / page",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                com.noches.chunkoidng.ui.screens.welcome.CompactSegmentedRow(
+                                    items = listOf(50 to "50", 100 to "100", 200 to "200", 500 to "500"),
+                                    selectedValue = uiState.nbtArrayPageSize,
+                                    onSelected = { viewModel.updateNbtArrayPageSize(it) }
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.welcome_custom_pack_frames),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = "${uiState.packMaxFrames} Frames",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                com.noches.chunkoidng.ui.screens.welcome.CompactSegmentedRow(
+                                    items = listOf(30_000 to "30k", 60_000 to "60k", 100_000 to "100k", 200_000 to "200k"),
+                                    selectedValue = uiState.packMaxFrames,
+                                    onSelected = { viewModel.updatePackMaxFrames(it) }
+                                )
+                            }
+                        }
+                    }
 
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                    )
-
-                    SettingsSwitchRow(
-                        icon = Icons.Outlined.Security,
-                        title = stringResource(R.string.settings_low_ram_title),
-                        subtitle = stringResource(R.string.settings_low_ram_desc),
-                        checked = uiState.lowRamModeEnabled,
-                        onCheckedChange = { viewModel.updateLowRamMode(it) }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
+                        modifier = Modifier.padding(vertical = 14.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
 
@@ -474,7 +735,6 @@ fun SettingsScreen(
                 }
             }
         }
-
         item {
             SettingsCategoryHeader(title = stringResource(R.string.settings_category_diagnostics))
             Spacer(modifier = Modifier.height(6.dp))

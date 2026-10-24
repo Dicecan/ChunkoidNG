@@ -11,8 +11,8 @@ android {
         applicationId = "com.noches.chunkoidng"
         minSdk = 27
         targetSdk = 35
-        versionCode = 5
-        versionName = "CANARY 0.5"
+        versionCode = 6
+        versionName = "Beta 0.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

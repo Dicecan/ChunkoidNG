@@ -1,15 +1,15 @@
 <div align="center">
-  <h1>Chunkoid NG (Next-Generation)</h1>
-  <p><strong>EncoreTeam's Modern Architectural Recode of Chunkoid</strong></p>
+  <h1>Chunkoid NG</h1>
+  <p><strong>Minecraft World and Resource Pack Toolkit for Android</strong></p>
 
   <p>
-    <a href="README_zh.md"><strong>简体中文 (Chinese)</strong></a> | 
-    <a href="README_en.md"><strong>English (英文)</strong></a> | 
-    <a href="https://chunkoid.top"><strong>Official Website</strong></a>
+    <a href="README_zh.md">简体中文</a> | 
+    <a href="README_en.md">English</a> | 
+    <a href="https://chunkoid.top">Official Website</a>
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-CANARY%200.5-2ea043">
+    <img alt="Version" src="https://img.shields.io/badge/version-Beta%200.6-2ea043">
     <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
     <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
     <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
@@ -20,110 +20,57 @@
 
 ---
 
-## 📢 Project Origin & EncoreTeam Recode Statement
+## Overview
 
-**Chunkoid NG (Next-Generation)** is a comprehensive, modern recode spearheaded by **DICECAN (EncoreTeam)**, succeeding the original **Chunkoid** application created by independent developer **Dozener (DozenesStudio)**.
+**Chunkoid NG (Next-Generation)** is an Android-native Minecraft world conversion and resource management utility, refactored and maintained by **EncoreTeam**.
 
-* **Project Transition**: The original author, Dozener, explored and created the very first PC-free, Android-native Minecraft world conversion utility in his spare time. As Dozener embarked on his university journey, he graciously and unconditionally transferred the full project assets and IP to DICECAN (EncoreTeam) to ensure continuous maintenance and future development.
-* **License Unchanged**: The project remains strictly open-source and free under the original **[GNU General Public License v3.0 (GPLv3)](LICENSE)**.
-* **Founder Attribution**: We deeply respect Dozener's pioneering contributions; his attribution and acknowledgments will be **permanently honored** across all repositories, documentations, and application releases.
+- **Project Transition**: Originated from Chunkoid developed by **Dozener (DozenesStudio)**. To ensure sustained maintenance and evolution after Dozener entered university, the project was officially handed over to **DICECAN (EncoreTeam)**.
+- **License**: The project continues under the **[GNU General Public License v3.0 (GPLv3)](LICENSE)**.
+- **Founder Attribution**: Dozener's pioneer attribution and credits remain permanently honored across all documentations, repositories, and release builds.
 
----
-
-> [!WARNING]
-> ### 🚧 Early Canary 0.5 Preview Phase
-> This project is currently undergoing active migration and refactoring from legacy Chunkoid. Foundational OpenJDK 17 sandbox runtime, interactive terminal, bidirectional Minecraft world conversion & export, smart version upgrade/downgrade mapping & risk alerts, standardized multi-language architecture (ZH/EN/JA), NetEase world decryption & passive encryption, standalone dimension pruning workbench, full-featured NBT / LevelDB visual editor (smart semantic tagging, big data paging, 2D chunk grid slimming), and brand new Canary 0.5 features including bidirectional resource pack conversion, MIDI-to-redstone music workshop, isolated crash diagnostics & export, and background persistent permission management have been fully implemented.
+The project has transitioned from early previews to **Beta 0.6**. Core feature modules are complete and operational, with ongoing development focused on stability and device-specific performance tuning.
 
 ---
 
-## 🌟 NG (Next-Generation) Highlights
+## Features
 
-* 📦 **Full-Featured NBT & LevelDB Visual Editor**:
-  * **Comprehensive Format Support**: Supports single NBT files (`.dat`, `.nbt`, `level.dat`), MCA region files (`.mca`, `.mcr`), LevelDB databases (`db/`), and world archives (`.zip`, `.mcworld`) with rapid parsing and tree hierarchy exploration.
-  * **Smart Semantic Analysis & Tags**: Built-in Minecraft semantic descriptor engine automatically identifies player attributes (health, hunger, XP, coordinates, inventory), entities/block entities (chest contents, furnace cook progress, sign texts), and world gamerules, presenting intuitive bilingual tags and safe value modification guidance to lower the learning curve.
-  * **Big Data Paging & Anti-Lag Optimization**: Dynamic virtual paging and decimal/hex views for large `ByteArray`, `IntArray`, and `LongArray` structures (biome palettes, heightmaps), preventing UI freezing and OOM crashes.
-  * **Rock-Solid Pure Java LevelDB Engine**: Built-in native ZLib compression bridge, eliminating Android JNI memory mapping (mmap) crashes to guarantee safe, crash-free loading and atomic transactions for Bedrock worlds.
-* 🗺️ **2D Chunk Visualizer & Precise Slimming**:
-  * **Interactive Chunk Grid Viewport**: Supports pan, pinch-to-zoom, tap, and rectangular multi-select box selection across world dimensions.
-  * **InhabitedTime Analysis & 0-Tick Pruning**: Automatically calculates chunk player dwell time, pinpoints 0-tick untouched chunks, and enables safe one-tap batch pruning to dramatically reduce world storage.
-* 🔄 **Full-Featured World Converter**:
-  * **Bidirectional Lossless Conversion**: Seamlessly converts worlds between Java Edition (JE) and Bedrock Edition (BE), with custom target version selection.
-  * **Smart Version Upgrade & Downgrade Mapping**: Cross-platform equivalent baseline mapping (JE 1.20 ↔ BE 1.20) with automatic recommendations and risk assessments for 1.18 negative height truncation and 1.13 block flattening.
-  * **Foreground Service Persistence**: Long-running conversions are guarded by an Android foreground service with notification updates, preventing background kills and providing conversion history management with remedy export.
-* ✂️ **Standalone Dimension Pruning & Slimming**:
-  * Dedicated slimming workbench with Overworld-only, Speed, and Full-dimension presets, independent dimension toggles, and `-k` raw NBT retention rules.
-* 🔐 **NetEase Decryption & Passive Encryption**:
-  * Streaming LevelDB XOR algorithm with magic byte integrity verification, passive encryption, and direct pipeline into the world converter.
-* 🌐 **Standardized i18n Architecture (ZH / EN / JA)**:
-  * Complete English (default fallback), Simplified Chinese, and Japanese localized resources with instant in-app seamless language switching.
-* 🎨 **Jetpack Compose Modern UX (MD3E)**:
-  * Built entirely on Material Design 3 Expressive standards, featuring Squircle container interactions, system window inset adaptation, and collapsible cards to maximize screen real estate.
-* ⚡ **Ultra-Slim RootFS & Sandbox Console**:
-  * Heavily pruned payload down to 57 binaries with 50% storage savings; built-in terminal console for debugging OpenJDK 17 and Shell commands.
-* 🎨 **Bidirectional Resource Pack Converter Workshop**:
-  * **Full Bidirectional Conversion**: Supports converting resource packs between Java Edition and Bedrock Edition with live progress feedback and logs.
-  * **Deep Model & Texture Mapping**: Automatically converts Blockstates and custom entity/block models, reconciling naming differences across editions.
-  * **Safe MCMETA Frame Expansion**: Automatically renders Java `.png.mcmeta` animations into Bedrock vertical sprite sheets with built-in frame and dimension safety fuses to eliminate OOM crashes.
-* 🎵 **MIDI to Redstone Music & World Workshop**:
-  * **High-Fidelity Noteblock Parsing**: Accurately parses MIDI tracks, mapping pitch and instruments to corresponding Minecraft blocks (dirt, planks, sand, etc.) and noteblock pitches (0-24).
-  * **Serpentine (S-Curve) Circuit Layout**: Replaces conventional single-line layouts with an ultra-compact serpentine layout, eliminating corner breakages and guaranteeing 1:1 true-tempo playback.
-  * **LevelDB Direct Chunk Injection**: Writes directly into LevelDB chunk databases to generate flat music worlds or inject redstone music contraptions into existing worlds, with full 1.21+ modern blockstate support.
-* 🛡️ **Isolated Crash Diagnostics & Safe Export System**:
-  * **Isolated :crash Process**: Fatal main process crashes are caught by an isolated process, offering an instant MD3 UI for rebooting or exiting safely without silent ANRs.
-  * **Complete Hardware & Stack Snapshot**: Captures Android OS, device model, memory heap, available disk space, exception thread, and unabridged stack traces.
-  * **Binder Safety & FileProvider Export**: Uses 4KB safe text truncation for IPC and exports unabridged log reports via temporary FileProvider sharing to eliminate Android `TransactionTooLargeException`.
+- **World Conversion**: Bidirectional conversion between Java Edition and Bedrock Edition (BE), with version mapping, cross-version compatibility warnings, and foreground service persistence.
+- **NBT & LevelDB Editor**: Parse and edit `.dat`, `.mca`, `level.dat`, LevelDB key-value entries, and full `.mcworld`/`.zip` archives; includes virtual paging for large arrays and semantic tags for common data fields.
+- **2D Chunk Visualizer & Pruning**: Grid-based chunk inspection across dimensions (Overworld / Nether / The End), with unvisited 0-tick chunk pruning and dimension trimming to reduce world size.
+- **Resource Pack Converter**: Bidirectional conversion between Java and Bedrock resource packs, resolving blockstates, models, and MCMETA texture strip stitching.
+- **MIDI to Redstone Music**: Parse MIDI tracks to construct compact serpentine redstone noteblock contraptions, directly written into LevelDB flat worlds or injected into existing saves.
+- **NetEase World Decryption**: XOR-based decryption and passive encryption for NetEase Bedrock saves.
+- **Sandbox Runtime & Performance Tuning**: Embedded OpenJDK 17 runtime with automatic device profiling and selectable memory profiles (Low Memory / Balanced / Aggressive / Custom) to avoid OOM crashes during large world processing.
+- **Isolated Crash Handler**: Crash diagnosis running in an isolated `:crash` process to capture hardware snapshots and export stack traces safely.
 
 ---
 
-## 🚀 Core Features Roadmap (Canary Status)
+## Building
 
-* ✅ **Interactive Sandbox Console**: `Implemented` (Supports OpenJDK 17 and Shell commands)
-* ✅ **Bidirectional World Conversion**: `Implemented` (Supports Java/Bedrock conversion, version targets, foreground service, history logs, and remedy export)
-* ✅ **Dimension Pruning & World Slimming**: `Implemented` (Standalone workbench, Overworld-only/Speed presets, per-dimension toggles, and `-k` raw NBT retention)
-* ✅ **NetEase Decryption & Passive Encryption**: `Implemented` (LevelDB XOR stream decryptor, magic byte check, passive encryption, and pipeline integration)
-* ✅ **Version Mapping & Risk Assessment**: `Implemented (Canary 0.3)` (Semantic version models, baseline recommendation, 1.18/1.13 downgrade alerts)
-* ✅ **Standardized i18n (ZH / EN / JA)**: `Implemented (Canary 0.3)` (Full English, Chinese, Japanese localizations with in-app switcher)
-* ✅ **NBT / LevelDB Visual Explorer**: `Implemented (Canary 0.4)` (Tree manipulation, LevelDB category query, big data paging, full format support)
-* ✅ **Minecraft Smart Semantic Analysis & Tags**: `Implemented (Canary 0.4)` (Player/entity/tile entity semantic tags, beginner-friendly value guides)
-* ✅ **2D Chunk Visualizer & Precise Slimming**: `Implemented (Canary 0.4)` (Pinch/pan grid, InhabitedTime analysis, 0-tick chunk pruning)
-* ✅ **Bidirectional Resource Pack Converter**: `Implemented (Canary 0.5)` (Java/Bedrock pack conversion, Blockstates/models restructuring, MCMETA animation safety)
-* ✅ **MIDI to Redstone Music & World Workshop**: `Implemented (Canary 0.5)` (Multi-track noteblock mapping, serpentine layout, LevelDB chunk injection, 1.21+ compatibility)
-* ✅ **Isolated Crash Diagnostics & Export**: `Implemented (Canary 0.5)` (Isolated :crash process, Binder overflow guard, 4KB truncation & FileProvider export)
-* ✅ **Background Persistence & Battery Exemption**: `Implemented (Canary 0.5)` (Foreground service notification permission, anti-spam prompts, cascading battery settings)
+### Requirements
+- **Android Studio**: Ladybug (2024.2.1) or newer
+- **JDK**: OpenJDK 17 or JDK 21
+- **Android SDK**: API 35 (Minimum: Android 8.0 / API 26)
 
----
-
-## 🛠️ Build & Development
-
-### Prerequisites
-* **Android Studio**: Ladybug (2024.2.1) or newer
-* **JDK**: OpenJDK 17 or JDK 21
-* **Android SDK**: Min SDK 27 (Android 8.1), Target SDK 35 (Android 15)
-* **Gradle**: 8.9+
-
-### Building Release APK
+### Build Commands
 ```bash
-./gradlew assembleRelease
+# Build Debug APK
+./gradlew assembleDebug
+
+# Run Unit Tests
+./gradlew testDebugUnitTest
 ```
-The output APK will be generated at `app/build/outputs/apk/release/app-release.apk`.
 
 ---
 
-## 📜 License
+## License & Credits
 
-This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE).
-
----
-
-## 🤝 Credits & Acknowledgments
-
-* **Original Author & Founder**: Dozener (DozenesStudio) (<dozener@outlook.com>)
-* **Current Maintainer**: DICECAN (EncoreTeam)
-* **Core Contributors**: Ryan Steven, Dozener
-* **Open Source Dependencies & Algorithmic References**:
-  * [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT License)
-  * [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
-  * [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT License)
-  * [iq80 - leveldb](https://github.com/dain/leveldb) (Apache-2.0)
-  * [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
-  * [Dicecan - NetEaseDecryptorSDK](https://github.com/Dicecan/NetEaseDecryptorSDK) (GPL-3.0)
+- **License**: [GNU General Public License v3.0](LICENSE)
+- **Original Author & Founder**: [Dozener (DozenesStudio)](mailto:dozener@outlook.com)
+- **Maintainers**: [EncoreTeam](https://chunkoid.top) (DICECAN)
+- **Key Libraries & References**:
+  - [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT)
+  - [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
+  - [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT)
+  - [iq80 - leveldb](https://github.com/dain/leveldb) (Apache-2.0)
+  - [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
