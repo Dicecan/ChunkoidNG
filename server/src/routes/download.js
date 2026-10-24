@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import path from 'node:path'
-import fs from 'node:fs'
 import { getDownloadPath, hasLocalDownload } from '../storage.js'
 import { getMirrors } from '../mirrors.js'
 import { getLocalReleaseData } from '../storage.js'
@@ -17,12 +16,24 @@ downloadRouter.get('/:tag/:filename', (req, res) => {
     return res.status(400).send('Invalid filename')
   }
 
-  const filePath = getDownloadPath(tag, safeFilename)
+  let filePath = getDownloadPath(tag, safeFilename)
+  let found = hasLocalDownload(tag, safeFilename)
 
-  if (hasLocalDownload(tag, safeFilename)) {
-    logger.info(`Serving local download: ${tag}/${safeFilename} to ${req.ip}`)
+  // Defensive check for duplicate .apk extension
+  if (!found && !safeFilename.endsWith('.apk.apk')) {
+    if (hasLocalDownload(tag, `${safeFilename}.apk`)) {
+      filePath = getDownloadPath(tag, `${safeFilename}.apk`)
+      found = true
+    }
+  }
+
+  // Sanitize download display name so users never download a .apk.apk file
+  const downloadDisplayName = safeFilename.replace(/\.apk\.apk$/i, '.apk')
+
+  if (found) {
+    logger.info(`Serving local download: ${tag}/${safeFilename} (as ${downloadDisplayName}) to ${req.ip}`)
     res.setHeader('Content-Type', 'application/vnd.android.package-archive')
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(safeFilename)}"`)
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadDisplayName)}"`)
     return res.sendFile(filePath)
   }
 
@@ -30,7 +41,11 @@ downloadRouter.get('/:tag/:filename', (req, res) => {
   logger.warn(`Local download not found for ${tag}/${safeFilename}, resolving redirect mirror`)
   const releaseData = getLocalReleaseData()
   const release = (releaseData.releases || []).find((r) => r.tagName === tag)
-  const asset = release?.assets?.find((a) => a.name === safeFilename)
+  const asset = release?.assets?.find((a) =>
+    a.name === safeFilename ||
+    a.name === `${safeFilename}.apk` ||
+    a.name.replace(/\.apk\.apk$/i, '.apk') === safeFilename
+  )
 
   if (asset && asset.browserDownloadUrl) {
     const mirrors = getMirrors().filter((m) => m.enabled && m.type !== 'local')

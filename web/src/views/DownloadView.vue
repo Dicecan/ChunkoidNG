@@ -79,7 +79,7 @@ const latestApk = computed(() => {
 
 const latestDownloadUrl = computed(() => {
   if (latestApk.value) {
-    return resolveAssetUrl(latestApk.value, effectiveMirrorId.value, mirrors.value, customPrefix.value)
+    return resolveAssetUrl(latestApk.value, effectiveMirrorId.value, mirrors.value, customPrefix.value, latestRelease.value?.tagName)
   }
   return fallbackRelease.apkUrl || ''
 })
@@ -164,7 +164,7 @@ function toggleNotes(id) {
 function getReleaseDownloadUrl(rel) {
   const apk = rel.primaryApk
   if (!apk) return rel.htmlUrl
-  return resolveAssetUrl(apk, effectiveMirrorId.value, mirrors.value, customPrefix.value)
+  return resolveAssetUrl(apk, effectiveMirrorId.value, mirrors.value, customPrefix.value, rel.tagName)
 }
 
 function formatDate(dateStr) {

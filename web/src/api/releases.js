@@ -109,7 +109,7 @@ export async function triggerManualSync() {
   }
 }
 
-export function resolveAssetUrl(asset, mirrorId, mirrorsList = DEFAULT_MIRRORS, customPrefix = '') {
+export function resolveAssetUrl(asset, mirrorId, mirrorsList = DEFAULT_MIRRORS, customPrefix = '', tagName = '') {
   if (!asset) return ''
   const rawUrl = asset.browserDownloadUrl || asset.browser_download_url || asset.url || ''
   if (!rawUrl) return ''
@@ -119,10 +119,22 @@ export function resolveAssetUrl(asset, mirrorId, mirrorsList = DEFAULT_MIRRORS, 
     return `${cleanPrefix}/${rawUrl}`
   }
 
+  // If local mirror, ALWAYS use relative path against current browser origin
+  if (mirrorId === 'local') {
+    const tag = tagName || asset.tagName || 'Beta-0.6'
+    return `/api/download/${encodeURIComponent(tag)}/${encodeURIComponent(asset.name)}`
+  }
+
   // Look for matched mirror in asset.mirrors first
   if (asset.mirrors && Array.isArray(asset.mirrors)) {
     const found = asset.mirrors.find((m) => m.id === mirrorId)
-    if (found && found.url) return found.url
+    if (found && found.url) {
+      // Strip any hardcoded host if it was accidentally saved as localhost
+      if (found.url.includes('/api/download/')) {
+        return found.url.substring(found.url.indexOf('/api/download/'))
+      }
+      return found.url
+    }
   }
 
   // Resolve using mirrors list
@@ -130,8 +142,8 @@ export function resolveAssetUrl(asset, mirrorId, mirrorsList = DEFAULT_MIRRORS, 
   if (!mirror) return rawUrl
 
   if (mirror.type === 'local') {
-    // If local download is available
-    return `/api/download/${encodeURIComponent(asset.tagName || 'latest')}/${encodeURIComponent(asset.name)}`
+    const tag = tagName || asset.tagName || 'Beta-0.6'
+    return `/api/download/${encodeURIComponent(tag)}/${encodeURIComponent(asset.name)}`
   }
 
   if (mirror.type === 'prefix' && mirror.prefix) {
@@ -158,7 +170,7 @@ function getFallbackData() {
         id: m.id,
         name: m.name,
         type: m.type,
-        url: m.type === 'prefix' && m.prefix ? `${m.prefix.replace(/\/+$/, '')}/${rawUrl}` : rawUrl
+        url: m.type === 'local' ? `/api/download/${tag}/${apkName}` : (m.prefix ? `${m.prefix.replace(/\/+$/, '')}/${rawUrl}` : rawUrl)
       }))
     }
 

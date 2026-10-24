@@ -7,17 +7,17 @@ export function getMirrors() {
 
 export function buildAssetMirrors(asset, tag, localServerBaseUrl = '') {
   const mirrors = getMirrors()
-  const rawUrl = asset.browser_download_url
+  const rawUrl = asset.browser_download_url || asset.browserDownloadUrl || ''
 
   return mirrors
     .filter((m) => m.enabled)
     .map((m) => {
       let url = rawUrl
       if (m.type === 'local') {
-        // Local server download URL
+        // Relative URL so that visitor browser always requests current server domain/host
         const safeTag = encodeURIComponent(tag)
         const safeFile = encodeURIComponent(asset.name)
-        url = `${localServerBaseUrl}/api/download/${safeTag}/${safeFile}`
+        url = `/api/download/${safeTag}/${safeFile}`
       } else if (m.type === 'prefix' && m.prefix) {
         url = `${m.prefix.replace(/\/+$/, '')}/${rawUrl}`
       }
