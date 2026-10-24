@@ -414,3 +414,20 @@ export const features = [
 export function findFeature(id) {
   return features.find((f) => f.id === id)
 }
+
+export const friendlyLinks = [
+  {
+    name: 'Theocraft',
+    url: 'https://theocraft.pages.dev/',
+    desc: {
+      'zh-CN': '原 Chunkoid 作者 Dozener 开发的全新项目',
+      en: "A new project developed by Chunkoid's original author Dozener",
+      ja: 'Chunkoid 原作者 Dozener 氏が手掛ける新プロジェクト'
+    },
+    tag: {
+      'zh-CN': '原作者新作',
+      en: 'Original Author',
+      ja: '原作者の新作'
+    }
+  }
+]

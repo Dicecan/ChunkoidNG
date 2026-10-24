@@ -32,6 +32,7 @@ export default {
     repo: 'Repository',
     issues: 'Report an Issue',
     aboutThanks: 'About & Credits',
+    friendlyLinks: 'Friendly Links',
     copyright: '© {year} {maintainer} · Original author {author}',
     license: 'Open source under {license}'
   },
@@ -204,6 +205,9 @@ export default {
     thLicense: 'License',
     licenseTitle: 'License',
     licenseDesc: 'This project is open sourced under the GNU General Public License v3.0. You are free to use, modify and distribute it in compliance with that license.',
-    readLicense: 'Read the full license'
+    readLicense: 'Read the full license',
+    friendlyLinks: 'Friendly Links & Related Projects',
+    friendlyLinksDesc: "Check out the latest projects and friendly links from Chunkoid's original creator Dozener (DozenesStudio).",
+    visitSite: 'Visit Website'
   }
 }

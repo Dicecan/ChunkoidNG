@@ -1,6 +1,6 @@
 <script setup>
-import { site } from '../data/features'
-import { t } from '../i18n'
+import { site, friendlyLinks } from '../data/features'
+import { t, localized } from '../i18n'
 const year = new Date().getFullYear()
 </script>
 
@@ -29,6 +29,19 @@ const year = new Date().getFullYear()
           <a :href="site.repo" target="_blank" rel="noopener">{{ t('footer.repo') }} ↗</a>
           <a :href="site.repo + '/issues'" target="_blank" rel="noopener">{{ t('footer.issues') }} ↗</a>
         </div>
+        <div>
+          <div class="ftr-title">{{ t('footer.friendlyLinks') }}</div>
+          <a
+            v-for="link in friendlyLinks"
+            :key="link.url"
+            :href="link.url"
+            target="_blank"
+            rel="noopener"
+            :title="localized(link.desc)"
+          >
+            {{ link.name }} ↗
+          </a>
+        </div>
       </div>
 
       <div class="ftr-bottom">
@@ -49,8 +62,8 @@ const year = new Date().getFullYear()
 
 .ftr-grid { display: grid; gap: 26px; grid-template-columns: 1fr; }
 
-@media (min-width: 700px) {
-  .ftr-grid { grid-template-columns: 2fr 1fr 1fr; gap: 28px; }
+@media (min-width: 760px) {
+  .ftr-grid { grid-template-columns: 1.8fr 1fr 1fr 1fr; gap: 24px; }
 }
 
 .ftr-brand {
@@ -107,7 +120,8 @@ const year = new Date().getFullYear()
   .ftr-grid { gap: 22px; }
 
   .ftr-grid > div:nth-child(2),
-  .ftr-grid > div:nth-child(3) { display: inline-block; }
+  .ftr-grid > div:nth-child(3),
+  .ftr-grid > div:nth-child(4) { display: inline-block; }
   .ftr-bottom { flex-direction: column; gap: 4px; margin-top: 24px; }
 }
 </style>

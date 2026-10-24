@@ -32,6 +32,7 @@ export default {
     repo: 'リポジトリ',
     issues: '問題を報告',
     aboutThanks: 'このアプリと謝辞',
+    friendlyLinks: '関連リンク',
     copyright: '© {year} {maintainer} · 原作者 {author}',
     license: '{license} ライセンスで公開'
   },
@@ -204,6 +205,9 @@ export default {
     thLicense: 'ライセンス',
     licenseTitle: 'ライセンス',
     licenseDesc: '本プロジェクトは GNU General Public License v3.0 のもとで公開されています。同ライセンスに従う限り、自由に使用・改変・配布できます。',
-    readLicense: 'ライセンス全文を読む'
+    readLicense: 'ライセンス全文を読む',
+    friendlyLinks: '関連プロジェクト・相互リンク',
+    friendlyLinksDesc: '原作者 Dozener 氏（DozenesStudio）による最新の取り組みや関連プロジェクト。',
+    visitSite: 'サイトを見る'
   }
 }

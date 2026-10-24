@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { site } from '../data/features'
+import { site, friendlyLinks } from '../data/features'
 import { t, locale, localized } from '../i18n'
 
 const thanks = [
@@ -26,6 +26,13 @@ const deps = [
 
 const people = computed(() => thanks.map((p) => ({ name: p.name, role: localized(roles.value[p.roleKey]) })))
 const dependencyList = computed(() => deps.map((d) => ({ ...d, descText: localized(d.desc) })))
+const friendlyLinksList = computed(() =>
+  friendlyLinks.map((l) => ({
+    ...l,
+    descText: localized(l.desc),
+    tagText: localized(l.tag)
+  }))
+)
 
 const stack = computed(() => [
   { k: t('about.stackLang'), v: 'Kotlin 2.0+' },
@@ -83,6 +90,27 @@ const stack = computed(() => [
       </section>
 
       <section class="section">
+        <h2>{{ t('about.friendlyLinks') }}</h2>
+        <div class="card">
+          <p style="margin-top: 0">{{ t('about.friendlyLinksDesc') }}</p>
+          <div class="links-grid" style="margin-top: 14px">
+            <div v-for="link in friendlyLinksList" :key="link.url" class="link-card">
+              <div class="link-header">
+                <strong class="link-title">{{ link.name }}</strong>
+                <span class="badge" v-if="link.tagText">{{ link.tagText }}</span>
+              </div>
+              <p class="link-desc">{{ link.descText }}</p>
+              <div class="link-action">
+                <a :href="link.url" target="_blank" rel="noopener" class="btn btn-sm">
+                  {{ t('about.visitSite') }} ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
         <h2>{{ t('about.thirdParty') }}</h2>
         <div class="card">
           <table class="table">
@@ -125,13 +153,48 @@ const stack = computed(() => [
 <style scoped>
 .person-name { font-weight: 600; font-size: 0.93rem; margin-bottom: 3px; }
 
-@media (max-width: 640px) {
-  .person-name { font-size: 0.95rem; }
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
 
-  .table a { display: inline-block; padding: 3px 0; }
+.link-card {
+  padding: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.link-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.link-title {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.link-desc {
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  margin: 0 0 14px 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.link-action {
+  margin-top: auto;
 }
 
 @media (max-width: 640px) {
-  .table a { min-height: 40px; display: inline-flex; align-items: center; }
+  .person-name { font-size: 0.95rem; }
+  .table a { min-height: 40px; display: inline-flex; align-items: center; padding: 3px 0; }
 }
 </style>

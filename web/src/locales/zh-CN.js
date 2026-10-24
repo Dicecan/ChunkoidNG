@@ -32,6 +32,7 @@ export default {
     repo: '项目仓库',
     issues: '问题反馈',
     aboutThanks: '关于与致谢',
+    friendlyLinks: '友情链接',
     copyright: '© {year} {maintainer} · 原作者 {author}',
     license: '基于 {license} 协议开源'
   },
@@ -204,6 +205,9 @@ export default {
     thLicense: '协议',
     licenseTitle: '开源协议',
     licenseDesc: '本项目采用 GNU General Public License v3.0 协议开源。你可以在遵循该协议的前提下自由使用、修改与分发本项目。',
-    readLicense: '阅读协议全文'
+    readLicense: '阅读协议全文',
+    friendlyLinks: '友情链接与相关项目',
+    friendlyLinksDesc: '关注原作者 Dozener (DozenesStudio) 的全新探索与相关项目。',
+    visitSite: '访问网站'
   }
 }
