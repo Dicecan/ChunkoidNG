@@ -468,14 +468,14 @@ export const friendlyLinks = [
     name: 'MD3L',
     url: 'https://md3l.top',
     desc: {
-      'zh-CN': 'Material Design 3 风格设计与资源站点',
-      en: 'Material Design 3 style design and resources',
-      ja: 'Material Design 3 デザイン＆リソースサイト'
+      'zh-CN': '基于 Material Design 3 风格打造的 Minecraft 启动器',
+      en: 'A Material Design 3 styled Minecraft launcher',
+      ja: 'Material Design 3 スタイルの Minecraft ランチャー'
     },
     tag: {
-      'zh-CN': '设计参考',
-      en: 'Design',
-      ja: 'デザイン'
+      'zh-CN': 'MC 启动器',
+      en: 'Launcher',
+      ja: 'ランチャー'
     },
     featured: false
   }
