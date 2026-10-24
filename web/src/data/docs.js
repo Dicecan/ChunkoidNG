@@ -7,7 +7,7 @@ export const docPages = [
       title: '快速开始',
       summary: '首次安装后需要了解的运行环境、权限与基本流程。',
       sections: [
-        { heading: '安装与首次启动', paragraphs: ['Chunkoid NG 当前处于 Canary 开发预览阶段，请从下载页或项目仓库获取安装包。', '首次启动时，应用需要复制内置的 OpenJDK 17 运行环境（RootFS）到应用私有目录，此过程只需一次，请保持应用处于前台。'] },
+        { heading: '安装与首次启动', paragraphs: ['Chunkoid NG 当前处于 Beta 0.6 测试阶段，请从下载页或项目仓库获取安装包。', '首次启动时，应用需要复制内置的 OpenJDK 17 运行环境（RootFS）到应用私有目录，此过程只需一次，请保持应用处于前台。'] },
         { heading: '权限说明', list: ['通知权限：用于展示转换进度与完成提醒（Android 13 及以上需要手动授予）。', '前台服务：保证长时间转换过程不被系统回收。', '电池优化白名单：可选，授予后长时间转换更稳定，部分厂商系统需要额外设置。', '存储访问：通过系统文件选择器（SAF）授权，应用只会访问你主动选择的目录，不会遍历整机存储。'] },
         { heading: '推荐工作流', list: ['在「功能」页进入「存档转换」。', '选择世界文件夹或 .zip / .mcworld 压缩包。', '等待应用读取世界信息，确认识别的平台与版本正确。', '选择目标版本，按需配置维度裁剪与世界设置。', '开始转换，保持应用在后台运行，等待完成通知。', '导出到目标目录，并在游戏内验证存档可正常读取。'] }
       ]
@@ -16,7 +16,7 @@ export const docPages = [
       title: 'Getting Started',
       summary: 'Runtime, permissions and the basic workflow to know after installing.',
       sections: [
-        { heading: 'Installation and first launch', paragraphs: ['Chunkoid NG is currently in the Canary development preview stage. Get the installer from the download page or the repository.', 'On first launch the app needs to copy its bundled OpenJDK 17 runtime (RootFS) into the app private directory. This happens only once — keep the app in the foreground while it completes.'] },
+        { heading: 'Installation and first launch', paragraphs: ['Chunkoid NG is currently in the Beta 0.6 release stage. Get the installer from the download page or the repository.', 'On first launch the app needs to copy its bundled OpenJDK 17 runtime (RootFS) into the app private directory. This happens only once — keep the app in the foreground while it completes.'] },
         { heading: 'Permissions', list: ['Notifications: used to show conversion progress and completion alerts (must be granted manually on Android 13 and above).', 'Foreground service: keeps long conversions from being reclaimed by the system.', 'Battery optimization allowlist: optional. Granting it makes long conversions more stable; some vendor ROMs require extra steps.', 'Storage access: granted through the system file picker (SAF). The app only accesses directories you explicitly choose and never scans your entire storage.'] },
         { heading: 'Recommended workflow', list: ['Open "World Conversion" from the Features page.', 'Select a world folder or a .zip / .mcworld archive.', 'Wait for the app to read the world metadata and confirm the detected platform and version are correct.', 'Choose the target version and configure dimension pruning and world settings as needed.', 'Start the conversion, keep the app running in the background, and wait for the completion notification.', 'Export to your target directory and verify in-game that the world loads correctly.'] }
       ]
@@ -25,7 +25,7 @@ export const docPages = [
       title: 'はじめに',
       summary: 'インストール後に知っておきたい実行環境、権限、基本的な流れ。',
       sections: [
-        { heading: 'インストールと初回起動', paragraphs: ['Chunkoid NG は現在 Canary の開発プレビュー段階です。インストーラはダウンロードページまたはリポジトリから入手してください。', '初回起動時、アプリは内蔵の OpenJDK 17 実行環境（RootFS）をアプリ専用ディレクトリへコピーします。この処理は一度だけなので、完了するまでアプリを前面に保ってください。'] },
+        { heading: 'インストールと初回起動', paragraphs: ['Chunkoid NG は現在 Beta 0.6 ベータテスト段階です。インストーラはダウンロードページまたはリポジトリから入手してください。', '初回起動時、アプリは内蔵の OpenJDK 17 実行環境（RootFS）をアプリ専用ディレクトリへコピーします。この処理は一度だけなので、完了するまでアプリを前面に保ってください。'] },
         { heading: '権限について', list: ['通知：変換の進捗と完了を知らせるために使用します（Android 13 以降では手動での許可が必要です）。', 'フォアグラウンドサービス：長時間の変換がシステムに回収されないようにします。', '電池最適化の除外：任意です。許可すると長時間の変換が安定します。メーカー製 ROM では追加設定が必要な場合があります。', 'ストレージアクセス：システムのファイル選択（SAF）で許可します。アプリはあなたが選んだフォルダにのみアクセスし、端末全体を走査することはありません。'] },
         { heading: 'おすすめの流れ', list: ['「機能」ページから「ワールド変換」を開きます。', 'ワールドフォルダ、または .zip / .mcworld を選択します。', 'アプリがワールド情報を読み取るまで待ち、判定されたプラットフォームとバージョンが正しいか確認します。', '変換先のバージョンを選び、必要に応じてディメンション整理とワールド設定を行います。', '変換を開始し、アプリをバックグラウンドで動かしたまま完了通知を待ちます。', '目的のフォルダへ書き出し、ゲーム内で正常に読み込めることを確認します。'] }
       ]

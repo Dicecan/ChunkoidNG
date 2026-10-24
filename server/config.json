@@ -1,0 +1,71 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "serveStatic": true,
+    "corsOrigin": "*"
+  },
+  "github": {
+    "owner": "Dicecan",
+    "repo": "ChunkoidNG",
+    "token": "",
+    "webhookSecret": "",
+    "syncIntervalMinutes": 30,
+    "autoDownloadApk": true,
+    "maxDownloadHistoryCount": 5
+  },
+  "mirrors": [
+    {
+      "id": "official",
+      "name": "GitHub 官方直链 (推荐)",
+      "type": "direct",
+      "prefix": "",
+      "description": "GitHub 官方发布源，官方直连无中转",
+      "enabled": true,
+      "priority": 100,
+      "isThirdParty": false
+    },
+    {
+      "id": "local",
+      "name": "本地高速节点 (服务器缓存)",
+      "type": "local",
+      "description": "本站服务器缓存直连，稳定高速",
+      "enabled": true,
+      "priority": 90,
+      "isThirdParty": false
+    },
+    {
+      "id": "ghfast",
+      "name": "第三方加速 1 (GHFast)",
+      "type": "prefix",
+      "prefix": "https://ghfast.top/",
+      "description": "第三方 GitHub Release 国内中继线路",
+      "enabled": true,
+      "priority": 80,
+      "isThirdParty": true
+    },
+    {
+      "id": "ghproxy",
+      "name": "第三方加速 2 (GHProxy)",
+      "type": "prefix",
+      "prefix": "https://ghproxy.net/",
+      "description": "公共第三方反代中继线路",
+      "enabled": true,
+      "priority": 70,
+      "isThirdParty": true
+    },
+    {
+      "id": "moeyy",
+      "name": "第三方加速 3 (Moeyy 镜像)",
+      "type": "prefix",
+      "prefix": "https://github.moeyy.xyz/",
+      "description": "第三方备用下载镜像通道",
+      "enabled": true,
+      "priority": 60,
+      "isThirdParty": true
+    }
+  ],
+  "admin": {
+    "token": "chunkoid-admin-change-me"
+  }
+}

@@ -3,8 +3,8 @@
 export const site = {
   name: 'Chunkoid NG',
   fullName: 'Chunkoid NG (Next-Generation)',
-  version: 'CANARY 0.5',
-  versionCode: 5,
+  version: 'Beta 0.6',
+  versionCode: 6,
   license: 'GPLv3',
   repo: 'https://github.com/Dicecan/ChunkoidNG',
   author: 'Dozener (DozenesStudio)',
@@ -21,9 +21,9 @@ export const release = {
   apkUrl: '',
   sha256: '',
   note: {
-    'zh-CN': 'CANARY 0.5 为开发预览版本，正式发布包发布后此处会更新下载地址与校验值。',
-    en: 'CANARY 0.5 is a development preview build. The download URL and checksum will be published here once an official release is available.',
-    ja: 'CANARY 0.5 は開発プレビュービルドです。正式リリースの公開後、ここにダウンロード先とチェックサムを掲載します。'
+    'zh-CN': 'Beta 0.6 为公开测试版本，各功能模块均已实装可用，重点转向稳定性提升与机型性能调优。',
+    en: 'Beta 0.6 is the public beta build with all modules available, focused on stability and device performance.',
+    ja: 'Beta 0.6 は現行の公開ベータ版です。全機能が実装され、安定性と端末性能の最適化に注力しています。'
   },
   size: {
     'zh-CN': '约 56 MB',
