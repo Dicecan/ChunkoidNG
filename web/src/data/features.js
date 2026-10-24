@@ -415,8 +415,24 @@ export function findFeature(id) {
   return features.find((f) => f.id === id)
 }
 
+export const community = {
+  qqGroup: '1103983368',
+  bilibili: [
+    { name: '诺切丝Noches', url: 'https://space.bilibili.com/672708380' },
+    { name: '原作者 Dozener', url: 'https://space.bilibili.com/3537108083935954' }
+  ],
+  douyin: [
+    { name: 'Dozener', url: 'https://www.douyin.com/user/MS4wLjABAAAAo90PVTMIc00rXJoAvIlWAlzh6rECCWpRbCM4nvHMdSeIO2tLFffuReQyiJy5FG3e?from_tab_name=main' }
+  ],
+  donate: [
+    { name: '诺切丝Noches', url: 'https://ifdian.net/a/EASY7' },
+    { name: '原作者 Dozener', url: 'https://ifdian.net/a/dozener' }
+  ]
+}
+
 export const friendlyLinks = [
   {
+    id: 'theocraft',
     name: 'Theocraft',
     url: 'https://theocraft.pages.dev/',
     desc: {
@@ -428,6 +444,39 @@ export const friendlyLinks = [
       'zh-CN': '原作者新作',
       en: 'Original Author',
       ja: '原作者の新作'
-    }
+    },
+    featured: true
+  },
+  {
+    id: 'chunker',
+    name: 'Chunker',
+    url: 'https://chunker.app',
+    desc: {
+      'zh-CN': 'The Hive 官方推出的在线 Minecraft 世界转换工具',
+      en: 'Official web-based Minecraft world converter by The Hive',
+      ja: 'The Hive 公式のオンライン Minecraft ワールド変換ツール'
+    },
+    tag: {
+      'zh-CN': '核心引擎',
+      en: 'Engine',
+      ja: '中核エンジン'
+    },
+    featured: false
+  },
+  {
+    id: 'md3l',
+    name: 'MD3L',
+    url: 'https://md3l.top',
+    desc: {
+      'zh-CN': 'Material Design 3 风格设计与资源站点',
+      en: 'Material Design 3 style design and resources',
+      ja: 'Material Design 3 デザイン＆リソースサイト'
+    },
+    tag: {
+      'zh-CN': '设计参考',
+      en: 'Design',
+      ja: 'デザイン'
+    },
+    featured: false
   }
 ]

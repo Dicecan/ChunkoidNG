@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { features, site, release } from '../data/features'
+import { features, site, release, friendlyLinks } from '../data/features'
 import { t, localized } from '../i18n'
 import FeatureCard from '../components/FeatureCard.vue'
 import HeroParallax from '../components/HeroParallax.vue'
@@ -26,6 +26,15 @@ const stack = computed(() => [
   { k: t('home.stackLang'), v: t('home.stackLangValue') },
   { k: t('home.factLicense'), v: site.license }
 ])
+
+const featuredLink = computed(() => friendlyLinks.find((l) => l.featured) || friendlyLinks[0])
+const linksList = computed(() =>
+  friendlyLinks.map((l) => ({
+    ...l,
+    descText: localized(l.desc),
+    tagText: localized(l.tag)
+  }))
+)
 </script>
 
 <template>
@@ -59,6 +68,7 @@ const stack = computed(() => [
       </div>
     </section>
 
+    <!-- 核心功能 -->
     <section class="container section section-top">
       <h2>{{ t('home.coreFeatures') }}</h2>
       <div class="grid grid-2">
@@ -69,6 +79,23 @@ const stack = computed(() => [
       </p>
     </section>
 
+    <!-- 原作者新作特别推荐 Banner (极显眼) -->
+    <section class="container section">
+      <div class="featured-link-banner">
+        <div class="featured-link-content">
+          <div class="featured-link-badge">★ {{ t('home.featuredLinkBadge') }}</div>
+          <h3 class="featured-link-title">{{ t('home.featuredLinkTitle') }}</h3>
+          <p class="featured-link-desc">{{ t('home.featuredLinkDesc') }}</p>
+        </div>
+        <div class="featured-link-action">
+          <a :href="featuredLink.url" target="_blank" rel="noopener" class="btn btn-primary btn-glow">
+            {{ t('home.featuredLinkBtn') }} ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 为什么选择 -->
     <section class="container section">
       <h2>{{ t('home.whyTitle') }}</h2>
       <div class="grid grid-2">
@@ -79,6 +106,7 @@ const stack = computed(() => [
       </div>
     </section>
 
+    <!-- 技术栈与架构 -->
     <section class="container section">
       <h2>{{ t('home.stackTitle') }}</h2>
       <div class="card">
@@ -97,6 +125,29 @@ const stack = computed(() => [
           {{ t('home.aboutVersionDesc', { version: site.version }) }}
           <RouterLink to="/docs/getting-started">{{ t('common.readDocs') }}</RouterLink>
         </p>
+      </div>
+    </section>
+
+    <!-- 友情链接与生态合作 -->
+    <section class="container section">
+      <h2>{{ t('home.friendlyLinks') }}</h2>
+      <p class="muted" style="margin-top: -6px; margin-bottom: 16px">{{ t('home.friendlyLinksLead') }}</p>
+      <div class="home-links-grid">
+        <a
+          v-for="link in linksList"
+          :key="link.url"
+          :href="link.url"
+          target="_blank"
+          rel="noopener"
+          class="home-link-card"
+          :class="{ 'home-link-featured': link.featured }"
+        >
+          <div class="home-link-head">
+            <span class="home-link-name">{{ link.name }} ↗</span>
+            <span class="badge" v-if="link.tagText">{{ link.tagText }}</span>
+          </div>
+          <p class="home-link-desc">{{ link.descText }}</p>
+        </a>
       </div>
     </section>
   </div>
@@ -158,161 +209,145 @@ const stack = computed(() => [
 }
 
 .hero-title {
-  font-size: clamp(1.9rem, 5vw, 2.7rem);
-  line-height: 1.22;
+  font-size: 2.85rem;
+  line-height: 1.15;
+  margin: 0 0 18px;
   letter-spacing: -0.02em;
-  margin-bottom: 16px;
-  color: #ffffff;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
 }
 
 .hero-lead {
-  font-size: 1rem;
-  margin: 0 0 24px auto;
-  max-width: 46ch;
-  color: rgba(242, 246, 244, 0.9);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.45);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 0 28px;
+  color: #dce7e1;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
 }
 
 .hero-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
-.btn-on-glass {
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
-  border-color: rgba(255, 255, 255, 0.32);
-  color: #ffffff;
-}
-.btn-on-glass:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.5);
+.hero-facts {
+  margin-top: 56px;
+  border-radius: 14px;
+  padding: 16px 20px;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.5);
+.fact-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 0;
 }
+.fact-list dt { font-size: 0.76rem; color: #a4beaf; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.fact-list dd { margin: 0; font-size: 0.95rem; font-weight: 600; color: #f2f6f4; }
 
-.hero-facts { margin-top: 34px; padding: 16px 22px; }
-
-.fact-list { display: grid; gap: 4px 40px; grid-template-columns: 1fr; margin: 0; }
-@media (min-width: 620px) { .fact-list { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1000px) { .fact-list { grid-template-columns: repeat(4, 1fr); } }
-
-.fact-list > div {
+/* Featured Link Banner */
+.featured-link-banner {
+  background: linear-gradient(135deg, rgba(47, 125, 99, 0.16) 0%, rgba(229, 164, 32, 0.09) 100%), var(--bg-soft);
+  border: 1px solid var(--accent);
+  padding: 24px 28px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 5px 0;
-  font-size: 0.87rem;
-}
-.fact-list dt { color: rgba(242, 246, 244, 0.62); white-space: nowrap; }
-.fact-list dd { margin: 0; color: #ffffff; text-align: right; }
-
-@media (max-width: 900px) {
-  .hero {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-  }
-
-  .hero-bg {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    aspect-ratio: 3 / 2;
-    max-height: 78vw;
-    flex: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .hero-scrim {
-    background:
-      linear-gradient(180deg,
-        rgba(8, 14, 12, 0.16) 0%,
-        rgba(8, 14, 12, 0.04) 30%,
-        rgba(8, 14, 12, 0.10) 66%,
-        rgba(8, 14, 12, 0.42) 100%);
-  }
-
-  .hero-inner { padding-top: 20px; padding-bottom: 24px; }
-  .hero-top { justify-content: flex-start; }
-  .hero-copy { text-align: left; max-width: none; color: var(--text); }
-
-  .hero-eyebrow {
-    color: var(--accent);
-    text-shadow: none;
-    font-size: 0.76rem;
-    margin-bottom: 8px;
-  }
-
-  .hero-title {
-    color: var(--text);
-    font-size: clamp(1.5rem, 6vw, 1.85rem);
-    text-shadow: none;
-    margin-bottom: 10px;
-  }
-
-  .hero-lead {
-    color: var(--text-soft);
-    text-shadow: none;
-    font-size: 0.94rem;
-    line-height: 1.65;
-    margin: 0 0 16px;
-    max-width: none;
-  }
-
-  .hero-actions { justify-content: flex-start; gap: 9px; }
-  .hero-actions .btn { min-height: 44px; }
-
-  .btn-on-glass {
-    background: var(--bg);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-color: var(--border-strong);
-    color: var(--text);
-  }
-  .btn-on-glass:hover { background: var(--bg-soft); border-color: var(--accent); }
-
-  .hero-facts {
-    margin-top: 16px;
-    padding: 13px 16px;
-    background: var(--bg-soft);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: none;
-  }
-
-  .fact-list { grid-template-columns: repeat(2, 1fr); gap: 3px 16px; }
-  .fact-list > div { font-size: 0.8rem; padding: 4px 0; gap: 8px; }
-  .fact-list dt { color: var(--text-faint); white-space: normal; }
-  .fact-list dd { color: var(--text); }
+  gap: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(47, 125, 99, 0.12);
 }
 
-@media (max-width: 900px) and (max-height: 760px) {
-  .hero-bg { aspect-ratio: 2 / 1; max-height: 42vw; }
-  .hero-inner { padding-top: 12px; padding-bottom: 14px; }
-  .hero-eyebrow { margin-bottom: 5px; font-size: 0.72rem; }
-  .hero-title { font-size: 1.32rem; margin-bottom: 7px; }
-  .hero-lead { font-size: 0.88rem; line-height: 1.55; margin-bottom: 11px; }
-  .hero-actions .btn { min-height: 44px; padding: 8px 14px; font-size: 0.9rem; }
-  .hero-facts { margin-top: 11px; padding: 9px 12px; }
-  .fact-list > div { font-size: 0.75rem; padding: 3px 0; }
+.featured-link-badge {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #e5a420;
+  background: rgba(229, 164, 32, 0.14);
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(12, 20, 17, 0.9); }
-  .btn-on-glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255,255,255,0.24); }
+.featured-link-title {
+  margin: 0 0 6px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.featured-link-desc {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-soft);
+  max-width: 60ch;
+  line-height: 1.5;
+}
+
+.btn-glow {
+  box-shadow: 0 2px 14px rgba(47, 125, 99, 0.4);
+}
+
+/* Home links grid */
+.home-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.home-link-card {
+  padding: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: block;
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.home-link-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.home-link-featured {
+  border-color: rgba(47, 125, 99, 0.6);
+  background: linear-gradient(145deg, rgba(47, 125, 99, 0.08), var(--bg-soft));
+}
+
+.home-link-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.home-link-name {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.home-link-desc {
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .hero-inner { padding-top: 56px; }
+  .hero-copy { text-align: left; }
+  .hero-actions { justify-content: flex-start; }
+  .hero-title { font-size: 2.2rem; }
+  .fact-list { grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
+  .featured-link-banner { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .hero-title { font-size: 1.85rem; }
+  .hero-lead { font-size: 0.98rem; }
+  .fact-list { grid-template-columns: 1fr; }
 }
 </style>
