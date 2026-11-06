@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.os.StatFs
+import com.noches.chunkoidng.maid.Maid
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.text.SimpleDateFormat
@@ -59,6 +60,20 @@ data class CrashReport(
             appendLine("Heap: total=${totalMemoryMb}MB, free=${freeMemoryMb}MB, max=${maxMemoryMb}MB")
             appendLine("Internal Storage Free: ${availableStorageMb}MB")
             appendLine()
+
+            val recentViolations = try {
+                Maid.securityAuditor.getRecentViolations().take(5)
+            } catch (_: Exception) {
+                emptyList()
+            }
+            if (recentViolations.isNotEmpty()) {
+                appendLine("[MAID™ Security & Resource Audit]")
+                recentViolations.forEach { v ->
+                    appendLine(" - [${v.severity}] [${v.module}] ${v.type}: ${v.message} (target: ${v.pathOrTarget ?: "N/A"})")
+                }
+                appendLine()
+            }
+
             appendLine("[Thread & Exception]")
             appendLine("Thread: $threadName (isMainThread=$isMainThread)")
             appendLine("Exception: $exceptionClass")

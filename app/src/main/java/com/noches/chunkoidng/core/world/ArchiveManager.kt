@@ -4,9 +4,9 @@ import android.content.ContentResolver
 import android.content.Context
 import com.noches.chunkoidng.R
 import android.net.Uri
-import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
+import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -14,16 +14,10 @@ import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.File
 import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import kotlin.coroutines.coroutineContext
 
 class ArchiveManager(private val context: Context) {
-    private companion object {
-        var MAX_ARCHIVE_ENTRIES = 100_000
-        const val MAX_ENTRY_BYTES = 512L * 1024 * 1024
-        const val MAX_TOTAL_BYTES = 2L * 1024 * 1024 * 1024
-    }
     private val contentResolver: ContentResolver get() = context.contentResolver
     private val prefs by lazy { com.noches.chunkoidng.core.settings.AppPreferences(context) }
 
@@ -79,57 +73,26 @@ class ArchiveManager(private val context: Context) {
             val inputStream = contentResolver.openInputStream(archiveUri)
                 ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_open_input)))
 
-            val buffer = ByteArray(64 * 1024)
-            var extractedCount = 0
-            var totalExtractedBytes = 0L
-            val destCanonicalPath = destDir.canonicalPath + File.separator
+            val limits = prefs.getEffectiveLimits()
+            var lastReported = 0
 
             inputStream.use { rawIn ->
-                ZipInputStream(rawIn).use { zis ->
-                    var entry: ZipEntry? = zis.nextEntry
-                    while (entry != null) {
-                        if (!coroutineContext.isActive) {
-                            zis.closeEntry()
-                            return@withContext Result.failure(Exception(context.getString(R.string.archive_error_cancelled)))
-                        }
-
-                        val limits = prefs.getEffectiveLimits()
-                        if (++extractedCount > limits.archiveMaxEntries) {
-                            throw IllegalArgumentException(context.getString(R.string.archive_error_entry_limit))
-                        }
-                        val entryName = entry.name
-                        val entryFile = File(destDir, entryName)
-                        val canonicalEntry = entryFile.canonicalFile
-                        if (canonicalEntry.path != destDir.canonicalPath &&
-                            !canonicalEntry.path.startsWith(destCanonicalPath)) {
-                            throw SecurityException(context.getString(R.string.archive_error_invalid_path, entryName))
-                        }
-
-                        if (entry.isDirectory) {
-                            entryFile.mkdirs()
-                        } else {
-                            entryFile.parentFile?.mkdirs()
-                            var entryBytes = 0L
-                            FileOutputStream(canonicalEntry).buffered(64 * 1024).use { out ->
-                                var len: Int
-                                while (zis.read(buffer).also { len = it } != -1) {
-                                    entryBytes += len
-                                    totalExtractedBytes += len
-                                    if (entryBytes > limits.archiveMaxEntryBytes || totalExtractedBytes > limits.archiveMaxTotalBytes) {
-                                        throw IllegalArgumentException(context.getString(R.string.archive_error_size_limit))
-                                    }
-                                    out.write(buffer, 0, len)
-                                }
+                Maid.defense.archiveShield.extractZipSecurely(
+                    inputStream = rawIn,
+                    destDir = destDir,
+                    limits = limits,
+                    module = "ArchiveManager",
+                    shouldContinue = { coroutineContext.isActive },
+                    onProgress = { count, _ ->
+                        if (count % 15 == 0) {
+                            val pct = (5 + (count / 5)).coerceIn(5, 75)
+                            if (pct != lastReported) {
+                                lastReported = pct
+                                onProgress(pct, context.getString(R.string.archive_staging_extracting_progress, count))
                             }
                         }
-                        zis.closeEntry()
-                        if (extractedCount % 15 == 0) {
-                            val pct = (5 + (extractedCount / 5)).coerceIn(5, 75)
-                            onProgress(pct, context.getString(R.string.archive_staging_extracting_progress, extractedCount))
-                        }
-                        entry = zis.nextEntry
                     }
-                }
+                )
             }
 
             onProgress(80, context.getString(R.string.archive_staging_searching_structure))

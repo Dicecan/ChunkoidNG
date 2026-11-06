@@ -2,6 +2,7 @@ package com.noches.chunkoidng.core.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.noches.chunkoidng.maid.Maid
 
 class AppPreferences(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("chunkoid_prefs", Context.MODE_PRIVATE)
@@ -122,11 +123,6 @@ class AppPreferences(private val context: Context) {
         set(value) = prefs.edit().putInt("midi_max_notes", value).apply()
 
     fun getEffectiveLimits(): PerformanceLimits {
-        val hardwareInfo = DevicePerformanceEvaluator.evaluate(context)
-        return when (PerformanceMode.fromId(performanceMode)) {
-            PerformanceMode.TUNED -> DevicePerformanceEvaluator.getTunedLimits(hardwareInfo)
-            PerformanceMode.STRICT -> DevicePerformanceEvaluator.getStrictLimits(hardwareInfo)
-            PerformanceMode.CUSTOM -> DevicePerformanceEvaluator.getCustomLimits(this, hardwareInfo)
-        }
+        return Maid.performanceRegistry.getEffectiveLimits(context)
     }
 }

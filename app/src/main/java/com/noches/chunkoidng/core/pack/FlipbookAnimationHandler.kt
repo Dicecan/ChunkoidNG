@@ -1,12 +1,19 @@
 package com.noches.chunkoidng.core.pack
 
+import com.noches.chunkoidng.maid.Maid
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
 object FlipbookAnimationHandler {
 
-    private const val MAX_EXPANDED_FRAMES = 100_000
+    private fun getMaxFrames(): Int {
+        return try {
+            Maid.tuning.limits.packMaxFrames
+        } catch (_: Exception) {
+            100_000
+        }
+    }
 
     data class FlipbookEntry(
         val flipbookTexture: String,
@@ -24,14 +31,18 @@ object FlipbookAnimationHandler {
             val anim = root.getJSONObject("animation")
             val frametime = if (anim.has("frametime")) anim.getInt("frametime").coerceIn(1, 1024) else 1
             val interpolate = if (anim.has("interpolate")) anim.getBoolean("interpolate") else false
+            val maxFrames = getMaxFrames()
 
             val frameSpecs = mutableListOf<Pair<Int, Int>>()
             if (anim.has("frames")) {
                 val framesArr = anim.getJSONArray("frames")
-                if (framesArr.length() > MAX_EXPANDED_FRAMES) {
-                    throw IllegalArgumentException("Animation contains too many frames")
-                }
-                for (i in 0 until framesArr.length()) {
+                val totalLength = framesArr.length()
+                val safeCount = Maid.pagingAdvisor.sanitizeAnimationFrames(
+                    requestedFrames = totalLength.toLong(),
+                    maxFrames = maxFrames,
+                    texturePath = bedrockTexturePath
+                )
+                for (i in 0 until safeCount) {
                     val item = framesArr.get(i)
                     when (item) {
                         is Int -> frameSpecs.add(item to frametime)
@@ -46,15 +57,22 @@ object FlipbookAnimationHandler {
                 }
             }
             val hasPerFrameTiming = frameSpecs.any { it.second != frametime }
-            if (hasPerFrameTiming) {
-                val expandedSize = frameSpecs.sumOf { it.second.toLong() }
-                require(expandedSize <= MAX_EXPANDED_FRAMES) {
-                    "Expanded animation frame list is too large"
-                }
-            }
             val frameList = if (hasPerFrameTiming) {
+                val expandedSize = frameSpecs.sumOf { it.second.toLong() }
+                val safeExpanded = Maid.pagingAdvisor.sanitizeAnimationFrames(
+                    requestedFrames = expandedSize,
+                    maxFrames = maxFrames,
+                    texturePath = bedrockTexturePath
+                )
                 buildList {
-                    frameSpecs.forEach { (index, frameTime) -> repeat(frameTime) { add(index) } }
+                    var accumulated = 0
+                    for ((index, frameTime) in frameSpecs) {
+                        val needed = (safeExpanded - accumulated).coerceAtLeast(0)
+                        val repeatCount = frameTime.coerceAtMost(needed)
+                        repeat(repeatCount) { add(index) }
+                        accumulated += repeatCount
+                        if (accumulated >= safeExpanded) break
+                    }
                 }
             } else {
                 frameSpecs.map { it.first }
@@ -66,8 +84,6 @@ object FlipbookAnimationHandler {
             FlipbookEntry(
                 flipbookTexture = textureWithoutExt,
                 atlasTile = atlasTile,
-                // Bedrock has one duration for the whole flipbook. Expand
-                // Java's per-frame durations above and use one tick per entry.
                 ticksPerFrame = if (hasPerFrameTiming) 1 else frametime.coerceAtLeast(1),
                 interpolate = interpolate,
                 frames = frameList.takeIf { it.isNotEmpty() }
@@ -104,17 +120,21 @@ object FlipbookAnimationHandler {
         val result = mutableListOf<Pair<String, String>>()
         try {
             val array = JSONArray(flipbookContent)
-            if (array.length() > MAX_EXPANDED_FRAMES) {
-                throw IllegalArgumentException("Flipbook list is too large")
-            }
-            for (i in 0 until array.length()) {
+            val maxFrames = getMaxFrames()
+            val safeArrayLen = Maid.pagingAdvisor.sanitizeAnimationFrames(
+                requestedFrames = array.length().toLong(),
+                maxFrames = maxFrames,
+                texturePath = "flipbook_textures.json"
+            )
+
+            for (i in 0 until safeArrayLen) {
                 val obj = array.getJSONObject(i)
                 val flipbookTexture = obj.getString("flipbook_texture")
-                val normalizedTexture = flipbookTexture.replace('\\', '/')
+                val normalizedTexture = Maid.defense.pathSanitizer.normalizeSeparators(flipbookTexture)
                 if (!normalizedTexture.startsWith("textures/") ||
                     normalizedTexture.split('/').any { it == ".." || it.isBlank() }
                 ) {
-                    throw IllegalArgumentException("Invalid flipbook texture path")
+                    throw IllegalArgumentException("Invalid flipbook texture path: $flipbookTexture")
                 }
                 val ticks = if (obj.has("ticks_per_frame")) {
                     obj.getInt("ticks_per_frame").coerceIn(1, 1024)
@@ -130,10 +150,16 @@ object FlipbookAnimationHandler {
 
                 if (obj.has("frames")) {
                     val frames = obj.getJSONArray("frames")
-                    if (frames.length() > MAX_EXPANDED_FRAMES) {
-                        throw IllegalArgumentException("Flipbook frame list is too large")
+                    val safeFramesLen = Maid.pagingAdvisor.sanitizeAnimationFrames(
+                        requestedFrames = frames.length().toLong(),
+                        maxFrames = maxFrames,
+                        texturePath = normalizedTexture
+                    )
+                    val safeFramesArr = JSONArray()
+                    for (fIdx in 0 until safeFramesLen) {
+                        safeFramesArr.put(frames.get(fIdx))
                     }
-                    animObj.put("frames", frames)
+                    animObj.put("frames", safeFramesArr)
                 }
 
                 mcmetaRoot.put("animation", animObj)

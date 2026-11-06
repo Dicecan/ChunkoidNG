@@ -1,5 +1,7 @@
 package com.noches.chunkoidng.core.midi
 
+import com.noches.chunkoidng.maid.Maid
+import com.noches.chunkoidng.maid.model.ViolationType
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -35,10 +37,24 @@ data class ParsedMidiSong(
 
 object MidiParser {
 
-    private const val MAX_MIDI_BYTES = 128 * 1024 * 1024
     private const val MAX_TRACK_BYTES = 64 * 1024 * 1024
     private const val MAX_TRACKS = 1024
-    private const val MAX_NOTES = 1_000_000
+
+    private fun getMaxMidiBytes(): Long {
+        return try {
+            Maid.tuning.limits.midiMaxFileBytes
+        } catch (_: Exception) {
+            128L * 1024 * 1024
+        }
+    }
+
+    private fun getMaxNotes(): Int {
+        return try {
+            Maid.tuning.limits.midiMaxNotes
+        } catch (_: Exception) {
+            1_000_000
+        }
+    }
 
     private data class TempoChange(
         val tick: Long,
@@ -46,16 +62,36 @@ object MidiParser {
     )
 
     fun parse(file: File): ParsedMidiSong {
-        require(file.length() <= MAX_MIDI_BYTES) { "MIDI file is too large" }
+        val maxBytes = getMaxMidiBytes()
+        Maid.defense.binaryGuard.checkFileSizeWithinLimit(
+            size = file.length(),
+            maxBytes = maxBytes,
+            type = ViolationType.MIDI_FILE_SIZE_LIMIT,
+            module = "MidiParser",
+            target = file.name
+        )
         return parse(file.readBytes(), file.nameWithoutExtension)
     }
 
     fun parse(bytes: ByteArray, defaultTitle: String = "Untitled"): ParsedMidiSong {
-        require(bytes.size <= MAX_MIDI_BYTES) { "MIDI file is too large" }
+        val maxBytes = getMaxMidiBytes()
+        Maid.defense.binaryGuard.checkFileSizeWithinLimit(
+            size = bytes.size.toLong(),
+            maxBytes = maxBytes,
+            type = ViolationType.MIDI_FILE_SIZE_LIMIT,
+            module = "MidiParser",
+            target = defaultTitle
+        )
         val stream = ByteArrayInputStream(bytes)
 
         val headerId = readString(stream, 4)
         if (headerId != "MThd") {
+            Maid.securityAuditor.recordBlock(
+                type = ViolationType.MALFORMED_HEADER,
+                module = "MidiParser",
+                message = "非法MIDI文件头标识: $headerId",
+                pathOrTarget = defaultTitle
+            )
             throw IllegalArgumentException("Invalid MIDI file header: $headerId")
         }
 
@@ -103,46 +139,33 @@ object MidiParser {
             var offset = 0
             var currentTick = 0L
             var runningStatus = 0
+            var trackName = "Track ${trackIdx + 1}"
             val channelPrograms = IntArray(16) { 0 }
-            var trackName = "Track $trackIdx"
             val currentTrackNotes = mutableListOf<RawMidiNote>()
 
             fun readVarInt(): Long {
                 var value = 0L
-                var count = 0
-                while (offset < trackData.size && count < 4) {
-                    val b = trackData[offset++].toInt() and 0xFF
+                var b: Int
+                do {
+                    if (offset >= trackData.size) throw IllegalArgumentException("Truncated MIDI varint")
+                    b = trackData[offset++].toInt() and 0xFF
                     value = (value shl 7) or ((b and 0x7F).toLong())
-                    if ((b and 0x80) == 0) break
-                    count++
-                }
-                if (offset == trackData.size &&
-                    (trackData[offset - 1].toInt() and 0x80) != 0
-                ) throw IllegalArgumentException("Truncated MIDI variable length value")
-                if (count >= 4 && (trackData[offset - 1].toInt() and 0x80) != 0) {
-                    throw IllegalArgumentException("MIDI variable length value is too long")
-                }
+                } while ((b and 0x80) != 0)
                 return value
             }
 
             while (offset < trackData.size) {
-                val delta = readVarInt()
-                currentTick += delta
+                val deltaTick = readVarInt()
+                currentTick += deltaTick
+
                 if (offset >= trackData.size) break
 
-                val firstByte = trackData[offset++].toInt() and 0xFF
-                val statusByte: Int
-                if (firstByte < 0x80) {
-                    if (runningStatus == 0) {
-                        throw IllegalArgumentException("MIDI data byte without running status")
-                    }
-                    offset--
-                    statusByte = runningStatus
+                var statusByte = trackData[offset].toInt() and 0xFF
+                if ((statusByte and 0x80) != 0) {
+                    offset++
+                    runningStatus = statusByte
                 } else {
-                    statusByte = firstByte
-                    if (firstByte < 0xF0) {
-                        runningStatus = firstByte
-                    }
+                    statusByte = runningStatus
                 }
 
                 val eventType = statusByte and 0xF0
@@ -151,22 +174,20 @@ object MidiParser {
                 when (eventType) {
                     0x80 -> {
                         if (offset + 1 < trackData.size) {
-                            val key = trackData[offset++].toInt() and 0xFF
-                            val vel = trackData[offset++].toInt() and 0xFF
+                            offset += 2
                         }
                     }
                     0x90 -> {
                         if (offset + 1 < trackData.size) {
-                            val key = trackData[offset++].toInt() and 0xFF
-                            val vel = trackData[offset++].toInt() and 0xFF
-                            if (vel > 0) {
-                                require(currentTrackNotes.size < MAX_NOTES) { "MIDI track contains too many notes" }
+                            val pitch = trackData[offset++].toInt() and 0xFF
+                            val velocity = trackData[offset++].toInt() and 0xFF
+                            if (velocity > 0) {
                                 val prog = channelPrograms[channel]
                                 currentTrackNotes.add(
                                     RawMidiNote(
                                         channel = channel,
-                                        pitch = key,
-                                        velocity = vel,
+                                        pitch = pitch,
+                                        velocity = velocity,
                                         tick = currentTick,
                                         startMs = 0L,
                                         program = prog
@@ -176,7 +197,9 @@ object MidiParser {
                         }
                     }
                     0xA0, 0xB0, 0xE0 -> {
-                        offset = minOf(offset + 2, trackData.size)
+                        if (offset + 1 < trackData.size) {
+                            offset += 2
+                        }
                     }
                     0xC0 -> {
                         if (offset < trackData.size) {
@@ -284,6 +307,10 @@ object MidiParser {
 
         allNotes.sortBy { it.startMs }
 
+        val maxNotes = getMaxNotes()
+        val safeNotesCount = Maid.pagingAdvisor.sanitizeMidiNotes(allNotes.size, maxNotes, songTitle)
+        val finalNotes = if (allNotes.size > safeNotesCount) allNotes.take(safeNotesCount) else allNotes
+
         val firstTempo = sortedTempos.firstOrNull()?.usPerQuarter ?: 500000L
         val bpm = 60000000.0 / firstTempo.toDouble()
 
@@ -294,7 +321,7 @@ object MidiParser {
             durationMs = maxTimeMs,
             initialBpm = bpm,
             tracks = trackInfos,
-            notes = allNotes
+            notes = finalNotes
         )
     }
 

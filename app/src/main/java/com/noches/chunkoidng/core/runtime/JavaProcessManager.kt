@@ -3,6 +3,7 @@ package com.noches.chunkoidng.core.runtime
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -17,18 +18,7 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
     private var maxMemoryMB = 2048
 
     fun setMaxMemory(mb: Int) {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
-        val memInfo = android.app.ActivityManager.MemoryInfo()
-        val deviceLimitMb = if (activityManager != null) {
-            activityManager.getMemoryInfo(memInfo)
-            val totalPhysicalRamMb = (memInfo.totalMem / (1024 * 1024)).toInt()
-
-            val reservedRamMb = (totalPhysicalRamMb * 0.25f).toInt().coerceAtLeast(1024)
-            (totalPhysicalRamMb - reservedRamMb).coerceAtLeast(512)
-        } else {
-            mb
-        }
-        this.maxMemoryMB = mb.coerceIn(256, deviceLimitMb)
+        this.maxMemoryMB = Maid.tuning.budgetGovernor.clampMaxMemory(context, mb)
     }
 
     fun runCliJar(jarFile: File, vararg arguments: String): Flow<String> {
@@ -77,7 +67,6 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
             process = pb.start()
             onProcessCreated?.invoke(process)
         } catch (e: Exception) {
-
             try {
                 val directCmd = mutableListOf(javaBin.absolutePath)
                 directCmd.addAll(args)
@@ -104,8 +93,8 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 }
                 val exitCode = process.waitFor()
                 emit("[SYSTEM] Process exited with code: $exitCode")
-                } finally {
-                    if (process.isAlive) process.destroyForcibly()
+            } finally {
+                if (process.isAlive) process.destroyForcibly()
             }
         }
     }.flowOn(Dispatchers.IO)
@@ -120,7 +109,6 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         val appFilesDir = context.filesDir.absolutePath
 
         when {
-
             command.equals("ls", ignoreCase = true) -> {
                 val files = context.filesDir.listFiles()
                 if (files != null && files.isNotEmpty()) {

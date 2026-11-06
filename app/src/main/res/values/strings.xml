@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
@@ -806,7 +806,7 @@
     <string name="welcome_action_save">Save Settings</string>
     <string name="settings_profile_title">Performance Profile</string>
     <string name="settings_profile_desc">Current runtime mode and device resource limits</string>
-    <string name="settings_rerun_wizard">Re-run Device Benchmark &amp; Wizard</string>
+    <string name="settings_rerun_wizard">Re-run Wizard</string>
     <string name="settings_rerun_wizard_desc">Re-evaluate device hardware and adjust tuning profiles</string>
     <string name="settings_submodule_limits_title">Submodule Limits &amp; Bomb Defense</string>
     <string name="settings_submodule_limits_desc">Fine-grained resource quotas for NBT, Decryptor, and Pack Converter</string>
@@ -861,4 +861,21 @@
     <string name="welcome_env_notification_denied">Not Enabled</string>
     <string name="welcome_env_notification_action">Enable Notification</string>
     <string name="welcome_env_tip">Permissions and environment can be reconfigured at any time in Settings.</string>
+    <string name="maid_dashboard_title">MAID™ Inspection Dashboard</string>
+    <string name="maid_dashboard_desc">Managed Architecture for Integrity &amp; Defense (MAID™)</string>
+    <string name="maid_dashboard_button">Open MAID™ Dashboard</string>
+    <string name="maid_dashboard_acronym_info">\"Maid™\" is the friendly shorthand for MAID (Managed Architecture for Integrity &amp; Defense), responsible for app-wide path traversal defense, archive bomb shield, dynamic resource tuning, and runtime audit.</string>
+    <string name="maid_tab_overview">Overview</string>
+    <string name="maid_tab_quotas">Active Limits</string>
+    <string name="maid_tab_audit">Security Audit</string>
+    <string name="maid_tier_label">Device Tier</string>
+    <string name="maid_memory_label">ART Heap Memory</string>
+    <string name="maid_storage_label">Available Storage</string>
+    <string name="maid_audit_empty">MAID™ is standing guard: No security violations or truncations recorded.</string>
+    <string name="maid_action_clear_audit">Clear Audit Log</string>
+    <string name="maid_action_copy_report">Copy Report</string>
+    <string name="maid_copied_toast">Copied MAID™ Inspection Report to clipboard</string>
+    <string name="maid_severity_blocked">Blocked</string>
+    <string name="maid_severity_truncated">Truncated</string>
 </resources>
+

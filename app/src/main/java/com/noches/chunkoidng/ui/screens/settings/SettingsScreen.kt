@@ -1,4 +1,4 @@
-package com.noches.chunkoidng.ui.screens.settings
+﻿package com.noches.chunkoidng.ui.screens.settings
 
 import android.Manifest
 import android.app.Activity
@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import com.noches.chunkoidng.core.settings.PerformanceMode
@@ -47,6 +48,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -98,6 +100,7 @@ fun SettingsScreen(
         mutableStateOf(PermissionHelper.isIgnoringBatteryOptimizations(context))
     }
     var showCrashLogsDialog by remember { mutableStateOf(false) }
+    var showMaidDashboard by remember { mutableStateOf(false) }
     var crashLogsCount by remember {
         mutableIntStateOf(CrashLogManager.listCrashLogs(context).size)
     }
@@ -121,6 +124,12 @@ fun SettingsScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { _ ->
         hasNotificationPermission = PermissionHelper.hasNotificationPermission(context)
+    }
+
+    if (showMaidDashboard) {
+        MaidDashboardDialog(
+            onDismissRequest = { showMaidDashboard = false }
+        )
     }
 
     if (showCrashLogsDialog) {
@@ -404,31 +413,62 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(R.string.settings_profile_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.settings_profile_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.settings_profile_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                        FilledTonalButton(
+                            onClick = { showMaidDashboard = true },
+                            modifier = if (onNavigateToWelcome != null) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
+                        ) {
+                            Icon(Icons.Outlined.Security, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = stringResource(R.string.settings_profile_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = stringResource(R.string.maid_dashboard_button),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+
                         if (onNavigateToWelcome != null) {
                             FilledTonalButton(
                                 onClick = onNavigateToWelcome,
+                                modifier = Modifier.weight(1f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
                             ) {
                                 Icon(Icons.Outlined.Speed, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.settings_rerun_wizard), fontSize = 12.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = stringResource(R.string.settings_rerun_wizard),
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         }
                     }
@@ -919,3 +959,6 @@ private fun SettingsSwitchRow(
         )
     }
 }
+
+
+

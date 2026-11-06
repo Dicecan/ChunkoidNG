@@ -1,5 +1,6 @@
 package com.noches.chunkoidng.core.pack
 
+import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -9,15 +10,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 object ResourcePackConverterEngine {
-
-    private const val MAX_ARCHIVE_ENTRIES = 100_000
-    private const val MAX_ENTRY_UNCOMPRESSED_BYTES = 256L * 1024L * 1024L
-    private const val MAX_ARCHIVE_UNCOMPRESSED_BYTES = 1L * 1024L * 1024L * 1024L
-    private const val MAX_ENTRY_NAME_LENGTH = 512
 
     suspend fun scanPack(sourceDir: File): PackMetadata = withContext(Dispatchers.IO) {
         val packRoot = resolvePackRoot(sourceDir)
@@ -157,8 +152,6 @@ object ResourcePackConverterEngine {
 
             if (isJavaToBedrock && relativeLower.startsWith("assets/") &&
                 relativeLower.contains("/models/item/") && relativeLower.endsWith(".json")) {
-                // Java item model JSON is not a Bedrock model format. The item
-                // atlas generated from textures is the compatible fallback.
                 continue
             }
 
@@ -395,8 +388,6 @@ object ResourcePackConverterEngine {
                 .filter { it.isFile }
                 .map { it.relativeTo(candidate).path.replace('\\', '/') }
                 .toList()
-            // Only flatten a wrapper when its contents look like a pack. This
-            // preserves a legitimate pack containing only a textures folder.
             if (PackManifestHandler.detectPlatform(paths) == null) break
             root = candidate
         }
@@ -415,73 +406,38 @@ object ResourcePackConverterEngine {
         if (destinationDir.exists()) destinationDir.deleteRecursively()
         destinationDir.mkdirs()
 
-        val destinationRoot = destinationDir.canonicalFile
-        val seenEntries = HashSet<String>()
-        var entryCount = 0
-        var totalBytes = 0L
-        var sawEntry = false
-
-        ZipInputStream(FileInputStream(archiveFile).buffered()).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                sawEntry = true
-                entryCount++
-                if (entryCount > MAX_ARCHIVE_ENTRIES) {
-                    throw IOException("Archive contains too many entries")
-                }
-
-                val entryName = entry.name.replace('\\', '/')
-                if (entryName.isBlank() || entryName.length > MAX_ENTRY_NAME_LENGTH || entryName.contains('\u0000')) {
-                    throw IOException("Invalid archive entry name")
-                }
-                val segments = entryName.split('/')
-                if (segments.any { it == ".." } || entryName.startsWith('/') ||
-                    Regex("^[A-Za-z]:/").containsMatchIn(entryName)) {
-                    throw IOException("Archive entry escapes destination: ${entry.name}")
-                }
-                val relativeName = segments.filter { it.isNotEmpty() && it != "." }.joinToString("/")
-                if (relativeName.isBlank()) {
-                    zis.closeEntry()
-                    entry = zis.nextEntry
-                    continue
-                }
-                if (!seenEntries.add(relativeName.lowercase())) {
-                    throw IOException("Duplicate archive entry: $entryName")
-                }
-
-                val targetFile = File(destinationRoot, relativeName).canonicalFile
-                val rootPath = destinationRoot.path
-                if (targetFile.path != rootPath && !targetFile.path.startsWith(rootPath + File.separator)) {
-                    throw IOException("Archive entry escapes destination: ${entry.name}")
-                }
-                if (entry.isDirectory) {
-                    targetFile.mkdirs()
-                } else {
-                    if (entry.size > MAX_ENTRY_UNCOMPRESSED_BYTES) {
-                        throw IOException("Archive entry is too large: $entryName")
-                    }
-                    targetFile.parentFile?.mkdirs()
-                    FileOutputStream(targetFile).buffered().use { fos ->
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        var entryBytes = 0L
-                        while (true) {
-                            val read = zis.read(buffer)
-                            if (read < 0) break
-                            entryBytes += read
-                            totalBytes += read
-                            if (entryBytes > MAX_ENTRY_UNCOMPRESSED_BYTES || totalBytes > MAX_ARCHIVE_UNCOMPRESSED_BYTES) {
-                                throw IOException("Archive expands beyond the allowed size")
-                            }
-                            fos.write(buffer, 0, read)
-                        }
-                    }
-                }
-                zis.closeEntry()
-                entry = zis.nextEntry
-            }
+        val limits = try {
+            Maid.tuning.limits
+        } catch (_: Exception) {
+            com.noches.chunkoidng.maid.model.PerformanceLimits(
+                jvmMaxMemoryMb = 2048,
+                parallelism = 2,
+                useSerialGc = true,
+                archiveMaxEntryBytes = 256L * 1024 * 1024,
+                archiveMaxTotalBytes = 1024L * 1024 * 1024,
+                archiveMaxEntries = 100_000,
+                nbtArrayPageSize = 100,
+                packMaxFrames = 100_000,
+                midiMaxFileBytes = 128L * 1024 * 1024,
+                midiMaxNotes = 1_000_000
+            )
         }
-        if (!sawEntry) {
-            throw IOException("Archive is empty or invalid")
+
+        try {
+            FileInputStream(archiveFile).buffered().use { fis ->
+                val summary = Maid.defense.archiveShield.extractZipSecurely(
+                    inputStream = fis,
+                    destDir = destinationDir,
+                    limits = limits,
+                    module = "PackConverter"
+                )
+                if (summary.entryCount == 0) {
+                    throw IOException("Archive is empty or invalid")
+                }
+            }
+        } catch (e: Exception) {
+            if (e is IOException) throw e
+            throw IOException(e.message, e)
         }
     }
 

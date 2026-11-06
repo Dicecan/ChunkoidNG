@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Android向けオープンソースのMinecraftワールド変換ツール</string>
@@ -806,7 +806,7 @@
     <string name="welcome_action_save">設定を保存</string>
     <string name="settings_profile_title">パフォーマンスとリソースモード</string>
     <string name="settings_profile_desc">現在の実行モードとサブモジュールの制限管理</string>
-    <string name="settings_rerun_wizard">デバイス評価ウィザードを再実行</string>
+    <string name="settings_rerun_wizard">評価ウィザード再実行</string>
     <string name="settings_rerun_wizard_desc">ハードウェア性能を再評価しチューニング設定を更新</string>
     <string name="settings_submodule_limits_title">サブモジュール制限とボム保護</string>
     <string name="settings_submodule_limits_desc">NBT、復号、パック変換、MIDI の安全上限を個別設定</string>
@@ -861,4 +861,21 @@
     <string name="welcome_env_notification_denied">未許可</string>
     <string name="welcome_env_notification_action">通知を許可</string>
     <string name="welcome_env_tip">ヒント：権限と環境は【設定】でいつでも再設定できます。</string>
+    <string name="maid_dashboard_title">メイド™ 巡回ダッシュボード</string>
+    <string name="maid_dashboard_desc">完全性・防衛のための統合アーキテクチャ (MAID™)</string>
+    <string name="maid_dashboard_button">メイド™看板を開く</string>
+    <string name="maid_dashboard_acronym_info">「メイド™」は MAID (Managed Architecture for Integrity &amp; Defense、完全性・防衛のための統合アーキテクチャ) の簡略名称であり、パス逸脱防止、書庫爆弾対策、動的性能調整、監査を一括管理します。</string>
+    <string name="maid_tab_overview">システム概要</string>
+    <string name="maid_tab_quotas">有効制限</string>
+    <string name="maid_tab_audit">セキュリティ監査</string>
+    <string name="maid_tier_label">デバイスティア</string>
+    <string name="maid_memory_label">ARTヒープメモリ</string>
+    <string name="maid_storage_label">空きストレージ</string>
+    <string name="maid_audit_empty">メイド™警戒中：セキュリティ遮断または切り捨ての記録はありません。</string>
+    <string name="maid_action_clear_audit">監査ログをクリア</string>
+    <string name="maid_action_copy_report">レポートをコピー</string>
+    <string name="maid_copied_toast">MAID™ 診断レポートをクリップボードにコピーしました</string>
+    <string name="maid_severity_blocked">厳格遮断</string>
+    <string name="maid_severity_truncated">安全切詰</string>
 </resources>
+

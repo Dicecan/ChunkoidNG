@@ -3,6 +3,7 @@ package com.noches.chunkoidng.core.runtime
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -53,20 +54,17 @@ class JavaRuntimeEnvironment(private val context: Context) {
             assetManager.open(ROOTFS_ZIP).use { inputStream ->
                 ZipInputStream(inputStream).use { zis ->
                     val buffer = ByteArray(65536)
-                    val rootfsCanonicalPath = rootfsDir.canonicalPath
                     var extractedEntries = 0
                     val estimatedTotal = 57
                     var lastReportedProgress = 0
 
                     while (true) {
                         val entry = zis.nextEntry ?: break
-                        val destFile = File(rootfsDir, entry.name)
-
-                        val destFilePath = destFile.canonicalPath
-                        if (destFilePath != rootfsCanonicalPath &&
-                            !destFilePath.startsWith(rootfsCanonicalPath + File.separator)) {
-                            throw SecurityException("RootFS archive contains invalid path: ${entry.name}")
-                        }
+                        val destFile = Maid.defense.pathSanitizer.resolveUnderBase(
+                            baseDir = rootfsDir,
+                            entryPath = entry.name,
+                            module = TAG
+                        )
 
                         if (entry.isDirectory) {
                             destFile.mkdirs()
