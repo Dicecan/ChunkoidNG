@@ -89,6 +89,61 @@ export const features = [
     }
   },
   {
+    id: 'maid_framework',
+    accent: '#2b78e4',
+    'zh-CN': {
+      title: 'MAID™ 安全与性能治理',
+      badge: 'Beta 0.7 预览',
+      summary: '全架构完整性与安全防御体系，收敛路径防逃逸、防炸弹配额、温和截断与巡检看板。',
+      tags: ['MAID™ 框架', '温和截断', '巡检看板', '实时审计'],
+      detail: [
+        'MAID (Managed Architecture for Integrity & Defense，拟人化简写为「女仆™」) 是 Chunkoid NG 正在集成演进的全新安全与性能治理底座（预计于 Beta 0.7 正式搭载）。',
+        '统一集成 PathSanitizer（Zip-Slip 目录逃逸与路径非法字符强阻断）、ArchiveShield（条目总数与压缩炸弹多级熔断）与 BinaryGuard（二进制魔数与内存范围守卫）。',
+        '首创「温和截断（Gentle Truncation）」治理策略：针对超限材质动画帧与大规模 MIDI 音符，自动温和修剪至设备安全承载阈值，保障转换正常完成且不发生 OOM 崩溃，并记录审计事件。',
+        '硬件管家（HardwareButler）与预算调控（BudgetGovernor）实时探针 CPU 规格与可用 RAM，动态调控沙箱堆内存与 I/O 缓冲区。',
+        '设置界面集成「女仆™ 巡检看板」，支持一键查看设备算力梯级、ART 堆内存水位、生效安全配额与 100 条定长无锁环形审计日志，并支持复制完整诊断报告。'
+      ],
+      notes: [
+        '女仆™ 会在后台默默守护所有子模块的运行时安全，绝大多数温和截断操作均在无感状态下自动完成。',
+        '若在转换过程中遇到异常中断，可随时进入【偏好设置】中的【女仆™ 巡检看板】排查近期的拦截事件。'
+      ]
+    },
+    en: {
+      title: 'MAID™ Security & Governance',
+      badge: 'Guardian',
+      summary: 'Managed Architecture for Integrity & Defense with path sanitization, bomb shields, gentle truncation and live dashboard.',
+      tags: ['MAID™ Framework', 'Gentle Truncation', 'Inspection Dashboard', 'Live Audit'],
+      detail: [
+        'MAID (Managed Architecture for Integrity & Defense, friendly shorthand "Maid™") serves as the app-wide architecture for integrity, defense, and resource governance.',
+        'Unifies PathSanitizer (Zip-Slip directory traversal and character sanitization), ArchiveShield (entry limits and zip-bomb circuit breaking), and BinaryGuard (magic numbers and range bounds checking).',
+        'Introduces the "Gentle Truncation" policy: oversized texture animation frames and massive MIDI note streams are gently clamped to safe hardware thresholds, preventing OOM crashes without breaking the workflow.',
+        'HardwareButler and BudgetGovernor inspect CPU cores and available RAM in real-time, dynamically tuning sandbox JVM heap limits and I/O buffers.',
+        'Settings features the "MAID™ Inspection Dashboard" dialog to inspect device compute tiers, ART heap watermarks, active quotas, and recent security events with one-click report copying.'
+      ],
+      notes: [
+        'MAID™ stands guard silently in the background; most gentle truncations occur transparently without interrupting your workflow.',
+        'If a task fails unexpectedly, open the MAID™ Dashboard in Settings to inspect recent security audit logs.'
+      ]
+    },
+    ja: {
+      title: 'MAID™ セキュリティと性能統治',
+      badge: '専属守衛',
+      summary: '完全性・防衛のための統合アーキテクチャ。パス逸脱防止、書庫爆弾対策、安全切詰、巡回看板を搭載。',
+      tags: ['MAID™ 基盤', '安全切詰', '巡回ダッシュボード', 'リアルタイム監査'],
+      detail: [
+        'MAID (Managed Architecture for Integrity & Defense、愛称「メイド™」) は、Chunkoid NG 全体の保全性とリソース統治を担うアーキテクチャです。',
+        'PathSanitizer（Zip-Slip パストラバーサル防止）、ArchiveShield（エントリ上限と Zip 爆弾の遮断）、BinaryGuard（マジックナンバーと境界検証）を統合。',
+        '「安全切詰（Gentle Truncation）」ポリシーを導入：上限を超えるアニメーションフレームや巨大な MIDI ノートを端末の安全閾値まで穏やかに切り詰めることで、OOM による強制終了を防ぎつつ変換を継続します。',
+        'HardwareButler と BudgetGovernor が CPU コア数と空き RAM をリアルタイムに計測し、サンドボックスのヒープメモリとバッファを動的に調整します。',
+        '設定画面に「メイド™ 巡回ダッシュボード」を新設。デバイス性能ティア、ART ヒープ使用状況、有効な制限値、直近の監査イベントを確認でき、レポートの一括コピーにも対応します。'
+      ],
+      notes: [
+        'メイド™はバックグラウンドで常に安全を監視しており、多くの安全切詰は変換を中断させることなく自然に行われます。',
+        '変換が予期せず終了した場合は、【設定】内の【メイド™ 巡回ダッシュボード】から直近の監査ログをご確認ください。'
+      ]
+    }
+  },
+  {
     id: 'netease_decryptor',
     accent: '#6b5bd2',
     'zh-CN': {

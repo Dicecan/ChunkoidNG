@@ -178,6 +178,7 @@ export default {
     "title": "バージョン履歴",
     "lead": "Chunkoid NG の歩みです。最新バージョンは {version} で、現在は開発プレビュー段階にあります。",
     "latest": "最新",
+    "upcoming": "開発中（未リリース）",
     "roadmap": "今後の予定",
     "roadmapNote": "予定は開発の進捗により変更される場合があり、確約ではありません。",
     "typeFeat": "追加",

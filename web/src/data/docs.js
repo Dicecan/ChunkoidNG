@@ -218,6 +218,114 @@ export const docPages = [
     }
   },
   {
+    slug: 'maid-governance',
+    'zh-CN': {
+      title: 'MAID™ 安全与资源治理 (Beta 0.7 预览)',
+      summary: '全架构完整性守卫、Zip 炸弹防御、温和截断与女仆™巡检看板说明。',
+      sections: [
+        {
+          heading: '什么是 MAID™',
+          paragraphs: [
+            'MAID (Managed Architecture for Integrity & Defense，全架构完整性与安全防御系统) 是 Chunkoid NG 正在为 Beta 0.7 集成研发的底层安全与性能治理核心，在软件内拟人化简写为「女仆™」。',
+            '在过去，路径校验、解压安全与防炸弹限制分散在各个独立业务模块中；MAID 将所有安全守卫统一收拢进 defense、tuning、audit 三大子系统，实现全局一致的防御与资源调控。'
+          ]
+        },
+        {
+          heading: '三大核心防御机制',
+          list: [
+            'PathSanitizer：绝对阻断 Zip-Slip 目录逃逸攻击与非法路径字符注入，保护应用私有数据与 RootFS 运行环境。',
+            'ArchiveShield：内置单条目体积配额、整包膨胀率上限与总条目数上限（默认 50,000 ~ 200,000），毫秒级熔断恶意 Zip 炸弹。',
+            'BinaryGuard：基于二进制魔数（Magic Number）严格校验网易 LevelDB 与标准 MIDI 头部格式，实施无越界内存缓冲区保护。'
+          ]
+        },
+        {
+          heading: '温和截断策略（Gentle Truncation）',
+          paragraphs: [
+            '对于非攻击性的资源超标场景（例如包含数万帧展开动画的极端材质包，或音符密集度极高的大型 MIDI 音乐），MAID 摒弃了直接抛出异常中断转换的粗暴做法。',
+            'MAID 会自动将超限资源温和截断至当前机型安全承受的上限阈值，确保转换任务顺利完成且不发生 OOM 崩溃，并在审计流中清晰记录截断详情。'
+          ]
+        },
+        {
+          heading: '女仆™ 巡检看板使用指南',
+          paragraphs: [
+            '在【偏好设置】中的【性能调优与资源模式】卡片顶部，点击【打开女仆™看板】即可唤起巡检面板。',
+            '看板提供「系统概览」（设备算力评分、核心主频、实时 ART 堆内存水位）、「生效配额」（当前沙箱与各模块安全限制）和「安全审计」（实时监听拦截与温和截断事件），并支持一键将完整诊断报告复制到剪贴板。'
+          ]
+        }
+      ]
+    },
+    en: {
+      title: 'MAID™ Security & Governance (Beta 0.7 Preview)',
+      summary: 'App-wide integrity guard, zip bomb shield, gentle truncation and MAID™ dashboard.',
+      sections: [
+        {
+          heading: 'What is MAID™',
+          paragraphs: [
+            'MAID (Managed Architecture for Integrity & Defense) is the core architecture for runtime security and resource governance in Chunkoid NG, affectionately abbreviated as "Maid™".',
+            'Previously, path validation and archive defenses were scattered across separate modules; MAID centralizes all safety guards into defense, tuning, and audit subsystems.'
+          ]
+        },
+        {
+          heading: 'Three Core Defense Mechanisms',
+          list: [
+            'PathSanitizer: Strictly blocks Zip-Slip directory traversal attacks and illegal path character injections, protecting private app storage and the RootFS environment.',
+            'ArchiveShield: Enforces entry size quotas, total extraction size quotas, and entry count limits (50,000 ~ 200,000), tripping circuit breakers against zip bombs.',
+            'BinaryGuard: Verifies magic numbers for NetEase LevelDB and MIDI files, enforcing zero-out-of-bounds binary buffer protections.'
+          ]
+        },
+        {
+          heading: 'Gentle Truncation Policy',
+          paragraphs: [
+            'For non-malicious resource overflows (e.g., texture packs with tens of thousands of animation frames, or massive MIDI tracks with millions of notes), MAID avoids crashing or failing the workflow.',
+            'Instead, MAID gently clamps excess items to the safe hardware capacity limit, completing the conversion safely without out-of-memory errors while logging an audit event.'
+          ]
+        },
+        {
+          heading: 'Using the MAID™ Dashboard',
+          paragraphs: [
+            'In Settings under the Performance Profile card, tap "Open MAID™ Dashboard" to launch the inspection panel.',
+            'The dashboard offers Overview (device tier, CPU clock, live ART heap watermarks), Active Limits (current quotas), and Security Audit (live stream of blocked and truncated events), with one-click report copying.'
+          ]
+        }
+      ]
+    },
+    ja: {
+      title: 'MAID™ セキュリティと統治 (Beta 0.7 プレビュー)',
+      summary: 'アプリ全体の保全防御、書庫爆弾対策、安全切詰とメイド™巡回看板の解説。',
+      sections: [
+        {
+          heading: 'MAID™ とは',
+          paragraphs: [
+            'MAID (Managed Architecture for Integrity & Defense、完全性・防衛のための統合アーキテクチャ) は、Chunkoid NG のランタイムセキュリティとリソース統治を司る中核基盤です（愛称「メイド™」）。',
+            '従来各モジュールに分散していたパス検証や解凍保護を、defense、tuning、audit の 3 つのサブシステムへ一元化しました。'
+          ]
+        },
+        {
+          heading: '3 つの主要防護機構',
+          list: [
+            'PathSanitizer：Zip-Slip によるパストラバーサルや不正パス文字を厳格に遮断し、プライベートデータと RootFS 環境を保護します。',
+            'ArchiveShield：単一ファイル制限、全体展開サイズ制限、エントリ数上限（50,000〜200,000）を設け、Zip 爆弾を即座に遮断します。',
+            'BinaryGuard：NetEase LevelDB や MIDI ファイルのマジックナンバーを検証し、境界外メモリ操作を確実に防ぎます。'
+          ]
+        },
+        {
+          heading: '安全切詰ポリシー（Gentle Truncation）',
+          paragraphs: [
+            '悪意のないリソース超過（数万フレームにおよぶアニメーションや膨大な音符を持つ MIDI など）に対して、処理を強制終了して中断するのではなく、安全な上限まで穏やかに切り詰めます。',
+            'これにより OOM クラッシュを起こさずに変換を無事完了させ、監査ログに切り詰めの詳細を記録します。'
+          ]
+        },
+        {
+          heading: 'メイド™ 巡回ダッシュボードの使い方',
+          paragraphs: [
+            '【設定】の【性能調优与资源模式】カード上部にある【メイド™看板を開く】をタップすると巡回パネルが表示されます。',
+            '「システム概要」「有効制限」「セキュリティ監査」の 3 つのタブで端末の稼働状況を確認でき、レポートをクリップボードへ一括コピーできます。'
+          ]
+        }
+      ]
+    }
+  },
+  {
     slug: 'faq-tech',
     'zh-CN': {
       title: '常见问题',

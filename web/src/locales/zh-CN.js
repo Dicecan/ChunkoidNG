@@ -178,6 +178,7 @@ export default {
     "title": "版本记录",
     "lead": "Chunkoid NG 的版本演进记录。当前最新版本为 {version}，处于开发预览阶段。",
     "latest": "最新",
+    "upcoming": "开发中 / 未发布",
     "roadmap": "后续规划",
     "roadmapNote": "规划内容可能随实际开发进度调整，不代表最终承诺。",
     "typeFeat": "新增",

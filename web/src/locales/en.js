@@ -178,6 +178,7 @@ export default {
     "title": "Version History",
     "lead": "The evolution of Chunkoid NG. The latest version is {version}, currently a development preview.",
     "latest": "Latest",
+    "upcoming": "In Dev (Unreleased)",
     "roadmap": "Roadmap",
     "roadmapNote": "Roadmap items may shift with actual development progress and are not a commitment.",
     "typeFeat": "New",

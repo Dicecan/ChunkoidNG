@@ -273,8 +273,18 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 900px) {
-  .tilt { inset: -30px; }
-  .glare { opacity: 0.13; }
+  .tilt { inset: -24px; }
+  .glare { opacity: 0.12; }
+  .layer img {
+    object-position: 28% 36%;
+  }
+}
+
+@media (max-width: 480px) {
+  .tilt { inset: -16px; }
+  .layer img {
+    object-position: 30% 32%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

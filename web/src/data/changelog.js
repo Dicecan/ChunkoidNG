@@ -1,6 +1,25 @@
-
-
 export const changelog = [
+  {
+    version: 'Beta 0.7',
+    code: 7,
+    status: 'upcoming',
+    highlight: {
+      'zh-CN': '全新 MAID™ 女仆安全与性能治理底座、温和截断策略与女仆巡检看板（开发中 · 未发布）',
+      en: 'MAID™ governance architecture, gentle truncation policy and inspection dashboard (In Development / Unreleased)',
+      ja: 'MAID™ メイド統合セキュリティ基盤、安全切詰ポリシー、巡回ダッシュボード（開発中・未リリース）'
+    },
+    date: {
+      'zh-CN': '未发布（开发中）',
+      en: 'Unreleased (In Dev)',
+      ja: '未リリース（開発中）'
+    },
+    items: [
+      { type: 'feat', text: { 'zh-CN': '全新集成 MAID™ (Managed Architecture for Integrity & Defense) 女仆统一安全与性能治理框架，收敛全模块防御与配额。', en: 'Introduced the MAID™ (Managed Architecture for Integrity & Defense) unified security and resource governance framework.', ja: '統合セキュリティ・性能ガバナンス基盤 MAID™（メイド™）を導入し、全モジュールの防護とクォータを集約。' } },
+      { type: 'feat', text: { 'zh-CN': '首创资源超标「温和截断（Gentle Truncation）」策略与 100 条定长无锁环形审计体系，超限材质帧与超大 MIDI 音符自动安全修剪不崩溃。', en: 'Pioneered "Gentle Truncation" and lock-free ring-buffer audit logging, safely clamping oversized frames and MIDI notes without crashing.', ja: '「安全切詰（Gentle Truncation）」とリングバッファ監査ログを導入。上限超過のアニメフレームや巨大 MIDI を安全にトリミング。' } },
+      { type: 'feat', text: { 'zh-CN': '新增设置「女仆™ 巡检看板」弹窗，支持设备体征总览、生效配额查看、实时拦截流与一键复制诊断报告。', en: 'Added "MAID™ Inspection Dashboard" dialog in Settings with device metrics, active quotas, live audit events and report export.', ja: '設定に「メイド™ 巡回ダッシュボード」を追加。端末スペック、有効制限、リアルタイム監査ログの閲覧とコピーに対応。' } },
+      { type: 'fix', text: { 'zh-CN': '优化偏好设置卡片排版，解决双操作按钮导致的标题与说明单字纵向换行挤压问题。', en: 'Optimized Settings card layout, fixing title text vertical stacking caused by dual button widths.', ja: '設定画面のカードレイアウトを改善し、ボタン配置によるタイトルの縦長崩れを解消。' } }
+    ]
+  },
   {
     version: 'Beta 0.6',
     code: 6,
@@ -11,7 +30,7 @@ export const changelog = [
       ja: 'ハードウェア適応チューニング、初回ウィザード、クラッシュ診断と安定性向上'
     },
     date: {
-      'zh-CN': '测试阶段',
+      'zh-CN': '公开测试版',
       en: 'Public Beta',
       ja: '公開ベータ'
     },

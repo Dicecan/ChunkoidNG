@@ -39,6 +39,9 @@ const plans = computed(() =>
             <span v-if="rel.status === 'current'" class="badge" style="margin-top: 6px">
               {{ t('changelog.latest') }}
             </span>
+            <span v-else-if="rel.status === 'upcoming'" class="tag" style="margin-top: 6px; border-color: var(--accent); color: var(--accent-text);">
+              {{ t('changelog.upcoming') }}
+            </span>
           </div>
 
           <div class="release-body">

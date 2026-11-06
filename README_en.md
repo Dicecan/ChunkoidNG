@@ -3,74 +3,85 @@
   <p><strong>Minecraft World and Resource Pack Toolkit for Android</strong></p>
 
   <p>
-    <a href="README_zh.md">简体中文</a> | 
-    <a href="README_en.md">English</a> | 
-    <a href="https://chunkoid.top">Official Website</a>
+    <a href="https://github.com/Dicecan/ChunkoidNG/releases"><img src="https://img.shields.io/github/v/release/Dicecan/ChunkoidNG?style=flat-square&color=2f7d63" alt="Release"></a>
+    <img src="https://img.shields.io/badge/Platform-Android_8.0+-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Platform">
+    <img src="https://img.shields.io/badge/Arch-arm64--v8a-blue?style=flat-square" alt="Arch">
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-orange?style=flat-square" alt="License"></a>
   </p>
 
   <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-Beta%200.6-2ea043">
-    <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-E6B800"></a>
-    <img alt="Kotlin" src="https://img.shields.io/badge/language-Kotlin-7F52FF">
-    <img alt="UI" src="https://img.shields.io/badge/UI-Jetpack%20Compose%20MD3E-4285F4">
-    <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-3DDC84">
-    <img alt="Minecraft" src="https://img.shields.io/badge/Minecraft-Bedrock%2FJava-62B47A">
+    <a href="README_zh.md">简体中文</a> | <strong>English</strong>
   </p>
 </div>
 
 ---
 
-## Overview
+## Quick Navigation
 
-**Chunkoid NG (Next-Generation)** is an Android-native Minecraft world conversion and resource management utility, refactored and maintained by **EncoreTeam**.
+- [Project Background](#project-background)
+- [Features](#features)
+- [System Requirements](#system-requirements)
+- [Build Instructions](#build-instructions)
+- [License and Acknowledgements](#license-and-acknowledgements)
 
-- **Project Transition**: Originated from Chunkoid developed by **Dozener (DozenesStudio)**. To ensure sustained maintenance and evolution after Dozener entered university, the project was officially handed over to **DICECAN (EncoreTeam)**.
-- **License**: The project continues under the **[GNU General Public License v3.0 (GPLv3)](LICENSE)**.
-- **Founder Attribution**: Dozener's pioneer attribution and credits remain permanently honored across all documentations, repositories, and release builds.
+---
 
-The project has transitioned from early previews to **Beta 0.6**. Core feature modules are complete and operational, with ongoing development focused on stability and device-specific performance tuning.
+## Project Background
+
+**Chunkoid NG (Next-Generation)** is a modernized, rebuilt Android toolkit for Minecraft worlds and resource packs, maintained by **EncoreTeam**.
+
+- **Origins and Transition**: The project originated from Chunkoid, independently created by **Dozener (DozenesStudio)**. Upon their transition to university, maintenance was handed over to **DICECAN (EncoreTeam)** to continue active development.
+- **Open-Source License**: Strictly adheres to the original **[GNU General Public License v3.0 (GPLv3)](LICENSE)**.
+- **Founder Attribution**: Founder attribution to Dozener is permanently retained across code repositories, documentation, and the application's About screen.
+
+The latest public release is **Beta 0.6**. The upcoming **Beta 0.7** is currently under active development with preview integration of the MAID™ security and resource governance framework.
 
 ---
 
 ## Features
 
 - **World Conversion**: Bidirectional conversion between Java Edition and Bedrock Edition (BE), with version mapping, cross-version compatibility warnings, and foreground service persistence.
+- **MAID™ Security & Resource Governance (Beta 0.7 Preview)**: Built-in **MAID™** (**M**anaged **A**rchitecture for **I**ntegrity & **D**efense) framework providing centralized Zip-Slip directory traversal blocking, multi-tier archive quotas, zip bomb circuit breaking, and binary magic number verification.
+- **Gentle Truncation Strategy (Beta 0.7 Preview)**: Oversized resource pack animation frames and extreme MIDI note counts are safely clamped to device hardware thresholds without interrupting the workflow, preventing out-of-memory crashes while recording audit logs.
+- **MAID™ Inspection Dashboard & Live Audit (Beta 0.7 Preview)**: A dedicated in-app dashboard accessible via Settings to monitor device compute score, ART heap watermarks, active quotas, and recent security events with one-click report export.
 - **NBT & LevelDB Editor**: Parse and edit `.dat`, `.mca`, `level.dat`, LevelDB key-value entries, and full `.mcworld`/`.zip` archives; includes virtual paging for large arrays and semantic tags for common data fields.
 - **2D Chunk Visualizer & Pruning**: Grid-based chunk inspection across dimensions (Overworld / Nether / The End), with unvisited 0-tick chunk pruning and dimension trimming to reduce world size.
 - **Resource Pack Converter**: Bidirectional conversion between Java and Bedrock resource packs, resolving blockstates, models, and MCMETA texture strip stitching.
 - **MIDI to Redstone Music**: Parse MIDI tracks to construct compact serpentine redstone noteblock contraptions, directly written into LevelDB flat worlds or injected into existing saves.
 - **NetEase World Decryption**: XOR-based decryption and passive encryption for NetEase Bedrock saves.
 - **Sandbox Runtime & Performance Tuning**: Embedded OpenJDK 17 runtime with automatic device profiling and selectable memory profiles (Low Memory / Balanced / Aggressive / Custom) to avoid OOM crashes during large world processing.
-- **Isolated Crash Handler**: Crash diagnosis running in an isolated `:crash` process to capture hardware snapshots and export stack traces safely.
+- **Isolated Crash Handler**: Crash diagnosis running in an isolated `:crash` process to capture hardware snapshots, audit logs, and export stack traces safely.
 
 ---
 
-## Building
+## System Requirements
 
-### Requirements
-- **Android Studio**: Ladybug (2024.2.1) or newer
-- **JDK**: OpenJDK 17 or JDK 21
-- **Android SDK**: API 35 (Minimum: Android 8.0 / API 26)
+- **Operating System**: Android 8.0 (API 27) or higher
+- **CPU Architecture**: 64-bit ARM only (`arm64-v8a`)
+- **Recommended Memory**: 4GB+ RAM (6GB+ recommended for large Java world conversions)
+- **Storage**: Minimum 100MB free space for unpacking the embedded OpenJDK runtime on first launch
 
-### Build Commands
+---
+
+## Build Instructions
+
+Built with modern Android tooling:
+- **Kotlin** 2.0+
+- **Jetpack Compose** (Material Design 3)
+- **NDK**: LevelDB JNI bindings and native optimizations
+
+Run the following command to assemble a Debug APK:
+
 ```bash
-# Build Debug APK
 ./gradlew assembleDebug
-
-# Run Unit Tests
-./gradlew testDebugUnitTest
 ```
 
+> **Note**: The first build will automatically download and unpack pre-built aarch64 OpenJDK and Chunker CLI binaries.
+
 ---
 
-## License & Credits
+## License and Acknowledgements
 
-- **License**: [GNU General Public License v3.0](LICENSE)
-- **Original Author & Founder**: [Dozener (DozenesStudio)](mailto:dozener@outlook.com)
-- **Maintainers**: [EncoreTeam](https://chunkoid.top) (DICECAN)
-- **Key Libraries & References**:
-  - [The Hive - Chunker](https://github.com/HiveGamesOSS/Chunker) (MIT)
-  - [HTMonkeyG - XOR-MC-Archive-Decrypt](https://github.com/HTMonkeyG/XOR-MC-Archive-Decrypt) (GPL-3.0)
-  - [PowerNukkit - NBT-Manipulator](https://github.com/PowerNukkit/NBT-Manipulator) (MIT)
-  - [iq80 - leveldb](https://github.com/dain/leveldb) (Apache-2.0)
-  - [HiveGamesOSS - leveldb-mcpe-java](https://github.com/HiveGamesOSS/leveldb-mcpe-java) (Apache-2.0 / BSD)
+- Licensed under the **GNU General Public License v3.0**, see [LICENSE](LICENSE).
+- Core conversion engine powered by [Chunker CLI](https://github.com/HiveGames/Chunker) (The Hive, MIT License).
+- Sincere thanks to founder **Dozener** for their exceptional foundation and open-source contributions.
