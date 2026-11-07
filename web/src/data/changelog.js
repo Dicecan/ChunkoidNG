@@ -4,9 +4,9 @@ export const changelog = [
     code: 7,
     status: 'upcoming',
     highlight: {
-      'zh-CN': '全新 MAID™ 女仆安全与性能治理底座、温和截断策略与女仆巡检看板（开发中 · 未发布）',
-      en: 'MAID™ governance architecture, gentle truncation policy and inspection dashboard (In Development / Unreleased)',
-      ja: 'MAID™ メイド統合セキュリティ基盤、安全切詰ポリシー、巡回ダッシュボード（開発中・未リリース）'
+      'zh-CN': '生物与实体全量双向迁移引擎、全新 MAID™ 女仆安全与性能治理底座（开发中 · 未发布）',
+      en: 'Smart entity migration pipeline, MAID™ governance architecture and inspection dashboard (In Development / Unreleased)',
+      ja: '生物・エンティティ全量双方向変換エンジン、MAID™ メイド統合セキュリティ基盤（開発中・未リリース）'
     },
     date: {
       'zh-CN': '未发布（开发中）',
@@ -14,6 +14,10 @@ export const changelog = [
       ja: '未リリース（開発中）'
     },
     items: [
+      { type: 'feat', text: { 'zh-CN': '首创全量生物与实体智能迁移引擎（JE ↔ BE 双向及同平台跨版本），打破上游 Chunker 仅 4 种装饰实体的限制，彻底攻克空壳实体、交易丢失与血量崩溃痛点。', en: 'Introduced smart bi-directional entity migration pipeline (JE ↔ BE and same-platform cross-version), overcoming upstream Chunker limitations and fixing empty shells, trade loss, and health crashes.', ja: '生物・エンティティの全量双方向変換エンジン（JE ↔ BE および同プラットフォーム世代間）を新設。空洞エンティティや取引消失、体力型クラッシュを根底から解消。' } },
+      { type: 'feat', text: { 'zh-CN': '全量解析与双向换算村民交易表（Offers.Recipes），完整保留经验修补等附魔书、绿宝石交换比、补货次数、职业等级与价格乘数。', en: 'Full bi-directional villager trade offer mapping (Offers.Recipes), preserving enchanted books (e.g. Mending), emerald trades, tiers, uses, and price multipliers.', ja: '村人の取引表（Offers.Recipes）を双方向で完全換算。修繕などのエンチャント本、エメラルドレート、レベル、利用回数を完全に維持。' } },
+      { type: 'feat', text: { 'zh-CN': '重构跨区块实体拓扑挂接算法，修复猪与栅栏跨区块拴绳断裂消失、船/矿车/马匹等载具与乘客跨区块解绑脱节问题。', en: 'Rebuilt cross-chunk entity topology linking, fixing severed cross-chunk leashes and detached vehicle-passenger pairs (boats, minecarts, leashed animals).', ja: 'チャンク間エンティティ参照トポロジーを再構築。チャンクを跨ぐ首ひも消失や、ボート・トロッコ・馬と乗員の分離問題を解決。' } },
+      { type: 'feat', text: { 'zh-CN': '新增同平台跨版本实体流水线：支持 Java 1.17 前后实体 MCA 分离与合并、1.20.5 装备格式字典化，以及基岩版 LevelDB actorprefix/digp 迁移。', en: 'Added same-platform cross-version entity pipelines: handling Java 1.17+ entity MCA separation, 1.20.5 equipment format adaptation, and Bedrock LevelDB actor migration.', ja: '同プラットフォーム間バージョン移行パイプラインを追加：Java 1.17+ エンティティMCA分離、1.20.5 装備辞書変換、統合版 LevelDB actor 移行に対応。' } },
       { type: 'feat', text: { 'zh-CN': '全新集成 MAID™ (Managed Architecture for Integrity & Defense) 女仆统一安全与性能治理框架，收敛全模块防御与配额。', en: 'Introduced the MAID™ (Managed Architecture for Integrity & Defense) unified security and resource governance framework.', ja: '統合セキュリティ・性能ガバナンス基盤 MAID™（メイド™）を導入し、全モジュールの防護とクォータを集約。' } },
       { type: 'feat', text: { 'zh-CN': '首创资源超标「温和截断（Gentle Truncation）」策略与 100 条定长无锁环形审计体系，超限材质帧与超大 MIDI 音符自动安全修剪不崩溃。', en: 'Pioneered "Gentle Truncation" and lock-free ring-buffer audit logging, safely clamping oversized frames and MIDI notes without crashing.', ja: '「安全切詰（Gentle Truncation）」とリングバッファ監査ログを導入。上限超過のアニメフレームや巨大 MIDI を安全にトリミング。' } },
       { type: 'feat', text: { 'zh-CN': '新增设置「女仆™ 巡检看板」弹窗，支持设备体征总览、生效配额查看、实时拦截流与一键复制诊断报告。', en: 'Added "MAID™ Inspection Dashboard" dialog in Settings with device metrics, active quotas, live audit events and report export.', ja: '設定に「メイド™ 巡回ダッシュボード」を追加。端末スペック、有効制限、リアルタイム監査ログの閲覧とコピーに対応。' } },

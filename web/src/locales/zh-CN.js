@@ -99,7 +99,7 @@ export default {
   },
   "features": {
     "eyebrow": "功能总览",
-    "title": "七大功能模块",
+    "title": "核心与特色功能模块",
     "lead": "Chunkoid NG 围绕 Minecraft 存档的转换、修复与创作展开，所有功能均在设备本地完成，不依赖电脑与网络。点击任意模块查看详细说明与注意事项。",
     "safetyTitle": "安全提示",
     "safety1": "任何涉及存档写入的操作都存在风险，请务必在操作前备份原始存档。",

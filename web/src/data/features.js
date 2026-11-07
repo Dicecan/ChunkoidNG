@@ -40,51 +40,60 @@ export const features = [
       title: '存档转换',
       badge: '核心',
       summary: '基岩版 (BE) ↔ Java 版 (JE) 双向转换，支持 1.8.8+ 至 1.21+。',
-      tags: ['双向转换', '无损', '跨版本'],
+      tags: ['双向转换', '无损', '跨版本', '实体全量迁移'],
       detail: [
         '支持 Java 版与基岩版世界存档双向互转，可自由指定目标版本，经典版本（1.8.8 / 1.12.2 / 1.16.5 / 1.18.2 / 1.20.4 / 1.21.11 等）已标记为常用项。',
         '内置版本升降级映射体系：按游戏世代（epoch）推荐双端等价基线版本（如 Java 1.20.4 ↔ 基岩 1.20.80），并对跨代降级给出兼容风险预警。',
         '转换核心为 Chunker CLI（The Hive 开源项目），在应用内置的 OpenJDK 17 沙箱中运行，无需电脑、无需联网。',
+        '【Beta 0.7 突破】全量生物与实体智能迁移：彻底解决 Chunker 原生仅 4 类实体的空壳问题，支持 JE ↔ BE 双向及同平台跨版本。',
+        '【村民交易完整保留】全量换算村民交易表（Offers.Recipes），原汁原味保留经验修补等附魔书、绿宝石汇率与交易等级。',
+        '【跨区块引用拓扑】智能重构实体拓扑关系，修复猪与栅栏跨区块拴绳断裂、矿车/船与村民跨区块脱节难题，并自动过滤模组实体。',
         '转换任务搭载 Android 前台保活服务，长时间转换不易被杀进程；提供转换历史与容灾补救导出。',
         '输出先落盘到临时目录并校验产物完整性，通过后以重命名方式原子提交，避免产生半成品存档。'
       ],
       notes: [
         '跨版本降级（尤其涉及 1.18 世界高度扩展、1.13 方块扁平化）存在不可逆的数据损失风险，转换前请备份。',
-        '转换结果建议在游戏内先验证，再用于正式存档。'
+        '生物与实体迁移默认为开启状态（可于工作台单独开关），转换结果建议在游戏内先验证，再用于正式存档。'
       ]
     },
     en: {
       title: 'World Conversion',
       badge: 'Core',
       summary: 'Two-way Bedrock (BE) ↔ Java (JE) conversion, supporting 1.8.8+ through 1.21+.',
-      tags: ['Two-way', 'Lossless', 'Cross-version'],
+      tags: ['Two-way', 'Lossless', 'Cross-version', 'Entity Migration'],
       detail: [
         'Convert worlds in both directions between Java and Bedrock, freely choosing the target version. Classic versions (1.8.8 / 1.12.2 / 1.16.5 / 1.18.2 / 1.20.4 / 1.21.11 and more) are marked as popular choices.',
         'A built-in version mapping system recommends equivalent baseline versions per game epoch (for example Java 1.20.4 ↔ Bedrock 1.20.80) and warns about compatibility risks when downgrading across epochs.',
         'Conversion is powered by Chunker CLI (an open-source project by The Hive) running inside the bundled OpenJDK 17 sandbox — no computer and no network required.',
+        '[Beta 0.7 Breakthrough] Smart Bi-directional Entity Migration: Solves the long-standing "empty shell" problem where upstream Chunker only supports 4 decorative entities. Supports JE ↔ BE and same-platform cross-version.',
+        '[Villager Trade Retention] Full mapping of villager trade tables (Offers.Recipes), preserving Mending/enchanted books, emerald costs, trade tiers, and price multipliers.',
+        '[Cross-Chunk Linking] Global dimension topology resolution fixes broken cross-chunk leashes (pig & fence in separate chunks) and severed vehicle-passenger pairs (boats, carts, leashed animals), with automatic modded entity filtering.',
         'Jobs run under an Android foreground service so long conversions are less likely to be killed. Conversion history and recovery export are provided.',
         'Output is written to a temporary directory and verified for completeness, then committed atomically via rename, so a failed run never leaves a half-written world.'
       ],
       notes: [
         'Downgrading across versions (especially involving the 1.18 world height expansion or the 1.13 block flattening) carries a risk of irreversible data loss. Back up before converting.',
-        'Verify the result in-game before using it as your main world.'
+        'Entity migration is enabled by default in the workbench toggle. Verify the result in-game before using it as your main world.'
       ]
     },
     ja: {
       title: 'ワールド変換',
       badge: '中核',
       summary: '統合版 (BE) ↔ Java 版 (JE) の双方向変換。1.8.8+ から 1.21+ まで対応。',
-      tags: ['双方向', 'ロスレス', 'バージョン間'],
+      tags: ['双方向', 'ロスレス', 'バージョン間', 'エンティティ移行'],
       detail: [
         'Java 版と統合版のワールドを双方向に変換でき、変換先のバージョンを自由に指定できます。定番バージョン（1.8.8 / 1.12.2 / 1.16.5 / 1.18.2 / 1.20.4 / 1.21.11 など）はよく使う項目として表示されます。',
         'バージョン対応表を内蔵し、ゲーム世代（epoch）ごとに対応する基準バージョンを提案します（例：Java 1.20.4 ↔ 統合版 1.20.80）。世代をまたぐダウングレード時には互換性リスクを警告します。',
         '変換の中核は Chunker CLI（The Hive のオープンソースプロジェクト）で、アプリ内蔵の OpenJDK 17 サンドボックス上で動作します。PC もネットワークも不要です。',
+        '【Beta 0.7 画期的機能】生物・エンティティ全量双方向変換：上流 Chunker が装飾エンティティ 4 種のみ対応していた空洞問題を打破し、JE ↔ BE 双方向および同プラットフォーム世代間移行を実現。',
+        '【村人取引の完全維持】村人の取引表（Offers.Recipes）を完全換算し、修繕などのエンチャント本、エメラルド取引レート、職業レベルを原状のまま継承。',
+        '【チャンク間参照トポロジー】グローバル次元トポロジー解析により、チャンクをまたぐ豚と柵の首ひも消失やボート・トロッコと乗員の分離を解決。MOD エンティティは自動除外。',
         '変換処理は Android のフォアグラウンドサービスで維持されるため、長時間の変換でもプロセスが終了されにくくなっています。変換履歴と復旧用のエクスポートも用意されています。',
         '出力はまず一時ディレクトリへ書き込み、内容を検証したうえでリネームによりアトミックに確定するため、不完全なワールドが残りません。'
       ],
       notes: [
         'バージョンをまたぐダウングレード（特に 1.18 のワールド高さ拡張や 1.13 のブロック平坦化が関わる場合）は、元に戻せないデータ損失の恐れがあります。変換前に必ずバックアップしてください。',
-        '変換結果は、本番のワールドとして使う前にゲーム内で確認することをおすすめします。'
+        'エンティティ移行は変換作業台のスイッチで標準有効化されています。変換結果は、本番ワールドとして使う前にゲーム内で確認することをおすすめします。'
       ]
     }
   },
@@ -501,6 +510,22 @@ export const friendlyLinks = [
       ja: '原作者の新作'
     },
     featured: true
+  },
+  {
+    id: 'litechunk',
+    name: 'LiteChunk',
+    url: 'https://litechunk.pages.dev/',
+    desc: {
+      'zh-CN': '轻量级 Minecraft 世界跨平台转换工具',
+      en: 'Lightweight cross-platform Minecraft world converter',
+      ja: '軽量なクロスプラットフォーム Minecraft ワールド変換ツール'
+    },
+    tag: {
+      'zh-CN': '世界转换',
+      en: 'World Converter',
+      ja: 'ワールド変換'
+    },
+    featured: false
   },
   {
     id: 'chunker',

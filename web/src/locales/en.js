@@ -99,7 +99,7 @@ export default {
   },
   "features": {
     "eyebrow": "Features",
-    "title": "Seven Feature Modules",
+    "title": "Feature Modules",
     "lead": "Chunkoid NG covers converting, repairing and creating Minecraft worlds. Every feature runs entirely on your device with no computer or network required. Click any module for details and caveats.",
     "safetyTitle": "Safety Notes",
     "safety1": "Any operation that writes to a world carries risk. Always back up the original world first.",

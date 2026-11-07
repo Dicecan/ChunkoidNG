@@ -41,6 +41,7 @@ The latest public release is **Beta 0.6**. The upcoming **Beta 0.7** is currentl
 ## Features
 
 - **World Conversion**: Bidirectional conversion between Java Edition and Bedrock Edition (BE), with version mapping, cross-version compatibility warnings, and foreground service persistence.
+- **Smart Bi-directional Entity Migration (Beta 0.7 Preview)**: Full entity migration pipeline supporting JE ↔ BE and same-platform cross-version conversion; preserves villager trades (`Offers.Recipes`) and enchanted books, resolves cross-chunk leashes and vehicle links, and automatically filters modded entities.
 - **MAID™ Security & Resource Governance (Beta 0.7 Preview)**: Built-in **MAID™** (**M**anaged **A**rchitecture for **I**ntegrity & **D**efense) framework providing centralized Zip-Slip directory traversal blocking, multi-tier archive quotas, zip bomb circuit breaking, and binary magic number verification.
 - **Gentle Truncation Strategy (Beta 0.7 Preview)**: Oversized resource pack animation frames and extreme MIDI note counts are safely clamped to device hardware thresholds without interrupting the workflow, preventing out-of-memory crashes while recording audit logs.
 - **MAID™ Inspection Dashboard & Live Audit (Beta 0.7 Preview)**: A dedicated in-app dashboard accessible via Settings to monitor device compute score, ART heap watermarks, active quotas, and recent security events with one-click report export.
