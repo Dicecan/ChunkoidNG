@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
-    <string name="app_version_display">Next-Generation · Beta 0.6 (Compose MD3E)</string>
-    <string name="app_version_badge">Beta 0.6</string>
+    <string name="app_version_display">Next-Generation · Beta 0.7 (Compose MD3E)</string>
+    <string name="app_version_badge">Beta 0.7</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">Cancel</string>
@@ -178,7 +178,7 @@
     <string name="about_team_org">Current Maintainer</string>
     <string name="about_team_contributors">Core Contributors</string>
     <string name="about_team_license">Open Source License</string>
-    <string name="about_features_title">Beta 0.6 Features &amp; Highlights</string>
+    <string name="about_features_title">Beta 0.7 Features &amp; Highlights</string>
     <string name="about_feature_pack">Bidirectional Resource Pack Converter</string>
     <string name="about_feature_pack_desc">Full bidirectional Java &amp; Bedrock resource pack conversion, model &amp; blockstates mapping, texture adaptation, and safe MCMETA frame expansion</string>
     <string name="about_feature_midi">MIDI to Redstone Music &amp; World Workshop</string>

@@ -2,16 +2,16 @@ export const changelog = [
   {
     version: 'Beta 0.7',
     code: 7,
-    status: 'upcoming',
+    status: 'past',
     highlight: {
-      'zh-CN': '生物与实体全量双向迁移引擎、全新 MAID™ 女仆安全与性能治理底座（开发中 · 未发布）',
-      en: 'Smart entity migration pipeline, MAID™ governance architecture and inspection dashboard (In Development / Unreleased)',
-      ja: '生物・エンティティ全量双方向変換エンジン、MAID™ メイド統合セキュリティ基盤（開発中・未リリース）'
+      'zh-CN': '生物与实体全量双向迁移引擎、全新 MAID™ 女仆安全与性能治理底座',
+      en: 'Smart entity migration pipeline, MAID™ governance architecture and inspection dashboard',
+      ja: '生物・エンティティ全量双方向変換エンジン、MAID™ メイド統合セキュリティ基盤'
     },
     date: {
-      'zh-CN': '未发布（开发中）',
-      en: 'Unreleased (In Dev)',
-      ja: '未リリース（開発中）'
+      'zh-CN': '公开测试版',
+      en: 'Public Beta',
+      ja: '公開ベータ'
     },
     items: [
       { type: 'feat', text: { 'zh-CN': '首创全量生物与实体智能迁移引擎（JE ↔ BE 双向及同平台跨版本），打破上游 Chunker 仅 4 种装饰实体的限制，彻底攻克空壳实体、交易丢失与血量崩溃痛点。', en: 'Introduced smart bi-directional entity migration pipeline (JE ↔ BE and same-platform cross-version), overcoming upstream Chunker limitations and fixing empty shells, trade loss, and health crashes.', ja: '生物・エンティティの全量双方向変換エンジン（JE ↔ BE および同プラットフォーム世代間）を新設。空洞エンティティや取引消失、体力型クラッシュを根底から解消。' } },

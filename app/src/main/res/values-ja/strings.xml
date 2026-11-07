@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Android向けオープンソースのMinecraftワールド変換ツール</string>
-    <string name="app_version_display">Next-Generation · Beta 0.6 (Compose MD3E)</string>
-    <string name="app_version_badge">Beta 0.6</string>
+    <string name="app_version_display">Next-Generation · Beta 0.7 (Compose MD3E)</string>
+    <string name="app_version_badge">Beta 0.7</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">キャンセル</string>
@@ -178,7 +178,7 @@
     <string name="about_team_org">保守組織</string>
     <string name="about_team_contributors">主要貢献者</string>
     <string name="about_team_license">オープンソースライセンス</string>
-    <string name="about_features_title">Beta 0.6 実装機能と特徴</string>
+    <string name="about_features_title">Beta 0.7 実装機能と特徴</string>
     <string name="about_feature_pack">リソースパック双方向変換ワークショップ</string>
     <string name="about_feature_pack_desc">Java版と統合版リソースパックの双方向変換、モデルとブロック状態のマッピング、テクスチャ適応、安全なMCMETAアニメーション展開に対応</string>
     <string name="about_feature_midi">MIDIからレッドストーン音楽・ワールド生成</string>

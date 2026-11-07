@@ -34,17 +34,17 @@
 - **Open-Source License**: Strictly adheres to the original **[GNU General Public License v3.0 (GPLv3)](LICENSE)**.
 - **Founder Attribution**: Founder attribution to Dozener is permanently retained across code repositories, documentation, and the application's About screen.
 
-The latest public release is **Beta 0.6**. The upcoming **Beta 0.7** is currently under active development with preview integration of the MAID™ security and resource governance framework.
+The latest public release is **Beta 0.7** (featuring the smart full-entity migration pipeline and MAID™ security & resource governance framework).
 
 ---
 
 ## Features
 
 - **World Conversion**: Bidirectional conversion between Java Edition and Bedrock Edition (BE), with version mapping, cross-version compatibility warnings, and foreground service persistence.
-- **Smart Bi-directional Entity Migration (Beta 0.7 Preview)**: Full entity migration pipeline supporting JE ↔ BE and same-platform cross-version conversion; preserves villager trades (`Offers.Recipes`) and enchanted books, resolves cross-chunk leashes and vehicle links, and automatically filters modded entities.
-- **MAID™ Security & Resource Governance (Beta 0.7 Preview)**: Built-in **MAID™** (**M**anaged **A**rchitecture for **I**ntegrity & **D**efense) framework providing centralized Zip-Slip directory traversal blocking, multi-tier archive quotas, zip bomb circuit breaking, and binary magic number verification.
-- **Gentle Truncation Strategy (Beta 0.7 Preview)**: Oversized resource pack animation frames and extreme MIDI note counts are safely clamped to device hardware thresholds without interrupting the workflow, preventing out-of-memory crashes while recording audit logs.
-- **MAID™ Inspection Dashboard & Live Audit (Beta 0.7 Preview)**: A dedicated in-app dashboard accessible via Settings to monitor device compute score, ART heap watermarks, active quotas, and recent security events with one-click report export.
+- **Smart Bi-directional Entity Migration (Beta 0.7 Core Feature)**: Full entity migration pipeline supporting JE ↔ BE and same-platform cross-version conversion; preserves villager trades (`Offers.Recipes`) and enchanted books, resolves cross-chunk leashes and vehicle links, and automatically filters modded entities.
+- **MAID™ Security & Resource Governance (Beta 0.7 Core Feature)**: Built-in **MAID™** (**M**anaged **A**rchitecture for **I**ntegrity & **D**efense) framework providing centralized Zip-Slip directory traversal blocking, multi-tier archive quotas, zip bomb circuit breaking, and binary magic number verification.
+- **Gentle Truncation Strategy (Beta 0.7 Core Feature)**: Oversized resource pack animation frames and extreme MIDI note counts are safely clamped to device hardware thresholds without interrupting the workflow, preventing out-of-memory crashes while recording audit logs.
+- **MAID™ Inspection Dashboard & Live Audit (Beta 0.7 Core Feature)**: A dedicated in-app dashboard accessible via Settings to monitor device compute score, ART heap watermarks, active quotas, and recent security events with one-click report export.
 - **NBT & LevelDB Editor**: Parse and edit `.dat`, `.mca`, `level.dat`, LevelDB key-value entries, and full `.mcworld`/`.zip` archives; includes virtual paging for large arrays and semantic tags for common data fields.
 - **2D Chunk Visualizer & Pruning**: Grid-based chunk inspection across dimensions (Overworld / Nether / The End), with unvisited 0-tick chunk pruning and dimension trimming to reduce world size.
 - **Resource Pack Converter**: Bidirectional conversion between Java and Bedrock resource packs, resolving blockstates, models, and MCMETA texture strip stitching.

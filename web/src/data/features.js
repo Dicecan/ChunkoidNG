@@ -3,8 +3,8 @@
 export const site = {
   name: 'Chunkoid NG',
   fullName: 'Chunkoid NG (Next-Generation)',
-  version: 'Beta 0.6',
-  versionCode: 6,
+  version: 'Beta 0.7',
+  versionCode: 7,
   license: 'GPLv3',
   repo: 'https://github.com/Dicecan/ChunkoidNG',
   author: 'Dozener (DozenesStudio)',
@@ -21,9 +21,9 @@ export const release = {
   apkUrl: '',
   sha256: '',
   note: {
-    'zh-CN': 'Beta 0.6 为公开测试版本，各功能模块均已实装可用，重点转向稳定性提升与机型性能调优。',
-    en: 'Beta 0.6 is the public beta build with all modules available, focused on stability and device performance.',
-    ja: 'Beta 0.6 は現行の公開ベータ版です。全機能が実装され、安定性と端末性能の最適化に注力しています。'
+    'zh-CN': 'Beta 0.7 为全新版本，重磅实装全量生物与实体智能迁移引擎及 MAID™ 女仆安全与性能治理底座。',
+    en: 'Beta 0.7 introduces the full-featured entity migration pipeline and the MAID™ security & resource governance framework.',
+    ja: 'Beta 0.7 は生物・エンティティ全量移行エンジンと MAID™ メイド統合セキュリティ基盤を搭載した最新版です。'
   },
   size: {
     'zh-CN': '约 56 MB',

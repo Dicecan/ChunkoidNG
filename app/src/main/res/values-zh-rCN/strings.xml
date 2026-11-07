@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">首个专为安卓打造的开源 Minecraft 世界转换工具</string>
-    <string name="app_version_display">Next-Generation · Beta 0.6 (Compose MD3E)</string>
-    <string name="app_version_badge">Beta 0.6</string>
+    <string name="app_version_display">Next-Generation · Beta 0.7 (Compose MD3E)</string>
+    <string name="app_version_badge">Beta 0.7</string>
 
     <string name="common_ok">确定</string>
     <string name="common_cancel">取消</string>
@@ -178,7 +178,7 @@
     <string name="about_team_org">现维护组织</string>
     <string name="about_team_contributors">核心贡献者</string>
     <string name="about_team_license">开源协议</string>
-    <string name="about_features_title">Beta 0.6 实装功能与特性</string>
+    <string name="about_features_title">Beta 0.7 实装功能与特性</string>
     <string name="about_feature_pack">材质包双版本双向深度转换工坊</string>
     <string name="about_feature_pack_desc">支持 Java 版与基岩版材质包全双向转换、模型与 Blockstates 映射重构、贴图格式自动适配、MCMETA 动画帧安全展开与熔断保护</string>
     <string name="about_feature_midi">MIDI 音乐转红石机械与超平坦工坊</string>
