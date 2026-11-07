@@ -332,6 +332,7 @@
     <string name="chunker_update_latest_ver">Latest: v%1$s</string>
     <string name="chunker_update_file_size">Size: %1$s</string>
     <string name="chunker_update_cleanup_tip">Old versions will be automatically cleaned up</string>
+    <string name="chunker_update_network_tip">Users in Mainland China experiencing slow downloads can try using a VPN/proxy network</string>
     <string name="chunker_update_new_versions_title">Newly Adapted Versions</string>
     <string name="chunker_update_btn_install">Update &amp; Clean Old</string>
     <string name="chunker_update_btn_later">Later</string>

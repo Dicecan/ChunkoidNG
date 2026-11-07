@@ -670,11 +670,18 @@ private fun ChunkerUpdateDialog(
                                 .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f))
                                 .padding(8.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.chunker_update_cleanup_tip),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = stringResource(R.string.chunker_update_cleanup_tip),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = stringResource(R.string.chunker_update_network_tip),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                     is ChunkerUpdateStatus.Downloading -> {
@@ -686,6 +693,12 @@ private fun ChunkerUpdateDialog(
                         androidx.compose.material3.LinearProgressIndicator(
                             progress = { status.progress },
                             modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.chunker_update_network_tip),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     is ChunkerUpdateStatus.Installing -> {
@@ -713,6 +726,12 @@ private fun ChunkerUpdateDialog(
                             text = status.message,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.chunker_update_network_tip),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     else -> {

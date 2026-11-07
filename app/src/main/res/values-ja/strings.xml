@@ -332,6 +332,7 @@
     <string name="chunker_update_latest_ver">最新バージョン：v%1$s</string>
     <string name="chunker_update_file_size">サイズ：%1$s</string>
     <string name="chunker_update_cleanup_tip">古いバージョンのエンジンは自動的にクリーンアップされます</string>
+    <string name="chunker_update_network_tip">ダウンロードが遅い場合は、VPNやプロキシネットワークをお試しください</string>
     <string name="chunker_update_new_versions_title">新しく対応したゲームバージョン</string>
     <string name="chunker_update_btn_install">更新して旧版を削除</string>
     <string name="chunker_update_btn_later">あとで</string>

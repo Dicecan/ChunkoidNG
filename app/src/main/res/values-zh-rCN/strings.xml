@@ -332,6 +332,7 @@
     <string name="chunker_update_latest_ver">发现最新版本：v%1$s</string>
     <string name="chunker_update_file_size">安装包体积：%1$s</string>
     <string name="chunker_update_cleanup_tip">更新将自动清理旧版本引擎，释放冗余存储</string>
+    <string name="chunker_update_network_tip">中国大陆用户如下载缓慢，请尝试使用VPN/代理网络</string>
     <string name="chunker_update_new_versions_title">新适配游戏版本</string>
     <string name="chunker_update_btn_install">立即更新并清理旧版</string>
     <string name="chunker_update_btn_later">稍后提示</string>
