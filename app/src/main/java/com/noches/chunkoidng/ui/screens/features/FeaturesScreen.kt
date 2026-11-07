@@ -1,6 +1,7 @@
 package com.noches.chunkoidng.ui.screens.features
 
 import com.noches.chunkoidng.R
+import android.widget.Toast
 import androidx.compose.ui.res.stringResource
 
 import androidx.compose.animation.animateContentSize
@@ -253,6 +254,21 @@ private fun HeroStatusBanner() {
                                         if (cliJar.exists() && cliJar.length() > 0) {
                                             terminalLogs = (terminalLogs + "[SYSTEM] cli.jar verified (${cliJar.length() / 1024} KB)").takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         }
+                                        terminalLogs = (terminalLogs + context.getString(R.string.chunker_update_checking_log)).takeLast(MAX_SELF_CHECK_LOG_LINES)
+                                        ChunkerUpdateManager.checkUpdateFlow(context, force = true).collect { updateStatus ->
+                                            when (updateStatus) {
+                                                is ChunkerUpdateStatus.UpdateAvailable -> {
+                                                    terminalLogs = (terminalLogs + context.getString(R.string.chunker_update_found_log, updateStatus.info.version)).takeLast(MAX_SELF_CHECK_LOG_LINES)
+                                                }
+                                                is ChunkerUpdateStatus.UpToDate -> {
+                                                    terminalLogs = (terminalLogs + context.getString(R.string.chunker_update_latest_log, updateStatus.currentVersion)).takeLast(MAX_SELF_CHECK_LOG_LINES)
+                                                }
+                                                is ChunkerUpdateStatus.Error -> {
+                                                    terminalLogs = (terminalLogs + context.getString(R.string.chunker_update_fail_log, updateStatus.message)).takeLast(MAX_SELF_CHECK_LOG_LINES)
+                                                }
+                                                else -> {}
+                                            }
+                                        }
                                         terminalLogs = terminalLogs + context.getString(R.string.cli_log_test_done)
 
                                         delay(2000)
@@ -312,11 +328,22 @@ private fun HeroStatusBanner() {
                         isSuccess = rootfsReady,
                         modifier = Modifier.weight(1f)
                     )
+                    val isChunkerUpdateAvailable = chunkerUpdateStatus is ChunkerUpdateStatus.UpdateAvailable
+                    val chunkerStatusText = when (val s = chunkerUpdateStatus) {
+                        is ChunkerUpdateStatus.Checking -> stringResource(R.string.cli_status_checking)
+                        is ChunkerUpdateStatus.Downloading -> stringResource(R.string.chunker_update_downloading, (s.progress * 100).toInt(), "${s.downloadedBytes / (1024 * 1024)}MB", "${s.totalBytes / (1024 * 1024)}MB")
+                        is ChunkerUpdateStatus.Installing -> stringResource(R.string.chunker_update_installing)
+                        is ChunkerUpdateStatus.UpdateAvailable -> stringResource(R.string.chunker_update_available, s.info.version)
+                        else -> if (isChecking && rootfsReady) stringResource(R.string.cli_engine_testing) else if (rootfsReady) "${stringResource(R.string.cli_engine_ready)} (v$currentChunkerVer)" else stringResource(R.string.cli_engine_waiting)
+                    }
+
                     SelfCheckItemChip(
                         icon = Icons.Outlined.Terminal,
                         title = stringResource(R.string.cli_engine_title),
-                        status = if (isChecking && rootfsReady) stringResource(R.string.cli_engine_testing) else if (rootfsReady) stringResource(R.string.cli_engine_ready) else stringResource(R.string.cli_engine_waiting),
+                        status = chunkerStatusText,
                         isSuccess = rootfsReady && !isChecking,
+                        badgeText = if (isChunkerUpdateAvailable) stringResource(R.string.chunker_update_badge) else null,
+                        onClick = { showChunkerUpdateDialog = true },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -468,10 +495,17 @@ private fun SelfCheckItemChip(
     title: String,
     status: String,
     isSuccess: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    badgeText: String? = null,
+    onClick: (() -> Unit)? = null
 ) {
+    val chipModifier = if (onClick != null) {
+        modifier.clickable { onClick() }
+    } else {
+        modifier
+    }
     Box(
-        modifier = modifier
+        modifier = chipModifier
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f))
             .padding(horizontal = 12.dp, vertical = 10.dp)
@@ -486,16 +520,36 @@ private fun SelfCheckItemChip(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Column(modifier = Modifier.weight(1f, fill = false)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (badgeText != null) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(PillShape)
+                                .background(MaterialTheme.colorScheme.errorContainer)
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = badgeText,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = status,
@@ -509,4 +563,162 @@ private fun SelfCheckItemChip(
             }
         }
     }
+}
+
+@Composable
+private fun ChunkerUpdateDialog(
+    status: ChunkerUpdateStatus,
+    currentVersion: String,
+    onDismiss: () -> Unit,
+    onCheckUpdate: () -> Unit,
+    onInstallUpdate: (ChunkerReleaseInfo) -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.CloudDownload,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
+            )
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.chunker_update_dialog_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                when (status) {
+                    is ChunkerUpdateStatus.UpdateAvailable -> {
+                        val info = status.info
+                        Text(
+                            text = stringResource(R.string.chunker_update_current_ver, currentVersion),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = stringResource(R.string.chunker_update_latest_ver, info.version),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = stringResource(R.string.chunker_update_file_size, "${info.fileSize / (1024 * 1024)} MB"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (info.newlySupportedVersions.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.chunker_update_new_versions_title) + "：" + info.newlySupportedVersions.joinToString(", ") { it.displayName },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f))
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.chunker_update_cleanup_tip),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    is ChunkerUpdateStatus.Downloading -> {
+                        Text(
+                            text = stringResource(R.string.chunker_update_downloading, (status.progress * 100).toInt(), "${status.downloadedBytes / (1024 * 1024)}MB", "${status.totalBytes / (1024 * 1024)}MB"),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { status.progress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    is ChunkerUpdateStatus.Installing -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.chunker_update_installing),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                    is ChunkerUpdateStatus.Checking -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.cli_status_checking),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                    is ChunkerUpdateStatus.Error -> {
+                        Text(
+                            text = status.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    else -> {
+                        Text(
+                            text = stringResource(R.string.chunker_update_already_latest, currentVersion),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            when (status) {
+                is ChunkerUpdateStatus.UpdateAvailable -> {
+                    androidx.compose.material3.Button(
+                        onClick = { onInstallUpdate(status.info) }
+                    ) {
+                        Text(stringResource(R.string.chunker_update_btn_install))
+                    }
+                }
+                is ChunkerUpdateStatus.Downloading, is ChunkerUpdateStatus.Installing -> {
+                }
+                else -> {
+                    androidx.compose.material3.Button(
+                        onClick = onCheckUpdate
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.chunker_update_manual_check))
+                        }
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            if (status !is ChunkerUpdateStatus.Downloading && status !is ChunkerUpdateStatus.Installing) {
+                androidx.compose.material3.TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.chunker_update_btn_later))
+                }
+            }
+        }
+    )
 }

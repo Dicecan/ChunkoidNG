@@ -340,6 +340,11 @@
     <string name="chunker_update_installing">Cleaning up old version &amp; installing...</string>
     <string name="chunker_update_success">Chunker engine updated to v%1$s</string>
     <string name="chunker_update_already_latest">Chunker engine is up to date (v%1$s)</string>
+    <string name="chunker_update_manual_check">Check for Updates</string>
+    <string name="chunker_update_checking_log">[SYSTEM] Checking remote Chunker engine version...</string>
+    <string name="chunker_update_found_log">[SYSTEM] Found new Chunker version: v%1$s</string>
+    <string name="chunker_update_latest_log">[SYSTEM] Chunker engine is up to date (v%1$s)</string>
+    <string name="chunker_update_fail_log">[SYSTEM] Update check failed: %1$s</string>
     <string name="cli_engine_testing">Testing connection...</string>
     <string name="cli_engine_ready">Core Ready</string>
     <string name="cli_engine_waiting">Waiting for mount</string>

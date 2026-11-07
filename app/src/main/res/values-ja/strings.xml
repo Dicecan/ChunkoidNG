@@ -340,6 +340,11 @@
     <string name="chunker_update_installing">旧バージョンを削除してインストール中...</string>
     <string name="chunker_update_success">Chunker エンジンが v%1$s に更新されました</string>
     <string name="chunker_update_already_latest">Chunker エンジンは最新です (v%1$s)</string>
+    <string name="chunker_update_manual_check">手動で更新を確認</string>
+    <string name="chunker_update_checking_log">[SYSTEM] リモート Chunker エンジンのバージョンを確認中...</string>
+    <string name="chunker_update_found_log">[SYSTEM] 新しい Chunker バージョンが見つかりました: v%1$s</string>
+    <string name="chunker_update_latest_log">[SYSTEM] Chunker エンジンは最新です (v%1$s)</string>
+    <string name="chunker_update_fail_log">[SYSTEM] 更新の確認に失敗しました: %1$s</string>
     <string name="cli_engine_testing">接続テスト中...</string>
     <string name="cli_engine_ready">コア利用可能</string>
     <string name="cli_engine_waiting">マウント待機中</string>

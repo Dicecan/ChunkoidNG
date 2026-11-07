@@ -340,6 +340,11 @@
     <string name="chunker_update_installing">正在清理旧版本并替换引擎...</string>
     <string name="chunker_update_success">Chunker 引擎已成功更新至 v%1$s，旧版本已清理</string>
     <string name="chunker_update_already_latest">Chunker 引擎已是最新版本 (v%1$s)</string>
+    <string name="chunker_update_manual_check">手动检查更新</string>
+    <string name="chunker_update_checking_log">[SYSTEM] 正在检查远程 Chunker 引擎版本...</string>
+    <string name="chunker_update_found_log">[SYSTEM] 发现 Chunker 引擎新版本: v%1$s</string>
+    <string name="chunker_update_latest_log">[SYSTEM] Chunker 引擎已是最新版本 (v%1$s)</string>
+    <string name="chunker_update_fail_log">[SYSTEM] 检查更新失败：%1$s</string>
     <string name="cli_engine_testing">连线测试中...</string>
     <string name="cli_engine_ready">核心可用</string>
     <string name="cli_engine_waiting">等待挂载</string>
