@@ -245,8 +245,9 @@ object ChunkerUpdateManager {
         expectedSize: Long,
         onProgress: (Float, Long, Long) -> Unit
     ): Boolean {
-        val mirrorUrl = "https://ghfast.top/$primaryUrl"
-        val candidates = listOf(primaryUrl, mirrorUrl)
+        val mirror1 = "https://gh-proxy.com/$primaryUrl"
+        val mirror2 = "https://ghfast.top/$primaryUrl"
+        val candidates = listOf(mirror1, primaryUrl, mirror2)
 
         for (candidate in candidates) {
             try {
@@ -262,9 +263,11 @@ object ChunkerUpdateManager {
                 var activeConn = conn
                 var redirects = 0
                 while (currentCode in listOf(301, 302, 303, 307, 308) && redirects < 5) {
-                    val newUrl = activeConn.getHeaderField("Location")
+                    val locationHeader = activeConn.getHeaderField("Location")
+                    if (locationHeader.isNullOrBlank()) break
+                    val nextUrl = URL(activeConn.url, locationHeader).toString()
                     activeConn.disconnect()
-                    activeConn = (URL(newUrl).openConnection() as HttpURLConnection).apply {
+                    activeConn = (URL(nextUrl).openConnection() as HttpURLConnection).apply {
                         connectTimeout = 15000
                         readTimeout = 30000
                         setRequestProperty("User-Agent", "ChunkoidNG")

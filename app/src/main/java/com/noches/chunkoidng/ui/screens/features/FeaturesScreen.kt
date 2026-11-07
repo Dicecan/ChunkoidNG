@@ -379,6 +379,40 @@ private fun HeroStatusBanner() {
             }
         }
     }
+
+    if (showChunkerUpdateDialog) {
+        ChunkerUpdateDialog(
+            status = chunkerUpdateStatus,
+            currentVersion = currentChunkerVer,
+            onDismiss = { showChunkerUpdateDialog = false },
+            onCheckUpdate = {
+                coroutineScope.launch {
+                    ChunkerUpdateManager.checkUpdateFlow(context, force = true).collect { }
+                }
+            },
+            onInstallUpdate = { info ->
+                coroutineScope.launch {
+                    val success = ChunkerUpdateManager.downloadAndInstall(context, info)
+                    if (success) {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.chunker_update_success, info.version),
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                        showChunkerUpdateDialog = false
+                    } else {
+                        val currentStatus = ChunkerUpdateManager.statusFlow.value
+                        val errorMsg = if (currentStatus is ChunkerUpdateStatus.Error) currentStatus.message else "Update failed"
+                        android.widget.Toast.makeText(
+                            context,
+                            errorMsg,
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -499,14 +533,14 @@ private fun SelfCheckItemChip(
     badgeText: String? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val chipModifier = if (onClick != null) {
-        modifier.clickable { onClick() }
-    } else {
-        modifier
-    }
     Box(
-        modifier = chipModifier
+        modifier = modifier
             .clip(RoundedCornerShape(16.dp))
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else Modifier
+            )
             .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f))
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
@@ -520,8 +554,11 @@ private fun SelfCheckItemChip(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f, fill = false)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.labelMedium.copy(
@@ -529,15 +566,16 @@ private fun SelfCheckItemChip(
                         ),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     if (badgeText != null) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Box(
                             modifier = Modifier
-                                .clip(PillShape)
-                                .background(MaterialTheme.colorScheme.errorContainer)
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.error)
+                                .padding(horizontal = 5.dp, vertical = 1.dp)
                         ) {
                             Text(
                                 text = badgeText,
@@ -545,7 +583,9 @@ private fun SelfCheckItemChip(
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.Bold
                                 ),
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                color = MaterialTheme.colorScheme.onError,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -716,7 +756,7 @@ private fun ChunkerUpdateDialog(
         dismissButton = {
             if (status !is ChunkerUpdateStatus.Downloading && status !is ChunkerUpdateStatus.Installing) {
                 androidx.compose.material3.TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.chunker_update_btn_later))
+                    Text(if (status is ChunkerUpdateStatus.UpdateAvailable) stringResource(R.string.chunker_update_btn_later) else stringResource(android.R.string.ok))
                 }
             }
         }
