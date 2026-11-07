@@ -1,6 +1,7 @@
 package com.noches.chunkoidng
 
 import android.app.Application
+import com.noches.chunkoidng.core.chunker.ChunkerUpdateManager
 import com.noches.chunkoidng.core.crash.CrashHandler
 import com.noches.chunkoidng.maid.Maid
 
@@ -9,5 +10,6 @@ class ChunkoidApp : Application() {
         super.onCreate()
         Maid.init(this)
         CrashHandler.init(this)
+        ChunkerUpdateManager.init(this)
     }
 }

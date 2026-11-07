@@ -18,7 +18,7 @@ data class ChunkerFormat(
             isPopular = true
         )
 
-        val BEDROCK_FORMATS: List<ChunkerFormat> = listOf(
+        val BASE_BEDROCK_FORMATS: List<ChunkerFormat> = listOf(
 
             ChunkerFormat("BEDROCK_1_21_130", Platform.BEDROCK, "1.21.x", "Bedrock 1.21.130", true),
             ChunkerFormat("BEDROCK_1_21_120", Platform.BEDROCK, "1.21.x", "Bedrock 1.21.120"),
@@ -88,7 +88,7 @@ data class ChunkerFormat(
             ChunkerFormat("BEDROCK_1_26_0", Platform.BEDROCK, "1.26.x", "Bedrock 1.26.0")
         )
 
-        val JAVA_FORMATS: List<ChunkerFormat> = listOf(
+        val BASE_JAVA_FORMATS: List<ChunkerFormat> = listOf(
 
             ChunkerFormat("JAVA_1_21_11", Platform.JAVA, "1.21.x", "Java 1.21.11", true),
             ChunkerFormat("JAVA_1_21_10", Platform.JAVA, "1.21.x", "Java 1.21.10"),
@@ -158,6 +158,33 @@ data class ChunkerFormat(
             ChunkerFormat("JAVA_26_2", Platform.JAVA, "26.x", "Java 26.2"),
             ChunkerFormat("JAVA_26_1", Platform.JAVA, "26.x", "Java 26.1")
         )
+
+        private val dynamicBedrockFormats = java.util.concurrent.CopyOnWriteArrayList<ChunkerFormat>()
+        private val dynamicJavaFormats = java.util.concurrent.CopyOnWriteArrayList<ChunkerFormat>()
+
+        val BEDROCK_FORMATS: List<ChunkerFormat>
+            get() = dynamicBedrockFormats + BASE_BEDROCK_FORMATS
+
+        val JAVA_FORMATS: List<ChunkerFormat>
+            get() = dynamicJavaFormats + BASE_JAVA_FORMATS
+
+        fun registerDynamicFormats(formats: List<ChunkerFormat>) {
+            for (f in formats) {
+                if (f.platform == Platform.BEDROCK) {
+                    if (dynamicBedrockFormats.none { it.id == f.id } && BASE_BEDROCK_FORMATS.none { it.id == f.id }) {
+                        dynamicBedrockFormats.add(0, f)
+                    }
+                } else {
+                    if (dynamicJavaFormats.none { it.id == f.id } && BASE_JAVA_FORMATS.none { it.id == f.id }) {
+                        dynamicJavaFormats.add(0, f)
+                    }
+                }
+            }
+        }
+
+        fun getAllDynamicFormats(): List<ChunkerFormat> {
+            return dynamicBedrockFormats.toList() + dynamicJavaFormats.toList()
+        }
 
         fun findById(id: String): ChunkerFormat? {
             if (id == "INPUT") return FORMAT_INPUT

@@ -58,6 +58,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.outlined.CloudDownload
+import com.noches.chunkoidng.core.chunker.ChunkerUpdateManager
+import com.noches.chunkoidng.core.chunker.ChunkerUpdateStatus
+import com.noches.chunkoidng.core.chunker.ChunkerReleaseInfo
 import com.noches.chunkoidng.ui.theme.PillShape
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -143,6 +148,14 @@ private fun HeroStatusBanner() {
     var extractionProgress by remember { mutableStateOf(0) }
     var terminalLogs by remember { mutableStateOf(listOf<String>()) }
     var showTerminal by remember { mutableStateOf(false) }
+
+    val chunkerUpdateStatus by ChunkerUpdateManager.statusFlow.collectAsState()
+    var showChunkerUpdateDialog by remember { mutableStateOf(false) }
+    val currentChunkerVer = remember(chunkerUpdateStatus) { ChunkerUpdateManager.getCurrentVersion(context) }
+
+    LaunchedEffect(Unit) {
+        ChunkerUpdateManager.checkSilently(context)
+    }
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
