@@ -3,9 +3,17 @@ package com.noches.chunkoidng.core.conversion
 import android.content.Context
 import com.noches.chunkoidng.R
 import android.util.Log
+import com.noches.chunkoidng.core.entity.BedrockActorBuilder
+import com.noches.chunkoidng.core.entity.BedrockToJavaEntityPipeline
+import com.noches.chunkoidng.core.entity.BedrockToBedrockEntityPipeline
+import com.noches.chunkoidng.core.entity.EntityConversionPipeline
+import com.noches.chunkoidng.core.entity.JavaToJavaEntityPipeline
 import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
+import com.noches.chunkoidng.core.world.Platform
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -100,6 +108,74 @@ class ConversionEngine(
             cliArgs.add(worldSettingsJson)
         }
 
+        val isTargetBedrock = config.targetFormat.platform == Platform.BEDROCK
+        val isInputJava = File(config.inputDir, "region").isDirectory ||
+                File(config.inputDir, "entities").isDirectory ||
+                File(config.inputDir, "dimensions").isDirectory
+        val shouldConvertJe2BeEntities = config.convertEntities && isTargetBedrock && isInputJava
+
+        val isTargetJava = config.targetFormat.platform == Platform.JAVA
+        val isInputBedrock = File(config.inputDir, "db").isDirectory
+        val shouldConvertBe2JeEntities = config.convertEntities && isTargetJava && isInputBedrock
+
+        val shouldConvertJe2JeEntities = config.convertEntities && isTargetJava && isInputJava
+        val shouldConvertBe2BeEntities = config.convertEntities && isTargetBedrock && isInputBedrock
+
+        val entityPipeline = if (shouldConvertJe2BeEntities) {
+            EntityConversionPipeline { _ -> }
+        } else null
+
+        val be2JePipeline = if (shouldConvertBe2JeEntities) {
+            BedrockToJavaEntityPipeline { _ -> }
+        } else null
+
+        val je2JePipeline = if (shouldConvertJe2JeEntities) {
+            JavaToJavaEntityPipeline { _ -> }
+        } else null
+
+        val be2BePipeline = if (shouldConvertBe2BeEntities) {
+            BedrockToBedrockEntityPipeline { _ -> }
+        } else null
+
+        val enabledDimensions = mutableListOf<String>()
+        if (config.includeOverworld) enabledDimensions.add("overworld")
+        if (config.includeNether) enabledDimensions.add("the_nether")
+        if (config.includeTheEnd) enabledDimensions.add("the_end")
+
+        val entityExtractDeferred = if (entityPipeline != null) {
+            CoroutineScope(Dispatchers.IO).async {
+                try {
+                    entityPipeline.preExtract(config.inputDir, enabledDimensions)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Entity pre-extraction failed", e)
+                }
+            }
+        } else null
+
+        if (be2JePipeline != null) {
+            try {
+                be2JePipeline.scan(config.inputDir, enabledDimensions)
+            } catch (e: Exception) {
+                Log.e(TAG, "Bedrock entity scanning failed", e)
+            }
+        }
+
+        if (je2JePipeline != null) {
+            try {
+                je2JePipeline.scan(config.inputDir, enabledDimensions, config.targetFormat.id)
+            } catch (e: Exception) {
+                Log.e(TAG, "Java to Java entity scanning failed", e)
+            }
+        }
+
+        if (be2BePipeline != null) {
+            try {
+                be2BePipeline.scan(config.inputDir, enabledDimensions)
+            } catch (e: Exception) {
+                Log.e(TAG, "Bedrock to Bedrock entity scanning failed", e)
+            }
+        }
+
         emit(ConversionEvent.Progress(config.taskId, 15, context.getString(R.string.engine_status_starting_chunker), context.getString(R.string.engine_status_args, cliArgs.joinToString(" "))))
 
         var lastPercent = 15
@@ -135,8 +211,8 @@ class ConversionEngine(
                     if (lastPercent < 85) lastPercent = 85
                     emit(ConversionEvent.Progress(config.taskId, 88, context.getString(R.string.engine_status_writing_target), line.trim()))
                 } else if (line.contains("Finished converting", ignoreCase = true) || line.contains("Conversion complete", ignoreCase = true)) {
-                    lastPercent = 95
-                    emit(ConversionEvent.Progress(config.taskId, 95, context.getString(R.string.engine_status_finishing_output), line.trim()))
+                    lastPercent = 92
+                    emit(ConversionEvent.Progress(config.taskId, 92, context.getString(R.string.engine_status_finishing_output), line.trim()))
                 }
 
                 if (line.startsWith("[SYSTEM] Process exited with code:")) {
@@ -152,6 +228,53 @@ class ConversionEngine(
             return@flow
         } finally {
             activeProcess = null
+        }
+
+        if (isSuccess && exitCode == 0 && entityPipeline != null) {
+            try {
+                emit(ConversionEvent.Progress(config.taskId, 94, "正在等待实体预提取完成...", ""))
+                entityExtractDeferred?.await()
+
+                emit(ConversionEvent.Progress(config.taskId, 96, "正在向基岩版存档写入生物与实体数据...", ""))
+                val stats = entityPipeline.flushToLevelDb(tempOutput)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体，跳过 ${stats.skippedModded} 个模组实体"))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error flushing entities to LevelDB", e)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+            }
+        }
+
+        if (isSuccess && exitCode == 0 && be2JePipeline != null) {
+            try {
+                emit(ConversionEvent.Progress(config.taskId, 96, "正在向 Java 版存档写入生物与实体数据...", ""))
+                val stats = be2JePipeline.flushToJava(tempOutput)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体至 ${stats.chunksWritten} 个区块，跳过 ${stats.skippedModded} 个模组实体"))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error flushing entities to Java MCA", e)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+            }
+        }
+
+        if (isSuccess && exitCode == 0 && je2JePipeline != null) {
+            try {
+                emit(ConversionEvent.Progress(config.taskId, 96, "正在向 Java 版存档写入生物与实体数据...", ""))
+                val stats = je2JePipeline.flushToJava(tempOutput, config.targetFormat.id, config.inputDir)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体至 ${stats.chunksWritten} 个区块，跳过 ${stats.skippedModded} 个模组实体"))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error flushing entities to Java MCA", e)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+            }
+        }
+
+        if (isSuccess && exitCode == 0 && be2BePipeline != null) {
+            try {
+                emit(ConversionEvent.Progress(config.taskId, 96, "正在向基岩版存档写入生物与实体数据...", ""))
+                val stats = be2BePipeline.flushToLevelDb(tempOutput)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体，跳过 ${stats.skippedModded} 个模组实体"))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error flushing entities to LevelDB", e)
+                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+            }
         }
 
         val totalTime = System.currentTimeMillis() - startTime

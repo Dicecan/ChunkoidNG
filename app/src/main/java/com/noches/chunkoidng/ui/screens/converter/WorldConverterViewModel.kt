@@ -53,6 +53,7 @@ data class ConverterUiState(
     val includeNether: Boolean = true,
     val includeTheEnd: Boolean = true,
     val keepOriginalNbt: Boolean = false,
+    val convertEntities: Boolean = true,
     val overrideWorldName: String = "",
     val overrideGameMode: String = "DEFAULT",
     val overrideDifficulty: String = "DEFAULT",
@@ -318,6 +319,10 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         _uiState.update { it.copy(keepOriginalNbt = keep) }
     }
 
+    fun setConvertEntities(convert: Boolean) {
+        _uiState.update { it.copy(convertEntities = convert) }
+    }
+
     fun setOverrideWorldName(name: String) {
         _uiState.update { it.copy(overrideWorldName = name) }
     }
@@ -349,7 +354,8 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             includeTheEnd = s.includeTheEnd,
             overrideWorldName = s.overrideWorldName.ifBlank { null },
             overrideGameMode = s.overrideGameMode,
-            overrideDifficulty = s.overrideDifficulty
+            overrideDifficulty = s.overrideDifficulty,
+            convertEntities = s.convertEntities
         )
         activeTaskId = config.taskId
 

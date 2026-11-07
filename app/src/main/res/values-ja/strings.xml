@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Android向けオープンソースのMinecraftワールド変換ツール</string>
@@ -103,6 +103,8 @@
     <string name="converter_advanced_options">高度なエンジン設定</string>
     <string name="converter_keep_nbt">未変更のNBTを保持 (-k)</string>
     <string name="converter_keep_nbt_desc">互換性のある範囲で元の未知タグを保持</string>
+    <string name="converter_convert_entities">Mobとエンティティの移行 (実験的)</string>
+    <string name="converter_convert_entities_desc">Mob、村人、乗り物、ドロップアイテムを移行（Modエンティティは除外）</string>
     <string name="converter_action_start">変換を開始</string>
     <string name="converter_action_abort">変換を中止</string>
     <string name="converter_converting">変換中...</string>

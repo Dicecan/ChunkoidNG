@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">首个专为安卓打造的开源 Minecraft 世界转换工具</string>
@@ -103,6 +103,8 @@
     <string name="converter_advanced_options">高级引擎参数</string>
     <string name="converter_keep_nbt">保留未修改的原始 NBT (-k)</string>
     <string name="converter_keep_nbt_desc">在格式兼容前提下，尽可能继承原世界的未知标签</string>
+    <string name="converter_convert_entities">迁移生物与实体 (实验性)</string>
+    <string name="converter_convert_entities_desc">迁移世界中的生物、村民、坐骑与载具（自动过滤模组实体）</string>
     <string name="converter_action_start">开始世界转换</string>
     <string name="converter_action_abort">中止转换</string>
     <string name="converter_converting">正在转换...</string>

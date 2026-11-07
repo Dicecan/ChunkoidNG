@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
@@ -103,6 +103,8 @@
     <string name="converter_advanced_options">Advanced Engine Options</string>
     <string name="converter_keep_nbt">Preserve Unmodified NBT (-k)</string>
     <string name="converter_keep_nbt_desc">Retain unknown or extra entity and tile entity tags</string>
+    <string name="converter_convert_entities">Migrate Mobs &amp; Entities (Experimental)</string>
+    <string name="converter_convert_entities_desc">Migrate living mobs, villagers, mounts, and vehicles (modded entities excluded)</string>
     <string name="converter_action_start">Start World Conversion</string>
     <string name="converter_action_abort">Abort Conversion</string>
     <string name="converter_converting">Converting...</string>

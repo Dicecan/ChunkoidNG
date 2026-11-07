@@ -29,7 +29,8 @@ data class ConversionConfig(
 
     val overrideWorldName: String? = null,
     val overrideGameMode: String? = null,
-    val overrideDifficulty: String? = null
+    val overrideDifficulty: String? = null,
+    val convertEntities: Boolean = true
 ) {
 
     fun buildPruningJson(): String? {

@@ -210,6 +210,8 @@ fun WorldConverterScreen(
                             onToggleTheEnd = { viewModel.toggleDimension("THE_END", it) },
                             keepOriginalNbt = uiState.keepOriginalNbt,
                             onToggleKeepOriginalNbt = { viewModel.setKeepOriginalNbt(it) },
+                            convertEntities = uiState.convertEntities,
+                            onToggleConvertEntities = { viewModel.setConvertEntities(it) },
                             overrideWorldName = uiState.overrideWorldName,
                             onUpdateWorldName = { viewModel.setOverrideWorldName(it) },
                             overrideGameMode = uiState.overrideGameMode,
@@ -343,6 +345,8 @@ private fun ConfigureView(
     onToggleTheEnd: (Boolean) -> Unit,
     keepOriginalNbt: Boolean,
     onToggleKeepOriginalNbt: (Boolean) -> Unit,
+    convertEntities: Boolean,
+    onToggleConvertEntities: (Boolean) -> Unit,
     overrideWorldName: String,
     onUpdateWorldName: (String) -> Unit,
     overrideGameMode: String,
@@ -588,11 +592,24 @@ private fun ConfigureView(
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                     Text(stringResource(R.string.converter_keep_nbt), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                                     Text(stringResource(R.string.converter_keep_nbt_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(checked = keepOriginalNbt, onCheckedChange = onToggleKeepOriginalNbt)
+                            }
+
+                            val isEntitySupported = worldInfo?.platform != null && targetFormat.platform != null
+                            if (isEntitySupported) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                        Text(stringResource(R.string.converter_convert_entities), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                        Text(stringResource(R.string.converter_convert_entities_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Switch(checked = convertEntities, onCheckedChange = onToggleConvertEntities)
+                                }
                             }
                         }
                     }

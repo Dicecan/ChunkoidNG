@@ -71,6 +71,7 @@ public class AnvilRegionFile(public val file: File) : Closeable, AutoCloseable {
 
     @Synchronized
     public fun getChunkInfo(localX: Int, localZ: Int): ChunkInfo {
+        if (raf.length() < 8192L) { raf.seek(0); raf.write(ByteArray(8192)) }
         val index = (localX and 31) + (localZ and 31) * 32
         raf.seek((index * 4).toLong())
         val b0 = raf.read() and 0xFF
@@ -135,6 +136,7 @@ public class AnvilRegionFile(public val file: File) : Closeable, AutoCloseable {
         val totalChunkBytes = 4 + payloadSize
         val neededSectors = (totalChunkBytes + 4095) / 4096
 
+        if (raf.length() < 8192L) { raf.seek(0); raf.write(ByteArray(8192)) }
         val index = (localX and 31) + (localZ and 31) * 32
         val currentInfo = getChunkInfo(localX, localZ)
 
@@ -174,6 +176,7 @@ public class AnvilRegionFile(public val file: File) : Closeable, AutoCloseable {
     @Synchronized
     @Throws(IOException::class)
     public fun deleteChunk(localX: Int, localZ: Int) {
+        if (raf.length() < 8192L) { raf.seek(0); raf.write(ByteArray(8192)) }
         val index = (localX and 31) + (localZ and 31) * 32
         raf.seek((index * 4).toLong())
         raf.writeInt(0)
