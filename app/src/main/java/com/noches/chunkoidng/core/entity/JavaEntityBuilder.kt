@@ -134,11 +134,36 @@ object JavaEntityBuilder {
                 val color = getByte(bedrockActor, "Color", 16)
                 javaEntity["Color"] = NbtByte(color)
             }
+            "minecraft:goat" -> {
+                val variant = getInt(bedrockActor, "Variant", 0)
+                val isScreamer = variant == 1 || definitions.any { it.contains("screamer") }
+                javaEntity["IsScreamingGoat"] = NbtByte(if (isScreamer) 1 else 0)
+            }
+            "minecraft:leash_knot" -> {
+                val px = if (posList != null && posList.size > 0) posList[0].value else 0f
+                val py = if (posList != null && posList.size > 1) posList[1].value else 0f
+                val pz = if (posList != null && posList.size > 2) posList[2].value else 0f
+                val bx = Math.floor(px.toDouble()).toInt()
+                val by = Math.floor(py.toDouble()).toInt()
+                val bz = Math.floor(pz.toDouble()).toInt()
+                javaEntity["TileX"] = NbtInt(bx)
+                javaEntity["TileY"] = NbtInt(by)
+                javaEntity["TileZ"] = NbtInt(bz)
+            }
         }
 
         restoreEquipment(javaEntity, bedrockActor)
 
         restoreSaddleAndChest(javaEntity, bedrockId, bedrockActor, definitions, flags)
+
+        val leasherId = bedrockActor.getNullableLong("LeasherID") ?: 0L
+        if (leasherId != 0L && leasherId != -1L) {
+            val holderUuid = EntityLinks.uuidFromUniqueId(leasherId)
+            val leashComp = NbtCompound()
+            leashComp["UUID"] = NbtIntArray(holderUuid)
+            javaEntity["leash"] = leashComp
+            javaEntity["Leash"] = leashComp
+        }
 
         return javaEntity
     }

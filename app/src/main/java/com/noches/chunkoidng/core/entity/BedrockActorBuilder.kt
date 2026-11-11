@@ -1,14 +1,6 @@
-﻿package com.noches.chunkoidng.core.entity
+package com.noches.chunkoidng.core.entity
 
-import br.com.gamemods.nbtmanipulator.NbtByte
-import br.com.gamemods.nbtmanipulator.NbtCompound
-import br.com.gamemods.nbtmanipulator.NbtDouble
-import br.com.gamemods.nbtmanipulator.NbtFloat
-import br.com.gamemods.nbtmanipulator.NbtInt
-import br.com.gamemods.nbtmanipulator.NbtList
-import br.com.gamemods.nbtmanipulator.NbtLong
-import br.com.gamemods.nbtmanipulator.NbtShort
-import br.com.gamemods.nbtmanipulator.NbtString
+import br.com.gamemods.nbtmanipulator.*
 
 object BedrockActorBuilder {
 
@@ -56,6 +48,8 @@ object BedrockActorBuilder {
         healthAttr["Name"] = NbtString("minecraft:health")
         healthAttr["Base"] = NbtFloat(defaultHp)
         healthAttr["Current"] = NbtFloat(health)
+        healthAttr["DefaultMax"] = NbtFloat(defaultHp)
+        healthAttr["DefaultMin"] = NbtFloat(0f)
         healthAttr["Max"] = NbtFloat(defaultHp)
         healthAttr["Min"] = NbtFloat(0f)
         attrList.add(healthAttr)
@@ -67,6 +61,14 @@ object BedrockActorBuilder {
             actor["CustomName"] = NbtString(cleanName)
             val nameVisible = getByte(javaEntity, "CustomNameVisible", 0)
             actor["CustomNameVisible"] = NbtByte(nameVisible)
+        }
+
+        val persistenceRequired = getByte(javaEntity, "PersistenceRequired", 0) != 0.toByte() ||
+                getByte(javaEntity, "Persistent", 0) != 0.toByte() ||
+                !customName.isNullOrEmpty() ||
+                javaEntity.contains("leash") || javaEntity.contains("Leash")
+        if (persistenceRequired) {
+            actor["Persistent"] = NbtByte(1)
         }
 
         val invulnerable = getByte(javaEntity, "Invulnerable", 0)
@@ -115,7 +117,6 @@ object BedrockActorBuilder {
                 actor["ShowBottom"] = NbtByte(showBottom)
             }
             else -> {
-
                 EntityVariants.apply(actor, identifier, javaEntity, definitions)
                 EntityStates.apply(actor, identifier, javaEntity, definitions)
                 EntityEquipment.apply(actor, javaEntity)

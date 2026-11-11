@@ -1,4 +1,4 @@
-﻿package com.noches.chunkoidng.core.entity
+package com.noches.chunkoidng.core.entity
 
 import br.com.gamemods.nbtmanipulator.NbtByte
 import br.com.gamemods.nbtmanipulator.NbtCompound
@@ -77,6 +77,8 @@ object EntityVariants {
             "minecraft:llama", "minecraft:trader_llama" -> llama(actor, javaEntity, definitions)
             "minecraft:axolotl" -> axolotl(actor, javaEntity, definitions)
             "minecraft:frog" -> frog(actor, javaEntity, definitions)
+            "minecraft:goat" -> goat(actor, javaEntity, definitions)
+            "minecraft:panda" -> panda(actor, javaEntity, definitions)
             "minecraft:tropicalfish" -> tropicalFish(actor, javaEntity)
             "minecraft:boat", "minecraft:chest_boat" -> boat(actor, javaEntity)
         }
@@ -176,6 +178,25 @@ object EntityVariants {
         val raw = entity.getNullableString("variant") ?: entity.getNullableString("Variant")
         val variantName = raw?.removePrefix(NAMESPACE)?.lowercase() ?: "temperate"
         addGroup(definitions, "frog_$variantName")
+    }
+
+    private fun goat(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
+        val isScreamer = getByte(entity, "IsScreamingGoat", 0) != 0.toByte() ||
+                getInt(entity, "IsScreamingGoat", 0) != 0
+        if (isScreamer) {
+            actor["Variant"] = NbtInt(1)
+            addGroup(definitions, "goat_screamer")
+        } else {
+            actor["Variant"] = NbtInt(0)
+            addGroup(definitions, "goat_default")
+        }
+    }
+
+    private fun panda(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
+        val gene = entity.getNullableString("MainGene")?.lowercase()
+        if (gene != null && gene != "normal") {
+            addGroup(definitions, "panda_$gene")
+        }
     }
 
     private fun tropicalFish(actor: NbtCompound, entity: NbtCompound) {

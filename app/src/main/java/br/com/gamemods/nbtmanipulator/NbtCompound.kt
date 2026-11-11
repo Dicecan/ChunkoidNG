@@ -125,77 +125,90 @@ public class NbtCompound private constructor(private val value: LinkedHashMap<St
     @Throws(ClassCastException::class, NoSuchElementException::class, IllegalStateException::class)
     public fun getListOfList(key: String): NbtList<NbtList<*>> = getList(key).cast()
 
-    @Throws(ClassCastException::class)
-    public fun getNullableByte(key: String): Byte? = this[key]?.let { it as NbtByte }?.signed
+    public fun getNullableByte(key: String): Byte? = when (val t = this[key]) {
+        is NbtByte -> t.signed
+        is NbtShort -> t.value.toByte()
+        is NbtInt -> t.value.toByte()
+        is NbtLong -> t.value.toByte()
+        else -> null
+    }
 
-    @Throws(ClassCastException::class)
-    public fun getNullableShort(key: String): Short? = this[key]?.let { it as NbtShort }?.value
+    public fun getNullableShort(key: String): Short? = when (val t = this[key]) {
+        is NbtShort -> t.value
+        is NbtByte -> t.signed.toShort()
+        is NbtInt -> t.value.toShort()
+        is NbtLong -> t.value.toShort()
+        else -> null
+    }
 
-    @Throws(ClassCastException::class)
-    public fun getNullableInt(key: String): Int? = this[key]?.let { it as NbtInt }?.value
+    public fun getNullableInt(key: String): Int? = when (val t = this[key]) {
+        is NbtInt -> t.value
+        is NbtByte -> t.signed.toInt()
+        is NbtShort -> t.value.toInt()
+        is NbtLong -> t.value.toInt()
+        else -> null
+    }
 
-    @Throws(ClassCastException::class)
-    public fun getNullableLong(key: String): Long? = this[key]?.let { it as NbtLong }?.value
+    public fun getNullableLong(key: String): Long? = when (val t = this[key]) {
+        is NbtLong -> t.value
+        is NbtInt -> t.value.toLong()
+        is NbtShort -> t.value.toLong()
+        is NbtByte -> t.signed.toLong()
+        else -> null
+    }
 
-    @Throws(ClassCastException::class)
-    public fun getNullableFloat(key: String): Float? = this[key]?.let { it as NbtFloat }?.value
+    public fun getNullableFloat(key: String): Float? = when (val t = this[key]) {
+        is NbtFloat -> t.value
+        is NbtDouble -> t.value.toFloat()
+        is NbtInt -> t.value.toFloat()
+        is NbtShort -> t.value.toFloat()
+        is NbtByte -> t.signed.toFloat()
+        else -> null
+    }
 
-    @Throws(ClassCastException::class)
-    public fun getNullableDouble(key: String): Double? = this[key]?.let { it as NbtDouble }?.value
+    public fun getNullableDouble(key: String): Double? = when (val t = this[key]) {
+        is NbtDouble -> t.value
+        is NbtFloat -> t.value.toDouble()
+        is NbtInt -> t.value.toDouble()
+        is NbtLong -> t.value.toDouble()
+        else -> null
+    }
 
-    @Throws(ClassCastException::class)
-    public fun getNullableByteArray(key: String): ByteArray? = this[key]?.let { it as NbtByteArray }?.value
+    public fun getNullableByteArray(key: String): ByteArray? = (this[key] as? NbtByteArray)?.value
 
-    @Throws(ClassCastException::class)
-    public fun getNullableString(key: String): String? = this[key]?.let { it as NbtString }?.value
+    public fun getNullableString(key: String): String? = (this[key] as? NbtString)?.value
 
-    @Throws(ClassCastException::class)
-    public fun getNullableIntArray(key: String): IntArray? = this[key]?.let { it as NbtIntArray }?.value
+    public fun getNullableIntArray(key: String): IntArray? = (this[key] as? NbtIntArray)?.value
 
-    @Throws(ClassCastException::class)
-    public fun getNullableLongArray(key: String): LongArray? = this[key]?.let { it as NbtLongArray }?.value
+    public fun getNullableLongArray(key: String): LongArray? = (this[key] as? NbtLongArray)?.value
 
-    @Throws(ClassCastException::class)
-    public fun getNullableCompound(key: String): NbtCompound? = this[key]?.let { it as NbtCompound }
+    public fun getNullableCompound(key: String): NbtCompound? = this[key] as? NbtCompound
 
-    @Throws(ClassCastException::class)
-    public fun getNullableList(key: String): NbtList<*>? = this[key]?.let { it as NbtList<*> }
+    public fun getNullableList(key: String): NbtList<*>? = this[key] as? NbtList<*>
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableByteList(key: String): NbtList<NbtByte>? = getNullableList(key)?.cast()
+    public fun getNullableByteList(key: String): NbtList<NbtByte>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableShortList(key: String): NbtList<NbtShort>? = getNullableList(key)?.cast()
+    public fun getNullableShortList(key: String): NbtList<NbtShort>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableIntList(key: String): NbtList<NbtInt>? = getNullableList(key)?.cast()
+    public fun getNullableIntList(key: String): NbtList<NbtInt>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableLongList(key: String): NbtList<NbtLong>? = getNullableList(key)?.cast()
+    public fun getNullableLongList(key: String): NbtList<NbtLong>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableFloatList(key: String): NbtList<NbtFloat>? = getNullableList(key)?.cast()
+    public fun getNullableFloatList(key: String): NbtList<NbtFloat>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableDoubleList(key: String): NbtList<NbtDouble>? = getNullableList(key)?.cast()
+    public fun getNullableDoubleList(key: String): NbtList<NbtDouble>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableByteArrayList(key: String): NbtList<NbtByteArray>? = getNullableList(key)?.cast()
+    public fun getNullableByteArrayList(key: String): NbtList<NbtByteArray>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableStringList(key: String): NbtList<NbtString>? = getNullableList(key)?.cast()
+    public fun getNullableStringList(key: String): NbtList<NbtString>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableIntArrayList(key: String): NbtList<NbtIntArray>? = getNullableList(key)?.cast()
+    public fun getNullableIntArrayList(key: String): NbtList<NbtIntArray>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableLongArrayList(key: String): NbtList<NbtLongArray>? = getNullableList(key)?.cast()
+    public fun getNullableLongArrayList(key: String): NbtList<NbtLongArray>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableCompoundList(key: String): NbtList<NbtCompound>? = getNullableList(key)?.cast()
+    public fun getNullableCompoundList(key: String): NbtList<NbtCompound>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
-    @Throws(ClassCastException::class, IllegalStateException::class)
-    public fun getNullableListOfList(key: String): NbtList<NbtList<*>>? = getNullableList(key)?.cast()
+    public fun getNullableListOfList(key: String): NbtList<NbtList<*>>? = try { getNullableList(key)?.cast() } catch (_: Exception) { null }
 
     public fun copyFrom(other: NbtCompound, tagKey: String, default: NbtTag? = null) {
         val tag = other[tagKey] ?: default

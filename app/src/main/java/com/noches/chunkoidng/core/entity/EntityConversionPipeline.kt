@@ -5,7 +5,6 @@ import br.com.gamemods.nbtmanipulator.AnvilRegionFile
 import br.com.gamemods.nbtmanipulator.NbtCompound
 import br.com.gamemods.nbtmanipulator.NbtFile
 import br.com.gamemods.nbtmanipulator.NbtIO
-import br.com.gamemods.nbtmanipulator.NbtList
 import org.iq80.leveldb.CompressionType
 import org.iq80.leveldb.DB
 import org.iq80.leveldb.Options
@@ -41,14 +40,25 @@ class EntityConversionPipeline(
         val chunkZ: Int
     )
 
+    data class PendingKnot(
+        val dimensionId: Int,
+        val blockX: Int,
+        val blockY: Int,
+        val blockZ: Int,
+        val knotId: Long
+    )
 
     internal val stagedChunks = ConcurrentHashMap<ChunkKey, MutableList<ActorRecord>>()
+    internal val pendingKnots = ConcurrentHashMap<ChunkKey, MutableList<PendingKnot>>()
+    internal val leashKnots = ConcurrentHashMap<Long, IntArray>()
     private val totalExtracted = AtomicInteger(0)
     private val skippedModdedCount = AtomicInteger(0)
     private val fallbackIdCounter = AtomicLong(0x1000L)
 
     fun preExtract(inputDir: File, dimensions: List<String> = listOf("overworld", "the_nether", "the_end")) {
         stagedChunks.clear()
+        pendingKnots.clear()
+        leashKnots.clear()
         totalExtracted.set(0)
         skippedModdedCount.set(0)
 
@@ -60,6 +70,9 @@ class EntityConversionPipeline(
             return
         }
 
+        log("预扫描拴绳绳结位置...")
+        indexLeashKnots(tasks)
+
         log("发现 ${tasks.size} 个区域文件，开始解析实体数据...")
 
         for (task in tasks) {
@@ -70,12 +83,13 @@ class EntityConversionPipeline(
             }
         }
 
-        log("实体预提取完成：成功构建 ${totalExtracted.get()} 个实体，跳过 ${skippedModdedCount.get()} 个未知/模组实体。")
+        log("实体预提取完成：成功构建 ${totalExtracted.get()} 个实体，记录 ${pendingKnots.values.sumOf { it.size }} 个栅栏绳结，跳过 ${skippedModdedCount.get()} 个未知/模组实体。")
     }
 
     fun flushToLevelDb(bedrockWorldDir: File): PipelineStats {
         val total = totalExtracted.get()
-        if (total == 0 || stagedChunks.isEmpty()) {
+        val totalKnots = pendingKnots.values.sumOf { it.size }
+        if ((total == 0 && totalKnots == 0) || (stagedChunks.isEmpty() && pendingKnots.isEmpty())) {
             log("无待写入的实体记录，跳过 LevelDB 写入。")
             return PipelineStats(0, skippedModdedCount.get(), 0)
         }
@@ -86,7 +100,7 @@ class EntityConversionPipeline(
             return PipelineStats(0, skippedModdedCount.get(), 0)
         }
 
-        log("正在向基岩版 LevelDB 写入 $total 个实体与区块索引...")
+        log("正在向基岩版 LevelDB 写入 ${total + totalKnots} 个实体与区块索引...")
 
         val options = Options()
         options.compressionType(CompressionType.ZLIB_RAW)
@@ -100,10 +114,17 @@ class EntityConversionPipeline(
             db = Iq80DBFactory.factory.open(dbDir, options)
             val batch = db.createWriteBatch()
             try {
+                // 1. Write staged regular actors
                 for ((chunkKey, records) in stagedChunks) {
                     if (records.isEmpty()) continue
 
-                    val digpStream = ByteArrayOutputStream(records.size * 8)
+                    val digpKey = buildDigpKey(chunkKey.dimensionId, chunkKey.chunkX, chunkKey.chunkZ)
+                    val existingDigp = try { db.get(digpKey) } catch (_: Exception) { null }
+                    val digpStream = ByteArrayOutputStream((existingDigp?.size ?: 0) + records.size * 8)
+                    if (existingDigp != null) {
+                        digpStream.write(existingDigp)
+                    }
+
                     for (record in records) {
                         val actorKey = ACTOR_PREFIX + record.storageKey
                         batch.put(actorKey, record.nbtBytes)
@@ -111,7 +132,40 @@ class EntityConversionPipeline(
                         writtenActors++
                     }
 
+                    batch.put(digpKey, digpStream.toByteArray())
+                    writtenChunks++
+                }
+
+                // 2. Write pending leash knots
+                for ((chunkKey, knots) in pendingKnots) {
+                    if (knots.isEmpty()) continue
+
                     val digpKey = buildDigpKey(chunkKey.dimensionId, chunkKey.chunkX, chunkKey.chunkZ)
+                    val existingDigp = try { db.get(digpKey) } catch (_: Exception) { null }
+                    val digpStream = ByteArrayOutputStream()
+                    val existingKeys = mutableSetOf<Long>()
+                    if (existingDigp != null) {
+                        digpStream.write(existingDigp)
+                        val buf = ByteBuffer.wrap(existingDigp).order(ByteOrder.BIG_ENDIAN)
+                        while (buf.remaining() >= 8) {
+                            existingKeys.add(buf.long)
+                        }
+                    }
+
+                    for (knot in knots) {
+                        val storageKeyBytes = EntityLinks.storageKey(knot.knotId)
+                        val storageKeyLong = ByteBuffer.wrap(storageKeyBytes).order(ByteOrder.BIG_ENDIAN).long
+                        if (!existingKeys.add(storageKeyLong)) continue
+
+                        val knotActor = EntityLinks.buildKnotActor(knot.knotId, knot.blockX, knot.blockY, knot.blockZ)
+                        val baos = ByteArrayOutputStream(512)
+                        NbtIO.writeNbtFile(baos, NbtFile("", knotActor), compressed = false, littleEndian = true)
+                        val actorKey = ACTOR_PREFIX + storageKeyBytes
+                        batch.put(actorKey, baos.toByteArray())
+                        digpStream.write(storageKeyBytes)
+                        writtenActors++
+                    }
+
                     batch.put(digpKey, digpStream.toByteArray())
                     writtenChunks++
                 }
@@ -130,6 +184,8 @@ class EntityConversionPipeline(
                 Log.w(TAG, "Error closing LevelDB", e)
             }
             stagedChunks.clear()
+            pendingKnots.clear()
+            leashKnots.clear()
         }
 
         log("LevelDB 写入完成：成功持久化 $writtenActors 个实体，关联 $writtenChunks 个区块。")
@@ -178,6 +234,39 @@ class EntityConversionPipeline(
         }
     }
 
+    private fun indexLeashKnots(tasks: List<RegionTask>) {
+        for (task in tasks) {
+            try {
+                AnvilRegionFile(task.file).use { regionFile ->
+                    val chunks = regionFile.getPopulatedChunks()
+                    for (chunkInfo in chunks) {
+                        val chunkNbt = try {
+                            regionFile.readChunkNbt(chunkInfo.localX, chunkInfo.localZ)
+                        } catch (_: Exception) {
+                            null
+                        } ?: continue
+
+                        val rootTag = chunkNbt.compound
+                        val entitiesList = rootTag.getNullableCompoundList("Entities")
+                            ?: rootTag.getNullableCompound("Level")?.getNullableCompoundList("Entities")
+                            ?: continue
+
+                        for (e in entitiesList) {
+                            if (EntityLinks.isLeashKnot(e)) {
+                                val id = EntityLinks.uniqueIdFromUuid(e.getNullableIntArray("UUID"))
+                                val pos = EntityLinks.position(e)
+                                if (id != 0L && pos != null) {
+                                    leashKnots[id] = pos
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     private fun processRegionFile(task: RegionTask) {
         val matcher = REGION_FILE_PATTERN.matcher(task.file.name)
         if (!matcher.matches()) return
@@ -206,13 +295,22 @@ class EntityConversionPipeline(
                 val chunkKey = ChunkKey(task.dimensionId, chunkGlobalX, chunkGlobalZ)
 
                 for (javaEntity in entitiesList) {
-                    processEntity(chunkKey, javaEntity, vehicleId = 0L)
+                    try {
+                        processEntity(chunkKey, javaEntity, vehicleId = 0L)
+                    } catch (e: Exception) {
+                        log("处理单个实体异常: ${e.message}")
+                    }
                 }
             }
         }
     }
 
     internal fun processEntity(chunkKey: ChunkKey, javaEntity: NbtCompound, vehicleId: Long) {
+        // Bedrock creates leash knot actors deterministically at fence locations; skip standalone knot entities
+        if (EntityLinks.isLeashKnot(javaEntity)) {
+            return
+        }
+
         val rawId = javaEntity.getNullableString("id")
         if (EntityIdMapper.isHandledByChunkerNative(rawId)) {
             return
@@ -237,20 +335,26 @@ class EntityConversionPipeline(
         } ?: return
 
         val passengers = javaEntity.getNullableCompoundList("Passengers")
-        if (vehicleId != 0L) {
-            EntityLinks.riding(actor, riderId = uniqueId, vehicleId = vehicleId)
+        val passengerIds = passengers?.mapNotNull { p ->
+            val pUuid = p.getNullableIntArray("UUID")
+            if (pUuid != null) EntityLinks.uniqueIdFromUuid(pUuid) else null
         }
-        if (!passengers.isNullOrEmpty()) {
-            val passengerIds = passengers.mapNotNull { p ->
-                val pUuid = p.getNullableIntArray("UUID")
-                if (pUuid != null) EntityLinks.uniqueIdFromUuid(pUuid) else null
-            }
-            EntityLinks.carried(actor, vehicleId = uniqueId, riderIds = passengerIds)
-        }
+        EntityLinks.link(actor, uniqueId, vehicleId, passengerIds)
 
-        val leashHolderId = EntityLinks.leashHolder(javaEntity)
-        if (leashHolderId != 0L) {
-            EntityLinks.leashed(actor, leashHolderId)
+        // Resolve leash
+        val leash = EntityLinks.leash(javaEntity) { EntityLinks.uniqueIdFromUuid(it) }
+        if (leash != null) {
+            val block = when (leash) {
+                is EntityLinks.LeashTarget.Block -> intArrayOf(leash.x, leash.y, leash.z)
+                is EntityLinks.LeashTarget.Holder -> leashKnots[leash.uniqueId]
+            }
+            if (block != null) {
+                val knotId = EntityLinks.knotId(block[0].toLong(), block[1].toLong(), block[2].toLong())
+                EntityLinks.leashed(actor, knotId)
+                registerKnot(chunkKey.dimensionId, block[0], block[1], block[2], knotId)
+            } else if (leash is EntityLinks.LeashTarget.Holder) {
+                EntityLinks.leashed(actor, leash.uniqueId)
+            }
         }
 
         val baos = ByteArrayOutputStream(1024)
@@ -268,6 +372,14 @@ class EntityConversionPipeline(
                 processEntity(chunkKey, passenger, vehicleId = uniqueId)
             }
         }
+    }
+
+    private fun registerKnot(dimensionId: Int, blockX: Int, blockY: Int, blockZ: Int, knotId: Long) {
+        val chunkX = blockX shr 4
+        val chunkZ = blockZ shr 4
+        val knotChunkKey = ChunkKey(dimensionId, chunkX, chunkZ)
+        pendingKnots.computeIfAbsent(knotChunkKey) { mutableListOf() }
+            .add(PendingKnot(dimensionId, blockX, blockY, blockZ, knotId))
     }
 
     fun buildDigpKey(dimensionId: Int, chunkX: Int, chunkZ: Int): ByteArray {

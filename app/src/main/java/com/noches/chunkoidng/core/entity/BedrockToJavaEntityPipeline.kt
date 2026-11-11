@@ -111,7 +111,10 @@ class BedrockToJavaEntityPipeline(
             for (link in links) {
                 val rideId = link.getNullableLong("RideID") ?: 0L
                 val vId = link.getNullableLong("VehicleID") ?: 0L
-                if (rideId == uniqueId && vId != 0L && vId != uniqueId) {
+                if (rideId != 0L && rideId != uniqueId) {
+                    vehicleId = rideId
+                    break
+                } else if (rideId == uniqueId && vId != 0L && vId != uniqueId) {
                     vehicleId = vId
                     break
                 }
