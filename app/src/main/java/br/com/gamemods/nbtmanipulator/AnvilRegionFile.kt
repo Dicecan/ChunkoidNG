@@ -5,9 +5,12 @@ import java.util.zip.DeflaterOutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.InflaterInputStream
 
-public class AnvilRegionFile(public val file: File) : Closeable, AutoCloseable {
+public class AnvilRegionFile @JvmOverloads constructor(
+    public val file: File,
+    readOnly: Boolean = false
+) : Closeable, AutoCloseable {
 
-    private val raf: RandomAccessFile = RandomAccessFile(file, "rw")
+    private val raf: RandomAccessFile = RandomAccessFile(file, if (readOnly) "r" else "rw")
 
     public val regionX: Int?
     public val regionZ: Int?
@@ -93,13 +96,15 @@ public class AnvilRegionFile(public val file: File) : Closeable, AutoCloseable {
         if (!info.exists) return null
 
         val byteOffset = info.sectorOffset.toLong() * 4096L
-        if (byteOffset + 5 > raf.length()) {
+        val fileLength = raf.length()
+        if (byteOffset < 8192L || byteOffset + 5 > fileLength) {
             return null
         }
 
         raf.seek(byteOffset)
         val length = raf.readInt()
-        if (length <= 1 || length > info.sectorCount * 4096) {
+        val allocatedBytes = info.sectorCount.toLong() * 4096L
+        if (length <= 1 || length.toLong() + 4L > allocatedBytes || byteOffset + 4L + length.toLong() > fileLength) {
             return null
         }
 
@@ -135,6 +140,11 @@ public class AnvilRegionFile(public val file: File) : Closeable, AutoCloseable {
         val payloadSize = compressedBytes.size + 1
         val totalChunkBytes = 4 + payloadSize
         val neededSectors = (totalChunkBytes + 4095) / 4096
+        if (neededSectors > 255) {
+            throw IOException(
+                "Anvil chunk ($localX, $localZ) compressed size ($totalChunkBytes bytes, $neededSectors sectors) exceeds the 255-sector Anvil format limit"
+            )
+        }
 
         if (raf.length() < 8192L) { raf.seek(0); raf.write(ByteArray(8192)) }
         val index = (localX and 31) + (localZ and 31) * 32

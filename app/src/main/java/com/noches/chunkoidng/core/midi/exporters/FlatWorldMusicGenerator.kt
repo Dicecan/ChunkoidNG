@@ -1,6 +1,7 @@
 package com.noches.chunkoidng.core.midi.exporters
 
 import br.com.gamemods.nbtmanipulator.*
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.core.leveldb.BedrockBlockState
 import com.noches.chunkoidng.core.leveldb.BedrockChunkHelper
 import com.noches.chunkoidng.core.leveldb.SafeEnv
@@ -201,16 +202,18 @@ object FlatWorldMusicGenerator {
     }
 
     private fun zipDirectory(sourceDir: File, zipFile: File) {
-        ZipOutputStream(FileOutputStream(zipFile).buffered()).use { zos ->
-            val prefixLen = sourceDir.absolutePath.length + 1
-            sourceDir.walkTopDown().forEach { file ->
-                if (file.isFile) {
-                    val entryName = file.absolutePath.substring(prefixLen).replace('\\', '/')
-                    zos.putNextEntry(ZipEntry(entryName))
-                    FileInputStream(file).use { fis ->
-                        fis.copyTo(zos)
+        val canonicalSource = sourceDir.canonicalFile
+        SafeFileIO.writeAtomically(zipFile) { out ->
+            ZipOutputStream(out).use { zos ->
+                canonicalSource.walkTopDown().forEach { file ->
+                    if (file.isFile) {
+                        val entryName = file.relativeTo(canonicalSource).path.replace('\\', '/')
+                        zos.putNextEntry(ZipEntry(entryName))
+                        FileInputStream(file).use { fis ->
+                            fis.copyTo(zos)
+                        }
+                        zos.closeEntry()
                     }
-                    zos.closeEntry()
                 }
             }
         }

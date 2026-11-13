@@ -56,25 +56,53 @@ export function saveLocalReleaseData(data) {
   fs.renameSync(tmpFile, RELEASES_FILE)
 }
 
-export function getDownloadPath(tag, filename) {
+export function sanitizeTagSegment(tag) {
+  if (typeof tag !== 'string') return null
   const safeTag = tag.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const tagDir = path.join(DOWNLOADS_DIR, safeTag)
+  if (!safeTag || safeTag === '.' || safeTag === '..') return null
+  return safeTag
+}
+
+export function sanitizeFilenameSegment(filename) {
+  if (typeof filename !== 'string') return null
+  const base = path.basename(filename)
+  if (!base || base !== filename || base === '.' || base === '..') return null
+  return base
+}
+
+export function resolveSafeDownloadPath(tag, filename) {
+  const safeTag = sanitizeTagSegment(tag)
+  const safeFilename = sanitizeFilenameSegment(filename)
+  if (!safeTag || !safeFilename) return null
+  const resolved = path.resolve(DOWNLOADS_DIR, safeTag, safeFilename)
+  if (!resolved.startsWith(DOWNLOADS_DIR + path.sep)) return null
+  return resolved
+}
+
+export function getDownloadPath(tag, filename) {
+  const safeTag = sanitizeTagSegment(tag)
+  const safeFilename = sanitizeFilenameSegment(filename)
+  if (!safeTag || !safeFilename) {
+    throw new Error('Invalid download tag or filename')
+  }
+  const tagDir = path.resolve(DOWNLOADS_DIR, safeTag)
+  if (!tagDir.startsWith(DOWNLOADS_DIR + path.sep)) {
+    throw new Error('Invalid download directory')
+  }
   if (!fs.existsSync(tagDir)) {
     fs.mkdirSync(tagDir, { recursive: true })
   }
-  return path.join(tagDir, filename)
+  return path.join(tagDir, safeFilename)
 }
 
 export function hasLocalDownload(tag, filename) {
-  const safeTag = tag.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const filePath = path.join(DOWNLOADS_DIR, safeTag, filename)
-  return fs.existsSync(filePath) && fs.statSync(filePath).size > 0
+  const filePath = resolveSafeDownloadPath(tag, filename)
+  return Boolean(filePath && fs.existsSync(filePath) && fs.statSync(filePath).size > 0)
 }
 
 export function getLocalDownloadStats(tag, filename) {
-  const safeTag = tag.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const filePath = path.join(DOWNLOADS_DIR, safeTag, filename)
-  if (!fs.existsSync(filePath)) return null
+  const filePath = resolveSafeDownloadPath(tag, filename)
+  if (!filePath || !fs.existsSync(filePath)) return null
   const stat = fs.statSync(filePath)
   return {
     path: filePath,
@@ -108,12 +136,19 @@ export async function downloadFileStream(url, destPath) {
   const tmpPath = `${destPath}.downloading`
   const fileStream = fs.createWriteStream(tmpPath)
 
-  // Use pipeline for robust stream piping
-  await pipeline(res.body, fileStream)
+  try {
+    // Use pipeline for robust stream piping
+    await pipeline(res.body, fileStream)
 
-  // Rename atomically on completion
-  fs.renameSync(tmpPath, destPath)
-  logger.info(`Asset downloaded successfully: ${destPath}`)
+    // Rename atomically on completion
+    fs.renameSync(tmpPath, destPath)
+    logger.info(`Asset downloaded successfully: ${destPath}`)
+  } catch (err) {
+    if (fs.existsSync(tmpPath)) {
+      fs.rmSync(tmpPath, { force: true })
+    }
+    throw err
+  }
 }
 
 export function pruneOldDownloads(keepTags) {

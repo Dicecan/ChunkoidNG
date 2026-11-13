@@ -1,5 +1,6 @@
 package com.noches.chunkoidng.core.conversion
 
+import org.json.JSONObject
 import java.io.File
 import java.util.UUID
 
@@ -47,16 +48,14 @@ data class ConversionConfig(
     fun buildWorldSettingsJson(): String? {
         val pairs = mutableListOf<String>()
         if (!overrideWorldName.isNullOrBlank()) {
-            val safeName = overrideWorldName.replace("\"", "\\\"")
-            pairs.add("\"world_name\": \"$safeName\"")
+            pairs.add("\"world_name\": ${JSONObject.quote(overrideWorldName)}")
         }
         if (!overrideGameMode.isNullOrBlank() && overrideGameMode != "DEFAULT") {
-            pairs.add("\"game_mode\": \"$overrideGameMode\"")
+            pairs.add("\"game_mode\": ${JSONObject.quote(overrideGameMode)}")
         }
         if (!overrideDifficulty.isNullOrBlank() && overrideDifficulty != "DEFAULT") {
-            pairs.add("\"difficulty\": \"$overrideDifficulty\"")
+            pairs.add("\"difficulty\": ${JSONObject.quote(overrideDifficulty)}")
         }
-
         return if (pairs.isNotEmpty()) {
             "{${pairs.joinToString(", ")}}"
         } else null

@@ -141,7 +141,7 @@ class WorldCryptManager(private val context: Context) {
                 false
             }
             if (mode == CryptMode.DECRYPT && fileName.endsWith(".ldb", ignoreCase = true)) {
-                if (!wasEncrypted || !NetEaseCryptor.verifyLdbFooter(destFile.readBytes())) ldbVerified = false
+                if (!wasEncrypted || !NetEaseCryptor.verifyLdbFooter(destFile)) ldbVerified = false
             }
             processedCount++
 

@@ -231,11 +231,15 @@ class ConversionEngine(
                 }
             }
         } catch (e: Exception) {
+            entityExtractDeferred?.cancel()
             tempOutput.deleteRecursively()
             emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_aborted, e.message ?: "")))
             return@flow
         } finally {
             activeProcess = null
+            if (!isSuccess || exitCode != 0) {
+                entityExtractDeferred?.cancel()
+            }
         }
 
         if (isSuccess && exitCode == 0 && entityPipeline != null) {
@@ -303,10 +307,16 @@ class ConversionEngine(
                 (File(tempOutput, "level.dat").isFile || File(tempOutput, "db").isDirectory)
         if (isSuccess && exitCode == 0 && outputValid) {
             if (config.outputDir.exists()) config.outputDir.deleteRecursively()
-            check(tempOutput.renameTo(config.outputDir)) { context.getString(R.string.engine_error_commit_output) }
+            val committed = tempOutput.renameTo(config.outputDir) || (
+                tempOutput.copyRecursively(config.outputDir, overwrite = true).also {
+                    tempOutput.deleteRecursively()
+                }
+            )
+            check(committed) { context.getString(R.string.engine_error_commit_output) }
             emit(ConversionEvent.Progress(config.taskId, 100, context.getString(R.string.engine_status_completed), context.getString(R.string.engine_status_time_elapsed, totalTime / 1000)))
             emit(ConversionEvent.Success(config.taskId, config.outputDir, totalTime))
         } else {
+            entityExtractDeferred?.cancel()
             tempOutput.deleteRecursively()
             val errorMsg = if (exitCode != null && exitCode != 0) {
                 context.getString(R.string.engine_error_exit_code, exitCode)

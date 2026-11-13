@@ -7,10 +7,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.gamemods.nbtmanipulator.*
 import com.noches.chunkoidng.R
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.core.leveldb.BedrockLevelDbHelper
 import com.noches.chunkoidng.core.leveldb.LevelDbCategory
 import com.noches.chunkoidng.core.leveldb.LevelDbRecord
 import com.noches.chunkoidng.core.nbt.MinecraftSemanticDescriptor
+import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -147,7 +149,10 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     return@launch
                 }
 
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val limits = appPreferences.getEffectiveLimits()
+                val bytes = context.contentResolver.openInputStream(uri)?.use {
+                    readStreamLimited(it, limits.archiveMaxTotalBytes)
+                }
                 if (bytes == null) {
                     withContext(Dispatchers.Main) {
                         _uiState.update {
@@ -204,6 +209,12 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 if (file.isFile && (file.name == "CURRENT" || file.name.endsWith(".ldb") || file.name.endsWith(".log"))) {
                     val parent = file.parentFile
                     if (parent != null && (parent.name.equals("db", true) || File(parent, "CURRENT").exists())) {
+                        _uiState.update {
+                            it.copy(
+                                currentFilePath = parent.absolutePath,
+                                currentFileName = parent.name
+                            )
+                        }
                         loadLevelDbFromFolder(parent)
                         return@launch
                     }
@@ -214,7 +225,8 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     return@launch
                 }
 
-                val bytes = file.readBytes()
+                val limits = appPreferences.getEffectiveLimits()
+                val bytes = file.inputStream().use { readStreamLimited(it, limits.archiveMaxTotalBytes) }
                 if (isZipArchive(bytes)) {
                     handleZipArchive(bytes, file.name)
                 } else {
@@ -265,7 +277,7 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             val relName = name.substringAfter("db/").substringAfter("db\\")
                             if (relName.isNotEmpty() && relName != "LOCK") {
                                 cacheFolder.mkdirs()
-                                val targetFile = File(cacheFolder, relName)
+                                val targetFile = Maid.defense.pathSanitizer.resolveUnderBase(cacheFolder, relName, "NbtEditor")
                                 var entryBytes = 0L
                                 targetFile.parentFile?.mkdirs()
                                 targetFile.outputStream().use { out ->
@@ -289,11 +301,10 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                             name.endsWith(".mcr", ignoreCase = true) ||
                             name.equals("levelname.txt", ignoreCase = true)
                         ) {
-                            val value = zis.readBytes()
+                            val remainingTotal = (limits.archiveMaxTotalBytes - totalBytes).coerceAtLeast(0L)
+                            val entryLimit = minOf(limits.archiveMaxEntryBytes, remainingTotal)
+                            val value = readStreamLimited(zis, entryLimit)
                             totalBytes += value.size
-                            if (value.size > limits.archiveMaxEntryBytes || totalBytes > limits.archiveMaxTotalBytes) {
-                                throw IOException("Archive exceeds extraction limits")
-                            }
                             workspaceEntries[name] = value
                         }
                     }
@@ -556,51 +567,60 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadChunkFromRegion(localX: Int, localZ: Int) {
         val region = _uiState.value.currentRegionFile ?: return
-        val info = region.getChunkInfo(localX, localZ)
-        if (info.exists) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val chunkNbt = region.readChunkNbt(localX, localZ)
-                if (chunkNbt != null) {
-                    _uiState.update {
-                        it.copy(
-                            mode = NbtEditorMode.NBT_TREE,
-                            title = "Chunk [$localX, $localZ]",
-                            subtitle = region.file.name,
-                            currentNbtFile = chunkNbt,
-                            currentFileName = "Chunk [$localX, $localZ]",
-                            currentChunkX = localX,
-                            currentChunkZ = localZ,
-                            isDirty = false,
-                            isCompressed = true,
-                            isLittleEndian = false,
-                            readHeaders = false
-                        )
+                val info = region.getChunkInfo(localX, localZ)
+                if (info.exists) {
+                    val chunkNbt = region.readChunkNbt(localX, localZ)
+                    if (chunkNbt != null) {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(
+                                    mode = NbtEditorMode.NBT_TREE,
+                                    title = "Chunk [$localX, $localZ]",
+                                    subtitle = region.file.name,
+                                    currentNbtFile = chunkNbt,
+                                    currentFileName = "Chunk [$localX, $localZ]",
+                                    currentChunkX = localX,
+                                    currentChunkZ = localZ,
+                                    isDirty = false,
+                                    isCompressed = true,
+                                    isLittleEndian = false,
+                                    readHeaders = false
+                                )
+                            }
+                            setupNbtTree(chunkNbt, "Chunk [$localX, $localZ]")
+                        }
                     }
-                    setupNbtTree(chunkNbt, "Chunk [$localX, $localZ]")
+                } else {
+                    val root = NbtCompound()
+                    root["DataVersion"] = NbtInt(3465)
+                    val newChunk = NbtFile("", root)
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                mode = NbtEditorMode.NBT_TREE,
+                                title = "Chunk [$localX, $localZ]",
+                                subtitle = region.file.name,
+                                currentNbtFile = newChunk,
+                                currentFileName = "Chunk [$localX, $localZ]",
+                                currentChunkX = localX,
+                                currentChunkZ = localZ,
+                                isDirty = true,
+                                isCompressed = true,
+                                isLittleEndian = false,
+                                readHeaders = false
+                            )
+                        }
+                        setupNbtTree(newChunk, "Chunk [$localX, $localZ]")
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(userMessage = e.message) }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                withContext(Dispatchers.Main) {
+                    _uiState.update { it.copy(userMessage = t.message) }
+                }
             }
-        } else {
-            val root = NbtCompound()
-            root["DataVersion"] = NbtInt(3465)
-            val newChunk = NbtFile("", root)
-            _uiState.update {
-                it.copy(
-                    mode = NbtEditorMode.NBT_TREE,
-                    title = "Chunk [$localX, $localZ]",
-                    subtitle = region.file.name,
-                    currentNbtFile = newChunk,
-                    currentFileName = "Chunk [$localX, $localZ]",
-                    currentChunkX = localX,
-                    currentChunkZ = localZ,
-                    isDirty = true,
-                    isCompressed = true,
-                    isLittleEndian = false,
-                    readHeaders = false
-                )
-            }
-            setupNbtTree(newChunk, "Chunk [$localX, $localZ]")
         }
     }
 
@@ -1379,19 +1399,26 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
             if (targets.isEmpty()) return
 
-            try {
-                region.deleteChunks(targets)
-                syncRegionFileToStorage()
-                val table = region.getChunkTable()
-                _uiState.update {
-                    it.copy(
-                        chunkTable = table,
-                        selectedChunkSet = emptySet(),
-                        userMessage = context.getString(R.string.nbt_delete_chunks_batch_success, targets.size)
-                    )
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    region.deleteChunks(targets)
+                    syncRegionFileToStorage()
+                    val table = region.getChunkTable()
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                chunkTable = table,
+                                selectedChunkSet = emptySet(),
+                                userMessage = context.getString(R.string.nbt_delete_chunks_batch_success, targets.size)
+                            )
+                        }
+                    }
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
+                    withContext(Dispatchers.Main) {
+                        _uiState.update { it.copy(userMessage = t.message) }
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(userMessage = e.message) }
             }
         }
     }
@@ -1479,18 +1506,26 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
         val region = state.currentRegionFile
         if (region != null && state.currentNbtFile != null) {
-            try {
-                region.writeChunkNbt(state.currentChunkX, state.currentChunkZ, state.currentNbtFile)
-                syncRegionFileToStorage()
-                _uiState.update {
-                    it.copy(
-                        isDirty = false,
-                        userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, e.message)}")
+            val nbtToWrite = state.currentNbtFile
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    region.writeChunkNbt(state.currentChunkX, state.currentChunkZ, nbtToWrite)
+                    syncRegionFileToStorage()
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                isDirty = false,
+                                userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
+                            )
+                        }
+                    }
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, t.message)}")
+                        }
+                    }
                 }
             }
             return
@@ -1499,34 +1534,41 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val zipBytes = state.originalZipBytes
         val zipEntry = state.selectedZipEntryName
         if (zipBytes != null && zipEntry != null && state.currentNbtFile != null) {
-            try {
-                val updatedNbt = serializeCurrentNbt()
-                val entries = state.workspaceZipEntries.toMutableMap()
-                entries[zipEntry] = updatedNbt
-                val updatedZip = updateZipWithNbt(zipBytes, zipEntry, updatedNbt)
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val updatedNbt = serializeCurrentNbt()
+                    val entries = state.workspaceZipEntries.toMutableMap()
+                    entries[zipEntry] = updatedNbt
+                    val updatedZip = updateZipWithNbt(zipBytes, zipEntry, updatedNbt)
 
-                saveWorkspaceToCache(updatedZip, state.activeWorkspaceName)
+                    saveWorkspaceToCache(updatedZip, state.activeWorkspaceName)
 
-                if (state.currentFilePath != null) {
-                    val file = File(state.currentFilePath)
-                    val bak = File("${state.currentFilePath}.bak")
-                    if (file.exists()) file.copyTo(bak, overwrite = true)
-                    atomicWriteFile(file, updatedZip)
-                } else if (state.currentFileUri != null) {
-                    context.contentResolver.openOutputStream(state.currentFileUri)?.use { it.write(updatedZip) }
-                }
+                    if (state.currentFilePath != null) {
+                        val file = File(state.currentFilePath)
+                        val bak = File("${state.currentFilePath}.bak")
+                        if (file.exists()) file.copyTo(bak, overwrite = true)
+                        atomicWriteFile(file, updatedZip)
+                    } else if (state.currentFileUri != null) {
+                        writeBytesToUri(context, state.currentFileUri, updatedZip)
+                    }
 
-                _uiState.update {
-                    it.copy(
-                        originalZipBytes = updatedZip,
-                        workspaceZipEntries = entries,
-                        isDirty = false,
-                        userMessage = if (!silent) context.getString(R.string.nbt_zip_save_success, zipEntry) else null
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, e.message)}")
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                originalZipBytes = updatedZip,
+                                workspaceZipEntries = entries,
+                                isDirty = false,
+                                userMessage = if (!silent) context.getString(R.string.nbt_zip_save_success, zipEntry) else null
+                            )
+                        }
+                    }
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, t.message)}")
+                        }
+                    }
                 }
             }
             return
@@ -1535,28 +1577,35 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val path = state.currentFilePath
         val nbtFile = state.currentNbtFile
         if (path != null && nbtFile != null) {
-            try {
-                val file = File(path)
-                val bak = File("$path.bak")
-                if (file.exists()) file.copyTo(bak, overwrite = true)
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val file = File(path)
+                    val bak = File("$path.bak")
+                    if (file.exists()) file.copyTo(bak, overwrite = true)
 
-                val bytes = ByteArrayOutputStream().also { output ->
-                    if (!state.readHeaders) {
-                        NbtIO.writeNbtFile(output, nbtFile, state.isCompressed, state.isLittleEndian)
-                    } else {
-                        output.write(serializeCurrentNbt())
+                    val bytes = ByteArrayOutputStream().also { output ->
+                        if (!state.readHeaders) {
+                            NbtIO.writeNbtFile(output, nbtFile, state.isCompressed, state.isLittleEndian)
+                        } else {
+                            output.write(serializeCurrentNbt())
+                        }
+                    }.toByteArray()
+                    atomicWriteFile(file, bytes)
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                isDirty = false,
+                                userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
+                            )
+                        }
                     }
-                }.toByteArray()
-                atomicWriteFile(file, bytes)
-                _uiState.update {
-                    it.copy(
-                        isDirty = false,
-                        userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, e.message)}")
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, t.message)}")
+                        }
+                    }
                 }
             }
         } else if (state.currentFileUri != null) {
@@ -1573,48 +1622,55 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val context = getApplication<Application>()
         val nbtFile = state.currentNbtFile ?: return
 
-        try {
-            val zipBytes = state.originalZipBytes
-            val zipEntry = state.selectedZipEntryName
-            if (zipBytes != null && zipEntry != null) {
-                val updatedNbt = serializeCurrentNbt()
-                val entries = state.workspaceZipEntries.toMutableMap()
-                entries[zipEntry] = updatedNbt
-                val updatedZip = updateZipWithNbt(zipBytes, zipEntry, updatedNbt)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val zipBytes = state.originalZipBytes
+                val zipEntry = state.selectedZipEntryName
+                if (zipBytes != null && zipEntry != null) {
+                    val updatedNbt = serializeCurrentNbt()
+                    val entries = state.workspaceZipEntries.toMutableMap()
+                    entries[zipEntry] = updatedNbt
+                    val updatedZip = updateZipWithNbt(zipBytes, zipEntry, updatedNbt)
 
-                val output = context.contentResolver.openOutputStream(uri)
+                    writeBytesToUri(context, uri, updatedZip)
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                originalZipBytes = updatedZip,
+                                workspaceZipEntries = entries,
+                                isDirty = false,
+                                userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
+                            )
+                        }
+                    }
+                    return@launch
+                }
+
+                val output = SafeFileIO.openTruncatingOutputStream(context.contentResolver, uri)
                     ?: throw IOException("Unable to open output stream")
-                output.use { it.write(updatedZip) }
-                _uiState.update {
-                    it.copy(
-                        originalZipBytes = updatedZip,
-                        workspaceZipEntries = entries,
-                        isDirty = false,
-                        userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
-                    )
+                output.use { stream ->
+                    if (!state.readHeaders) {
+                        NbtIO.writeNbtFile(stream, nbtFile, state.isCompressed, state.isLittleEndian)
+                    } else {
+                        val nbtBytes = serializeCurrentNbt()
+                        stream.write(nbtBytes)
+                    }
                 }
-                return
-            }
-
-            val output = context.contentResolver.openOutputStream(uri)
-                ?: throw IOException("Unable to open output stream")
-            output.use { stream ->
-                if (!state.readHeaders) {
-                    NbtIO.writeNbtFile(stream, nbtFile, state.isCompressed, state.isLittleEndian)
-                } else {
-                    val nbtBytes = serializeCurrentNbt()
-                    stream.write(nbtBytes)
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            isDirty = false,
+                            userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
+                        )
+                    }
                 }
-            }
-            _uiState.update {
-                it.copy(
-                    isDirty = false,
-                    userMessage = if (!silent) context.getString(R.string.nbt_save_success) else null
-                )
-            }
-        } catch (e: Exception) {
-            _uiState.update {
-                it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, e.message)}")
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(userMessage = "${context.getString(R.string.nbt_save_failed, t.message)}")
+                    }
+                }
             }
         }
     }
@@ -1659,13 +1715,30 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         return baos.toByteArray()
     }
 
-    private fun atomicWriteFile(file: File, bytes: ByteArray) {
-        val temp = File(file.parentFile, ".${file.name}.tmp")
-        temp.outputStream().use { it.write(bytes) }
-        if (!temp.renameTo(file)) {
-            temp.delete()
-            throw IOException("Unable to commit file")
+    private fun readStreamLimited(input: InputStream, maxBytes: Long): ByteArray {
+        val baos = ByteArrayOutputStream()
+        val buffer = ByteArray(32 * 1024)
+        var total = 0L
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) break
+            total += read
+            if (total > maxBytes) {
+                throw IOException("File or archive entry exceeds safe memory limit ($maxBytes bytes)")
+            }
+            baos.write(buffer, 0, read)
         }
+        return baos.toByteArray()
+    }
+
+    private fun writeBytesToUri(context: Context, uri: Uri, bytes: ByteArray) {
+        val output = SafeFileIO.openTruncatingOutputStream(context.contentResolver, uri)
+            ?: throw IOException("Unable to open output stream")
+        output.use { it.write(bytes) }
+    }
+
+    private fun atomicWriteFile(file: File, bytes: ByteArray) {
+        SafeFileIO.writeBytesAtomically(file, bytes)
     }
 
     private fun updateZipWithLevelDbFolder(originalZip: ByteArray, levelDbFolder: File): ByteArray {
@@ -1679,13 +1752,15 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                     val name = entry.name
                     if (name.startsWith("db/") || name.startsWith("db\\")) {
                         val relName = name.substringAfter("db/").substringAfter("db\\")
-                        val file = File(levelDbFolder, relName)
-                        if (file.exists() && !file.isDirectory) {
-                            val newEntry = ZipEntry("db/$relName")
-                            zos.putNextEntry(newEntry)
-                            file.inputStream().use { it.copyTo(zos) }
-                            zos.closeEntry()
-                            writtenEntries.add(relName)
+                        if (relName != "LOCK" && relName.isNotEmpty()) {
+                            val file = File(levelDbFolder, relName)
+                            if (file.exists() && !file.isDirectory) {
+                                val newEntry = ZipEntry("db/$relName")
+                                zos.putNextEntry(newEntry)
+                                file.inputStream().use { it.copyTo(zos) }
+                                zos.closeEntry()
+                                writtenEntries.add(relName)
+                            }
                         }
                     } else {
                         val newEntry = ZipEntry(name)
@@ -1715,27 +1790,42 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
         val folder = levelDbCachedFolder
         val context = getApplication<Application>()
 
-        if (zipBytes != null && folder != null) {
-            val updatedZip = updateZipWithLevelDbFolder(zipBytes, folder)
-            saveWorkspaceToCache(updatedZip, state.activeWorkspaceName)
-            _uiState.update { it.copy(originalZipBytes = updatedZip) }
+        if (folder == null) return
 
-            if (state.currentFilePath != null) {
-                val file = File(state.currentFilePath)
-                val bak = File("${state.currentFilePath}.bak")
-                if (file.exists()) file.copyTo(bak, overwrite = true)
-                atomicWriteFile(file, updatedZip)
-            } else if (state.currentFileUri != null) {
-                context.contentResolver.openOutputStream(state.currentFileUri)?.use { it.write(updatedZip) }
-            }
-        } else if (state.currentFilePath != null && folder != null) {
-            val originalFolder = File(state.currentFilePath)
-            if (originalFolder.isDirectory) {
-                folder.listFiles()?.forEach { f ->
-                    if (!f.isDirectory && f.name != "LOCK") {
-                        f.copyTo(File(originalFolder, f.name), overwrite = true)
+        // Close active LevelDB handle before snapshotting files so WAL/memtable/CURRENT are flushed cleanly.
+        val hadHelper = levelDbHelper != null
+        if (hadHelper) {
+            levelDbHelper?.close()
+            levelDbHelper = null
+        }
+
+        try {
+            if (zipBytes != null) {
+                val updatedZip = updateZipWithLevelDbFolder(zipBytes, folder)
+                saveWorkspaceToCache(updatedZip, state.activeWorkspaceName)
+                _uiState.update { it.copy(originalZipBytes = updatedZip) }
+
+                if (state.currentFilePath != null) {
+                    val file = File(state.currentFilePath)
+                    val bak = File("${state.currentFilePath}.bak")
+                    if (file.exists()) file.copyTo(bak, overwrite = true)
+                    atomicWriteFile(file, updatedZip)
+                } else if (state.currentFileUri != null) {
+                    writeBytesToUri(context, state.currentFileUri, updatedZip)
+                }
+            } else if (state.currentFilePath != null) {
+                val originalFolder = File(state.currentFilePath)
+                if (originalFolder.isDirectory && originalFolder.canonicalFile != folder.canonicalFile) {
+                    folder.listFiles()?.forEach { f ->
+                        if (!f.isDirectory && f.name != "LOCK") {
+                            SafeFileIO.writeBytesAtomically(File(originalFolder, f.name), f.readBytes())
+                        }
                     }
                 }
+            }
+        } finally {
+            if (hadHelper && folder.exists() && levelDbCachedFolder == folder) {
+                levelDbHelper = BedrockLevelDbHelper(folder)
             }
         }
     }
@@ -1766,16 +1856,20 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
                 if (file.exists()) file.copyTo(bak, overwrite = true)
                 atomicWriteFile(file, updatedZip)
             } else if (state.currentFileUri != null) {
-                context.contentResolver.openOutputStream(state.currentFileUri)?.use { it.write(updatedZip) }
+                writeBytesToUri(context, state.currentFileUri, updatedZip)
             }
         } else if (regionFile != null) {
             if (state.currentFilePath != null) {
                 val file = File(state.currentFilePath)
                 val bak = File("${state.currentFilePath}.bak")
                 if (file.exists()) file.copyTo(bak, overwrite = true)
-                regionFile.copyTo(file, overwrite = true)
+                SafeFileIO.writeAtomically(file) { out ->
+                    regionFile.inputStream().use { it.copyTo(out) }
+                }
             } else if (state.currentFileUri != null) {
-                context.contentResolver.openOutputStream(state.currentFileUri)?.use { out ->
+                val output = SafeFileIO.openTruncatingOutputStream(context.contentResolver, state.currentFileUri)
+                    ?: throw IOException("Unable to open output stream")
+                output.use { out ->
                     regionFile.inputStream().use { it.copyTo(out) }
                 }
             }

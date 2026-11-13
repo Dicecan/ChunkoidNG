@@ -1,5 +1,6 @@
 package com.noches.chunkoidng.core.pack
 
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -202,7 +203,7 @@ object ResourcePackConverterEngine {
                     for ((mcmetaRel, content) in extractedMcmetas) {
                         val mappedJavaPath = PackAssetMapper.mapBedrockToJava(mcmetaRel, config.targetJavaFormat)
                         if (mappedJavaPath != null) {
-                            val javaTarget = File(targetDir, mappedJavaPath)
+                            val javaTarget = Maid.defense.pathSanitizer.resolveUnderBase(targetDir, mappedJavaPath, "PackConverter")
                             javaTarget.parentFile?.mkdirs()
                             javaTarget.writeText(content)
                         }
@@ -212,7 +213,7 @@ object ResourcePackConverterEngine {
             }
 
             if (targetRel != null) {
-                val destFile = File(targetDir, targetRel)
+                val destFile = Maid.defense.pathSanitizer.resolveUnderBase(targetDir, targetRel, "PackConverter")
                 destFile.parentFile?.mkdirs()
 
                 if (isJavaToBedrock) {
@@ -300,7 +301,7 @@ object ResourcePackConverterEngine {
                     }
                 }
             } else {
-                val fallbackDest = File(targetDir, relative)
+                val fallbackDest = Maid.defense.pathSanitizer.resolveUnderBase(targetDir, relative, "PackConverter")
                 fallbackDest.parentFile?.mkdirs()
                 sourceFile.copyTo(fallbackDest, overwrite = true)
             }
@@ -442,17 +443,19 @@ object ResourcePackConverterEngine {
     }
 
     suspend fun createArchive(sourceDir: File, targetArchiveFile: File) = withContext(Dispatchers.IO) {
-        targetArchiveFile.parentFile?.mkdirs()
-        ZipOutputStream(FileOutputStream(targetArchiveFile).buffered()).use { zos ->
-            val files = sourceDir.walkTopDown().filter { it.isFile }.toList()
-            for (file in files) {
-                val relPath = file.relativeTo(sourceDir).path.replace('\\', '/')
-                val zipEntry = ZipEntry(relPath)
-                zos.putNextEntry(zipEntry)
-                FileInputStream(file).buffered().use { fis ->
-                    fis.copyTo(zos)
+        val canonicalSource = sourceDir.canonicalFile
+        SafeFileIO.writeAtomically(targetArchiveFile) { out ->
+            ZipOutputStream(out).use { zos ->
+                val files = canonicalSource.walkTopDown().filter { it.isFile }.toList()
+                for (file in files) {
+                    val relPath = file.relativeTo(canonicalSource).path.replace('\\', '/')
+                    val zipEntry = ZipEntry(relPath)
+                    zos.putNextEntry(zipEntry)
+                    FileInputStream(file).buffered().use { fis ->
+                        fis.copyTo(zos)
+                    }
+                    zos.closeEntry()
                 }
-                zos.closeEntry()
             }
         }
     }

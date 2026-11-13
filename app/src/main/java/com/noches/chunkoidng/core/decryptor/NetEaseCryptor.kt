@@ -113,6 +113,20 @@ object NetEaseCryptor {
         return true
     }
 
+    fun verifyLdbFooter(file: java.io.File): Boolean {
+        if (!file.isFile || file.length() < 8L) return false
+        return try {
+            java.io.RandomAccessFile(file, "r").use { raf ->
+                raf.seek(raf.length() - 8L)
+                val tail = ByteArray(8)
+                raf.readFully(tail)
+                verifyLdbFooter(tail)
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     fun keyToHexString(key: ByteArray): String {
         return key.joinToString("") { "%02X".format(it) }
     }
@@ -133,8 +147,8 @@ object NetEaseCryptor {
             xorCopy(source, target, key)
         } else if (!decrypt && !encrypted) {
             target.write(MAGIC_HEADER)
-            xorWrite(header, read, target, key, 0)
-            xorCopy(source, target, key, read)
+            xorWrite(header, read, target, key, 0L)
+            xorCopy(source, target, key, read.toLong())
         } else {
             if (read > 0) target.write(header, 0, read)
             source.copyTo(target, BUFFER_SIZE)
@@ -143,7 +157,7 @@ object NetEaseCryptor {
         return encrypted
     }
 
-    private fun xorCopy(input: InputStream, output: OutputStream, key: ByteArray, offset: Int = 0) {
+    private fun xorCopy(input: InputStream, output: OutputStream, key: ByteArray, offset: Long = 0L) {
         val buffer = ByteArray(BUFFER_SIZE)
         var position = offset
         var count: Int
@@ -153,8 +167,12 @@ object NetEaseCryptor {
         }
     }
 
-    private fun xorWrite(data: ByteArray, count: Int, output: OutputStream, key: ByteArray, offset: Int) {
-        for (i in 0 until count) data[i] = (data[i].toInt() xor key[(offset + i) % key.size].toInt()).toByte()
+    private fun xorWrite(data: ByteArray, count: Int, output: OutputStream, key: ByteArray, offset: Long) {
+        val keyLen = key.size.toLong()
+        for (i in 0 until count) {
+            val idx = ((offset + i) % keyLen).toInt()
+            data[i] = (data[i].toInt() xor key[idx].toInt()).toByte()
+        }
         output.write(data, 0, count)
     }
 

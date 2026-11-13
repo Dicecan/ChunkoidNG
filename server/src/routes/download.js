@@ -1,8 +1,13 @@
 import { Router } from 'express'
 import path from 'node:path'
-import { getDownloadPath, hasLocalDownload } from '../storage.js'
+import {
+  getLocalReleaseData,
+  hasLocalDownload,
+  resolveSafeDownloadPath,
+  sanitizeFilenameSegment,
+  sanitizeTagSegment
+} from '../storage.js'
 import { getMirrors } from '../mirrors.js'
-import { getLocalReleaseData } from '../storage.js'
 import { logger } from '../utils/logger.js'
 
 export const downloadRouter = Router()
@@ -10,20 +15,20 @@ export const downloadRouter = Router()
 downloadRouter.get('/:tag/:filename', (req, res) => {
   const { tag, filename } = req.params
 
-  // Validate filename to prevent path traversal
-  const safeFilename = path.basename(filename)
-  if (safeFilename !== filename) {
-    return res.status(400).send('Invalid filename')
+  const safeTag = sanitizeTagSegment(tag)
+  const safeFilename = sanitizeFilenameSegment(filename)
+  if (!safeTag || !safeFilename) {
+    return res.status(400).send('Invalid tag or filename')
   }
 
-  let filePath = getDownloadPath(tag, safeFilename)
-  let found = hasLocalDownload(tag, safeFilename)
+  let filePath = resolveSafeDownloadPath(safeTag, safeFilename)
+  let found = Boolean(filePath && hasLocalDownload(safeTag, safeFilename))
 
   // Defensive check for duplicate .apk extension
   if (!found && !safeFilename.endsWith('.apk.apk')) {
-    if (hasLocalDownload(tag, `${safeFilename}.apk`)) {
-      filePath = getDownloadPath(tag, `${safeFilename}.apk`)
-      found = true
+    if (hasLocalDownload(safeTag, `${safeFilename}.apk`)) {
+      filePath = resolveSafeDownloadPath(safeTag, `${safeFilename}.apk`)
+      found = Boolean(filePath)
     }
   }
 

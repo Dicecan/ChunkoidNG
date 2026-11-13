@@ -1,5 +1,6 @@
 package com.noches.chunkoidng.core.midi.exporters
 
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.core.midi.NoteBlockSong
 import com.noches.chunkoidng.core.world.Platform
 import com.noches.chunkoidng.core.world.WorldMetadataReader
@@ -213,23 +214,30 @@ object WorldBlockInjector {
 
     private fun createWorldBackup(worldDir: File, worldName: String): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val sanitized = worldName.replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val backupDir = File(worldDir.parentFile ?: worldDir, "backups").apply { mkdirs() }
+        val sanitized = worldName.replace(Regex("[^a-zA-Z0-9_-]"), "_").ifBlank { "world" }
+        val canonicalWorld = worldDir.canonicalFile
+        val parentDir = canonicalWorld.parentFile
+        val backupDir = if (parentDir != null && parentDir != canonicalWorld) {
+            File(parentDir, "backups").apply { mkdirs() }
+        } else {
+            java.nio.file.Files.createTempDirectory("chunkoid_world_backups").toFile()
+        }
         val backupZip = File(backupDir, "${sanitized}_backup_$timeStamp.zip")
 
         var totalBytes = 0L
-        ZipOutputStream(FileOutputStream(backupZip).buffered()).use { zos ->
-            val prefixLen = worldDir.absolutePath.length + 1
-            worldDir.walkTopDown().forEach { file ->
-                if (file.isFile) {
-                    totalBytes += file.length()
-                    require(totalBytes <= MAX_WORLD_BACKUP_BYTES) { "World is too large to back up" }
-                    val entryName = file.absolutePath.substring(prefixLen).replace('\\', '/')
-                    zos.putNextEntry(ZipEntry(entryName))
-                    FileInputStream(file).use { fis ->
-                        fis.copyTo(zos)
+        SafeFileIO.writeAtomically(backupZip) { out ->
+            ZipOutputStream(out).use { zos ->
+                canonicalWorld.walkTopDown().forEach { file ->
+                    if (file.isFile && file.canonicalFile != backupZip.canonicalFile) {
+                        totalBytes += file.length()
+                        require(totalBytes <= MAX_WORLD_BACKUP_BYTES) { "World is too large to back up" }
+                        val entryName = file.relativeTo(canonicalWorld).path.replace('\\', '/')
+                        zos.putNextEntry(ZipEntry(entryName))
+                        FileInputStream(file).use { fis ->
+                            fis.copyTo(zos)
+                        }
+                        zos.closeEntry()
                     }
-                    zos.closeEntry()
                 }
             }
         }

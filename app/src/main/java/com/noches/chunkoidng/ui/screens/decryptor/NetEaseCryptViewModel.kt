@@ -10,8 +10,10 @@ import androidx.lifecycle.viewModelScope
 import com.noches.chunkoidng.core.decryptor.CryptEvent
 import com.noches.chunkoidng.core.decryptor.CryptMode
 import com.noches.chunkoidng.core.decryptor.WorldCryptManager
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.core.world.ArchiveManager
 import com.noches.chunkoidng.core.world.HistoryManager
+import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -137,10 +139,11 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
 
             result.fold(
                 onSuccess = { worldInfo ->
-
-                    if (stagingInputDir.exists()) stagingInputDir.deleteRecursively()
-                    stagingInputDir.mkdirs()
-                    archiveManager.inputDir.copyRecursively(stagingInputDir, overwrite = true)
+                    withContext(Dispatchers.IO) {
+                        if (stagingInputDir.exists()) stagingInputDir.deleteRecursively()
+                        stagingInputDir.mkdirs()
+                        archiveManager.inputDir.copyRecursively(stagingInputDir, overwrite = true)
+                    }
                     startProcessing()
                 },
                 onFailure = { err ->
@@ -263,7 +266,10 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                             ?: return@withContext Result.failure(Exception(getApplication<Application>().getString(R.string.crypt_error_create_archive)))
 
                         try {
-                            val streamSuccess = getApplication<Application>().contentResolver.openOutputStream(docFile.uri)?.use { out ->
+                            val streamSuccess = SafeFileIO.openTruncatingOutputStream(
+                                getApplication<Application>().contentResolver,
+                                docFile.uri
+                            )?.use { out ->
                                 ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
                                     zipDirectory(outputDir, outputDir, zos)
                                 }
@@ -326,7 +332,8 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
         val failures = mutableListOf<String>()
         target.mkdirs()
         source.listFiles().forEach { child ->
-            val destChild = File(target, child.name ?: "unknown")
+            val safeName = Maid.defense.pathSanitizer.sanitizeFileName(child.name ?: "unknown")
+            val destChild = Maid.defense.pathSanitizer.resolveUnderBase(target, safeName, "NetEaseCrypt")
             if (child.isDirectory) {
                 failures += copyDocumentDir(child, destChild)
             } else if (child.isFile) {
@@ -355,15 +362,21 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                 val subDirDoc = targetDoc.createDirectory(file.name)
                 if (subDirDoc == null) failures += file.absolutePath else failures += copyToDocumentDir(file, subDirDoc)
             } else {
+                var newFile: androidx.documentfile.provider.DocumentFile? = null
                 try {
-                    val newFile = targetDoc.createFile("application/octet-stream", file.name)
+                    newFile = targetDoc.createFile("application/octet-stream", file.name)
                         ?: throw java.io.IOException(getApplication<Application>().getString(R.string.decrypt_err_create_file))
-                    val out = getApplication<Application>().contentResolver.openOutputStream(newFile.uri)
-                        ?: throw java.io.IOException(getApplication<Application>().getString(R.string.decrypt_err_output_stream))
+                    val out = SafeFileIO.openTruncatingOutputStream(
+                        getApplication<Application>().contentResolver,
+                        newFile.uri
+                    ) ?: throw java.io.IOException(getApplication<Application>().getString(R.string.decrypt_err_output_stream))
                     out.use { stream ->
                         file.inputStream().use { input -> input.copyTo(stream) }
                     }
-                } catch (e: Exception) { failures += file.absolutePath }
+                } catch (e: Exception) {
+                    newFile?.delete()
+                    failures += file.absolutePath
+                }
             }
         }
         return failures

@@ -1,21 +1,11 @@
 import { Router } from 'express'
 import { getMirrors, updateMirrorsList } from '../mirrors.js'
-import { getConfig, saveConfig } from '../config.js'
+import { verifyAdmin } from '../middleware/auth.js'
 
 export const mirrorsRouter = Router()
+export const adminMirrorsRouter = Router()
 
-function verifyAdmin(req, res, next) {
-  const authHeader = req.headers['authorization'] || ''
-  const token = authHeader.replace(/^Bearer\s+/i, '') || req.query.token
-  const cfg = getConfig()
-
-  if (!token || token !== cfg.admin?.token) {
-    return res.status(401).json({ code: 401, message: 'Unauthorized: invalid admin token' })
-  }
-  next()
-}
-
-// GET /api/mirrors - List all mirrors
+// GET /api/mirrors - Public list of mirrors
 mirrorsRouter.get('/', (req, res) => {
   const mirrors = getMirrors()
   res.json({
@@ -25,7 +15,7 @@ mirrorsRouter.get('/', (req, res) => {
 })
 
 // POST /api/admin/mirrors - Update entire mirrors array
-mirrorsRouter.post('/', verifyAdmin, (req, res) => {
+adminMirrorsRouter.post('/', verifyAdmin, (req, res) => {
   const { mirrors } = req.body
   if (!Array.isArray(mirrors)) {
     return res.status(400).json({ code: 400, message: 'Invalid mirrors payload' })
@@ -40,7 +30,7 @@ mirrorsRouter.post('/', verifyAdmin, (req, res) => {
 })
 
 // POST /api/admin/mirrors/quick-add - Quickly add or update a mirror
-mirrorsRouter.post('/quick-add', verifyAdmin, (req, res) => {
+adminMirrorsRouter.post('/quick-add', verifyAdmin, (req, res) => {
   const { id, name, type, prefix, description, priority, enabled = true } = req.body
   if (!id || !name || !type) {
     return res.status(400).json({ code: 400, message: 'Missing required mirror fields (id, name, type)' })
@@ -70,7 +60,7 @@ mirrorsRouter.post('/quick-add', verifyAdmin, (req, res) => {
 })
 
 // POST /api/admin/mirrors/toggle - Quickly toggle a mirror on/off
-mirrorsRouter.post('/toggle', verifyAdmin, (req, res) => {
+adminMirrorsRouter.post('/toggle', verifyAdmin, (req, res) => {
   const { id, enabled } = req.body
   if (!id) {
     return res.status(400).json({ code: 400, message: 'Missing mirror id' })

@@ -8,7 +8,7 @@ import { getConfig } from './src/config.js'
 import { startPeriodicSync } from './src/syncer.js'
 import { releasesRouter } from './src/routes/releases.js'
 import { downloadRouter } from './src/routes/download.js'
-import { mirrorsRouter } from './src/routes/mirrors.js'
+import { adminMirrorsRouter, mirrorsRouter } from './src/routes/mirrors.js'
 import { webhookRouter } from './src/routes/webhook.js'
 import { syncRouter } from './src/routes/sync.js'
 import { logger } from './src/utils/logger.js'
@@ -20,7 +20,12 @@ const app = express()
 
 // Middleware
 app.use(cors({ origin: cfg.server.corsOrigin || '*' }))
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, _res, buf) => {
+    req.rawBody = buf
+  }
+}))
 app.use(express.urlencoded({ extended: true }))
 
 // Request logger
@@ -33,7 +38,7 @@ app.use((req, res, next) => {
 app.use('/api/releases', releasesRouter)
 app.use('/api/download', downloadRouter)
 app.use('/api/mirrors', mirrorsRouter)
-app.use('/api/admin/mirrors', mirrorsRouter)
+app.use('/api/admin/mirrors', adminMirrorsRouter)
 app.use('/api/webhook', webhookRouter)
 app.use('/api/sync', syncRouter)
 

@@ -12,20 +12,29 @@ webhookRouter.post('/github', (req, res) => {
   const cfg = getConfig()
   const secret = cfg.github.webhookSecret
 
-  // Verify signature if secret is configured
-  if (secret) {
-    if (!signature) {
-      logger.warn('GitHub webhook rejected: missing X-Hub-Signature-256 header')
-      return res.status(401).send('Missing signature')
-    }
+  // Require configured secret and verify HMAC over exact raw request bytes
+  if (!secret) {
+    logger.warn('GitHub webhook rejected: webhookSecret is not configured')
+    return res.status(503).send('Webhook secret not configured')
+  }
 
-    const payload = JSON.stringify(req.body)
-    const expectedSig = 'sha256=' + crypto.createHmac('sha256', secret).update(payload).digest('hex')
+  if (typeof signature !== 'string' || !signature) {
+    logger.warn('GitHub webhook rejected: missing X-Hub-Signature-256 header')
+    return res.status(401).send('Missing signature')
+  }
 
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
-      logger.warn('GitHub webhook rejected: invalid signature')
-      return res.status(401).send('Invalid signature')
-    }
+  if (!Buffer.isBuffer(req.rawBody)) {
+    logger.warn('GitHub webhook rejected: raw body unavailable')
+    return res.status(400).send('Invalid body')
+  }
+
+  const expectedSig = 'sha256=' + crypto.createHmac('sha256', secret).update(req.rawBody).digest('hex')
+  const sigBuf = Buffer.from(signature, 'utf-8')
+  const expectedBuf = Buffer.from(expectedSig, 'utf-8')
+
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+    logger.warn('GitHub webhook rejected: invalid signature')
+    return res.status(401).send('Invalid signature')
   }
 
   logger.info(`Received GitHub webhook event: "${event}"`)

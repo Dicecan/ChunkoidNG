@@ -87,8 +87,8 @@ class HistoryManager(private val context: Context) {
                         sourcePlatform = obj.getString("sourcePlatform"),
                         targetPlatform = obj.getString("targetPlatform"),
                         durationMs = obj.getLong("durationMs"),
-                        iconPath = if (obj.has("iconPath")) obj.getString("iconPath") else null,
-                        exportedUri = if (obj.has("exportedUri")) obj.getString("exportedUri") else null
+                        iconPath = if (!obj.isNull("iconPath")) obj.optString("iconPath") else null,
+                        exportedUri = if (!obj.isNull("exportedUri")) obj.optString("exportedUri") else null
                     )
                 )
             }

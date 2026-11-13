@@ -12,7 +12,8 @@ class PathSanitizer(private val securityAuditor: SecurityAuditor) {
 
     fun sanitizeFileName(name: String): String {
         val normalized = normalizeSeparators(name).substringAfterLast('/')
-        return normalized.replace(Regex("[\\\\/:*?\"<>|\r\n\t]"), "_").trim()
+        val cleaned = normalized.replace(Regex("[\\\\/:*?\"<>|\r\n\t\\u0000]"), "_").trim()
+        return if (cleaned.isEmpty() || cleaned == "." || cleaned == "..") "unnamed" else cleaned
     }
 
     fun resolveUnderBase(
@@ -20,6 +21,15 @@ class PathSanitizer(private val securityAuditor: SecurityAuditor) {
         entryPath: String,
         module: String = "Defense"
     ): File {
+        if (entryPath.indexOf('\u0000') >= 0) {
+            securityAuditor.recordBlock(
+                type = ViolationType.ZIP_SLIP,
+                module = module,
+                message = "检测到包含空字节的恶意路径，已严格拦截",
+                pathOrTarget = entryPath
+            )
+            throw SecurityException("Security violation: NUL byte in path: $entryPath")
+        }
         val normalized = normalizeSeparators(entryPath)
         val targetFile = File(baseDir, normalized)
         val canonicalBase = baseDir.canonicalFile

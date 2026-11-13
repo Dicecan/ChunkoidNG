@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.core.pack.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -293,8 +294,10 @@ class PackConverterViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    val out = getApplication<Application>().contentResolver.openOutputStream(destinationUri)
-                        ?: throw IOException("Unable to open destination")
+                    val out = SafeFileIO.openTruncatingOutputStream(
+                        getApplication<Application>().contentResolver,
+                        destinationUri
+                    ) ?: throw IOException("Unable to open destination")
                     out.use { output ->
                         file.inputStream().use { input -> input.copyTo(output) }
                     }

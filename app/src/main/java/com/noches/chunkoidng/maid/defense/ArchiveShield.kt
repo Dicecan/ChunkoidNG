@@ -59,41 +59,66 @@ class ArchiveShield(
                 if (entry.isDirectory) {
                     targetFile.mkdirs()
                 } else {
+                    if (targetFile.canonicalFile == destDir.canonicalFile) {
+                        securityAuditor.recordBlock(
+                            type = ViolationType.ZIP_SLIP,
+                            module = module,
+                            message = "检测到指向根目录本身的非法文件条目，已拦截",
+                            pathOrTarget = entry.name
+                        )
+                        throw SecurityException("Invalid zip file entry targeting base directory: ${entry.name}")
+                    }
                     targetFile.parentFile?.mkdirs()
+                    if (java.nio.file.Files.isSymbolicLink(targetFile.toPath())) {
+                        securityAuditor.recordBlock(
+                            type = ViolationType.ZIP_SLIP,
+                            module = module,
+                            message = "检测到符号链接目标路径，已拦截",
+                            pathOrTarget = entry.name
+                        )
+                        throw SecurityException("Security violation: symlink target refused: ${entry.name}")
+                    }
                     var entryBytes = 0L
+                    var entryCompleted = false
+                    try {
+                        FileOutputStream(targetFile).buffered(bufferSize).use { fos ->
+                            var len: Int
+                            while (zis.read(buffer).also { len = it } != -1) {
+                                if (!shouldContinue()) {
+                                    throw java.util.concurrent.CancellationException("Archive extraction cancelled by user")
+                                }
 
-                    FileOutputStream(targetFile).buffered(bufferSize).use { fos ->
-                        var len: Int
-                        while (zis.read(buffer).also { len = it } != -1) {
-                            if (!shouldContinue()) {
-                                throw java.util.concurrent.CancellationException("Archive extraction cancelled by user")
+                                entryBytes += len
+                                totalBytes += len
+
+                                if (entryBytes > limits.archiveMaxEntryBytes) {
+                                    securityAuditor.recordBlock(
+                                        type = ViolationType.ZIP_BOMB_ENTRY_SIZE,
+                                        module = module,
+                                        message = "单条目解压大小超出配额 (${limits.archiveMaxEntryBytes} bytes)，已安全阻断",
+                                        pathOrTarget = entry.name,
+                                        requestedValue = entryBytes
+                                    )
+                                    throw IllegalArgumentException("Single entry exceeded maximum allowed size: ${entry.name}")
+                                }
+
+                                if (totalBytes > limits.archiveMaxTotalBytes) {
+                                    securityAuditor.recordBlock(
+                                        type = ViolationType.ZIP_BOMB_TOTAL_SIZE,
+                                        module = module,
+                                        message = "归档累计解压体积超出总体配额 (${limits.archiveMaxTotalBytes} bytes)，疑似Zip炸弹攻击",
+                                        requestedValue = totalBytes
+                                    )
+                                    throw IllegalArgumentException("Total extracted size exceeded quota: $totalBytes bytes")
+                                }
+
+                                fos.write(buffer, 0, len)
                             }
-
-                            entryBytes += len
-                            totalBytes += len
-
-                            if (entryBytes > limits.archiveMaxEntryBytes) {
-                                securityAuditor.recordBlock(
-                                    type = ViolationType.ZIP_BOMB_ENTRY_SIZE,
-                                    module = module,
-                                    message = "单条目解压大小超出配额 (${limits.archiveMaxEntryBytes} bytes)，已安全阻断",
-                                    pathOrTarget = entry.name,
-                                    requestedValue = entryBytes
-                                )
-                                throw IllegalArgumentException("Single entry exceeded maximum allowed size: ${entry.name}")
-                            }
-
-                            if (totalBytes > limits.archiveMaxTotalBytes) {
-                                securityAuditor.recordBlock(
-                                    type = ViolationType.ZIP_BOMB_TOTAL_SIZE,
-                                    module = module,
-                                    message = "归档累计解压体积超出总体配额 (${limits.archiveMaxTotalBytes} bytes)，疑似Zip炸弹攻击",
-                                    requestedValue = totalBytes
-                                )
-                                throw IllegalArgumentException("Total extracted size exceeded quota: $totalBytes bytes")
-                            }
-
-                            fos.write(buffer, 0, len)
+                        }
+                        entryCompleted = true
+                    } finally {
+                        if (!entryCompleted && targetFile.exists() && targetFile.isFile) {
+                            targetFile.delete()
                         }
                     }
                 }

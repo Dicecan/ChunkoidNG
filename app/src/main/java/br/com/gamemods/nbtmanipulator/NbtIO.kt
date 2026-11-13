@@ -10,6 +10,33 @@ import kotlin.reflect.cast
 
 public object NbtIO {
 
+    private const val MAX_ARRAY_OR_LIST_SIZE = 16_777_216
+    private const val MAX_NESTING_DEPTH = 512
+
+    private val currentDepth = object : ThreadLocal<Int>() {
+        override fun initialValue(): Int = 0
+    }
+
+    private inline fun <T> withDepthGuard(block: () -> T): T {
+        val depth = currentDepth.get() ?: 0
+        if (depth >= MAX_NESTING_DEPTH) {
+            throw IOException("NBT nesting depth exceeded maximum limit ($MAX_NESTING_DEPTH)")
+        }
+        currentDepth.set(depth + 1)
+        return try {
+            block()
+        } finally {
+            currentDepth.set(depth)
+        }
+    }
+
+    private fun serializerFor(typeId: Int): NbtSerial<out NbtTag> {
+        if (typeId !in serializers.indices) {
+            throw IOException("Unsupported NBT tag type id: $typeId")
+        }
+        return serializers[typeId]
+    }
+
     @JvmStatic
     @Throws(IOException::class)
     public fun writeNbtFileAsOriginal(outputStream: OutputStream, file: NbtFile) {
@@ -105,7 +132,10 @@ public object NbtIO {
     @Throws(IOException::class)
     public fun readNbtFileDirectly(input: DataInput): NbtFile {
         val typeId = input.readUnsignedByte()
-        val serializer = serializers[typeId]
+        if (typeId == 0) {
+            throw IOException("Unexpected TAG_End as root NBT tag")
+        }
+        val serializer = serializerFor(typeId)
 
         val name = input.readUTF()
 
@@ -132,10 +162,10 @@ public object NbtIO {
                 return try {
                     openFile.seek(0)
                     readNbtFile(FileInputStream(openFile.fd).buffered(), compressed, littleEndian, readHeaders)
-                }  catch (e: IOException) {
+                } catch (e: IOException) {
                     val lastEx = ex
                     if (lastEx == null) {
-                        ex = lastEx
+                        ex = e
                     } else {
                         lastEx.addSuppressed(e)
                     }
@@ -159,7 +189,7 @@ public object NbtIO {
     @Throws(IOException::class)
     public fun writeNbtTagDirectly(output: DataOutput, tag: NbtTag, writeTypeId: Boolean = true) {
         val typeId = tag.typeId
-        val serializer = serializers[typeId]
+        val serializer = serializerFor(typeId)
         output.takeIf { writeTypeId }?.writeByte(typeId)
         serializer.writeTag(output, tag)
     }
@@ -168,8 +198,8 @@ public object NbtIO {
     @Throws(IOException::class, IllegalArgumentException::class)
     public fun <T: NbtTag> readNbtTagDirectly(input: DataInput, tagType: Class<T>? = null): T {
         if (tagType == null) {
-            val typeId = input.readByte().toInt()
-            val serializer = serializers[typeId]
+            val typeId = input.readUnsignedByte()
+            val serializer = serializerFor(typeId)
 
             @Suppress("UNCHECKED_CAST")
             return serializer.readTag(input) as T
@@ -296,6 +326,9 @@ public object NbtIO {
     private object NbtByteArraySerial: NbtSerial<NbtByteArray>(NbtByteArray::class) {
         override fun readTag(input: DataInput): NbtByteArray {
             val size = input.readInt()
+            if (size < 0 || size > MAX_ARRAY_OR_LIST_SIZE) {
+                throw IOException("NBT ByteArray size out of bounds: $size")
+            }
             val bytes = ByteArray(size)
             input.readFully(bytes)
             return NbtByteArray(bytes)
@@ -318,24 +351,27 @@ public object NbtIO {
     }
 
     private object NbtListSerial: NbtSerial<NbtList<*>>(NbtList::class) {
-        override fun readTag(input: DataInput): NbtList<*> {
+        override fun readTag(input: DataInput): NbtList<*> = withDepthGuard {
             val type = input.readUnsignedByte()
             val size = input.readInt()
-            if (type == 0 && size > 0) {
-                error("Missing type on NbtList")
+            if (size < 0 || size > MAX_ARRAY_OR_LIST_SIZE) {
+                throw IOException("NBT List size out of bounds: $size")
             }
-            val serializer = serializers[type]
-            val list = mutableListOf<NbtTag>()
+            if (type == 0 && size > 0) {
+                throw IOException("Missing element type on non-empty NbtList")
+            }
+            val serializer = serializerFor(type)
+            val list = ArrayList<NbtTag>(minOf(size, 1024))
             for (i in 1..size) {
                 list += serializer.readTag(input)
             }
-            return NbtList(list)
+            NbtList(list)
         }
 
         override fun writeTag(output: DataOutput, tag: NbtList<*>) {
             val sample = tag.firstOrNull() ?: NbtEnd
             val typeId = sample.typeId
-            val serializer = serializers[typeId]
+            val serializer = serializerFor(typeId)
 
             if (typeId == 0 && tag.size > 0) {
                 error("NbtList cannot have NbtEnd")
@@ -350,7 +386,7 @@ public object NbtIO {
     }
 
     private object NbtCompoundSerial: NbtSerial<NbtCompound>(NbtCompound::class) {
-        override fun readTag(input: DataInput): NbtCompound {
+        override fun readTag(input: DataInput): NbtCompound = withDepthGuard {
             val map = mutableMapOf<String, NbtTag>()
             while (true) {
                 val typeId = input.readUnsignedByte()
@@ -359,11 +395,11 @@ public object NbtIO {
                 }
 
                 val name = input.readUTF()
-                val serializer = serializers[typeId]
+                val serializer = serializerFor(typeId)
                 val childTag = serializer.readTag(input)
                 map[name] = childTag
             }
-            return NbtCompound(map)
+            NbtCompound(map)
         }
 
         override fun writeTag(output: DataOutput, tag: NbtCompound) {
@@ -373,7 +409,7 @@ public object NbtIO {
 
             tag.forEach { (name, childTag) ->
                 val typeId = childTag.typeId
-                val serializer = serializers[typeId]
+                val serializer = serializerFor(typeId)
                 output.writeByte(typeId)
                 output.writeUTF(name)
                 serializer.writeTag(output, childTag)
@@ -386,6 +422,9 @@ public object NbtIO {
     private object NbtIntArraySerial: NbtSerial<NbtIntArray>(NbtIntArray::class) {
         override fun readTag(input: DataInput): NbtIntArray {
             val size = input.readInt()
+            if (size < 0 || size > MAX_ARRAY_OR_LIST_SIZE) {
+                throw IOException("NBT IntArray size out of bounds: $size")
+            }
             val array = IntArray(size)
             for (i in 0 until size) {
                 array[i] = input.readInt()
@@ -404,6 +443,9 @@ public object NbtIO {
     private object NbtLongArraySerial: NbtSerial<NbtLongArray>(NbtLongArray::class) {
         override fun readTag(input: DataInput): NbtLongArray {
             val size = input.readInt()
+            if (size < 0 || size > MAX_ARRAY_OR_LIST_SIZE) {
+                throw IOException("NBT LongArray size out of bounds: $size")
+            }
             val array = LongArray(size)
             for (i in 0 until size) {
                 array[i] = input.readLong()

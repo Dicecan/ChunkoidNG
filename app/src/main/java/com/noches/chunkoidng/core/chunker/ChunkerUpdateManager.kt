@@ -231,8 +231,26 @@ object ChunkerUpdateManager {
             FileInputStream(file).use { input ->
                 val magic = ByteArray(4)
                 if (input.read(magic) != 4) return false
-                magic[0] == 0x50.toByte() && magic[1] == 0x4B.toByte() &&
-                        magic[2] == 0x03.toByte() && magic[3] == 0x04.toByte()
+                if (magic[0] != 0x50.toByte() || magic[1] != 0x4B.toByte() ||
+                    magic[2] != 0x03.toByte() || magic[3] != 0x04.toByte()
+                ) {
+                    return false
+                }
+            }
+            // Validate ZIP central directory & entry table so truncated downloads are rejected.
+            java.util.zip.ZipFile(file).use { zip ->
+                val entries = zip.entries()
+                var hasManifestOrClass = false
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name.equals("META-INF/MANIFEST.MF", ignoreCase = true) ||
+                        entry.name.endsWith(".class")
+                    ) {
+                        hasManifestOrClass = true
+                        break
+                    }
+                }
+                hasManifestOrClass
             }
         } catch (e: Exception) {
             false
@@ -250,28 +268,35 @@ object ChunkerUpdateManager {
         val candidates = listOf(mirror1, primaryUrl, mirror2)
 
         for (candidate in candidates) {
+            var trackedConn: HttpURLConnection? = null
             try {
                 val url = URL(candidate)
-                val conn = (url.openConnection() as HttpURLConnection).apply {
+                if (!url.protocol.equals("https", ignoreCase = true)) continue
+                var activeConn = (url.openConnection() as HttpURLConnection).apply {
                     connectTimeout = 15000
                     readTimeout = 30000
-                    instanceFollowRedirects = true
+                    instanceFollowRedirects = false
                     setRequestProperty("User-Agent", "ChunkoidNG")
                 }
+                trackedConn = activeConn
 
-                var currentCode = conn.responseCode
-                var activeConn = conn
+                var currentCode = activeConn.responseCode
                 var redirects = 0
                 while (currentCode in listOf(301, 302, 303, 307, 308) && redirects < 5) {
                     val locationHeader = activeConn.getHeaderField("Location")
                     if (locationHeader.isNullOrBlank()) break
-                    val nextUrl = URL(activeConn.url, locationHeader).toString()
+                    val nextUrl = URL(activeConn.url, locationHeader)
+                    if (!nextUrl.protocol.equals("https", ignoreCase = true)) {
+                        throw SecurityException("Blocked insecure HTTP redirect: $nextUrl")
+                    }
                     activeConn.disconnect()
-                    activeConn = (URL(nextUrl).openConnection() as HttpURLConnection).apply {
+                    activeConn = (nextUrl.openConnection() as HttpURLConnection).apply {
                         connectTimeout = 15000
                         readTimeout = 30000
+                        instanceFollowRedirects = false
                         setRequestProperty("User-Agent", "ChunkoidNG")
                     }
+                    trackedConn = activeConn
                     currentCode = activeConn.responseCode
                     redirects++
                 }
@@ -293,12 +318,15 @@ object ChunkerUpdateManager {
                             output.flush()
                         }
                     }
-                    if (targetFile.exists() && targetFile.length() > 5 * 1024 * 1024) {
+                    if (verifyJarFile(targetFile)) {
                         return true
                     }
+                    targetFile.delete()
                 }
             } catch (e: Exception) {
                 if (targetFile.exists()) targetFile.delete()
+            } finally {
+                trackedConn?.disconnect()
             }
         }
         return false

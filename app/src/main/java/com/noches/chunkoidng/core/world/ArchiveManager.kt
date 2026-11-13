@@ -6,6 +6,7 @@ import com.noches.chunkoidng.R
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
+import com.noches.chunkoidng.core.io.SafeFileIO
 import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -178,10 +179,8 @@ class ArchiveManager(private val context: Context) {
     }
 
     suspend fun zipDirectoryToFile(sourceDir: File, zipFile: File) = withContext(Dispatchers.IO) {
-        if (zipFile.exists()) zipFile.delete()
-        zipFile.parentFile?.mkdirs()
-        FileOutputStream(zipFile).buffered(64 * 1024).use { fos ->
-            ZipOutputStream(fos).use { zos ->
+        SafeFileIO.writeAtomically(zipFile) { out ->
+            ZipOutputStream(out).use { zos ->
                 zipDirectory(sourceDir, sourceDir, zos)
             }
         }
@@ -200,8 +199,9 @@ class ArchiveManager(private val context: Context) {
             currDest.mkdirs()
             for (child in currSource.listFiles()) {
                 if (!coroutineContext.isActive) throw java.util.concurrent.CancellationException(context.getString(R.string.archive_error_cancelled))
-                val childName = child.name ?: "unnamed"
-                val destChild = File(currDest, childName)
+                val rawName = child.name ?: "unnamed"
+                val safeChildName = Maid.defense.pathSanitizer.sanitizeFileName(rawName)
+                val destChild = Maid.defense.pathSanitizer.resolveUnderBase(currDest, safeChildName, "ArchiveManager")
                 if (child.isDirectory) {
                     recursiveCopy(child, destChild)
                 } else if (child.isFile) {
@@ -241,24 +241,69 @@ class ArchiveManager(private val context: Context) {
     }
 
     private fun moveDirectoryContents(sourceDir: File, destDir: File) {
-        val files = sourceDir.listFiles() ?: return
-        for (file in files) {
-            val target = File(destDir, file.name)
-            if (target.exists()) target.deleteRecursively()
-            file.renameTo(target)
-        }
-        deleteEmptyDirs(sourceDir)
+        moveDirectoryContentsSafely(sourceDir, destDir)
     }
 
-    private fun deleteEmptyDirs(dir: File) {
-        val files = dir.listFiles() ?: return
-        for (file in files) {
-            if (file.isDirectory) {
-                deleteEmptyDirs(file)
+    companion object {
+        internal fun moveDirectoryContentsSafely(sourceDir: File, destDir: File) {
+            val canonicalSource = sourceDir.canonicalFile
+            val canonicalDest = destDir.canonicalFile
+            if (canonicalSource == canonicalDest) return
+
+            // Stage children into a unique temporary sibling directory first so moving nested
+            // directories with identical names (e.g., destDir/world/world) never deletes sourceDir.
+            val stagingParent = canonicalDest.parentFile ?: canonicalDest
+            val stagingDir = File(stagingParent, ".stage_flatten_${java.util.UUID.randomUUID()}")
+            try {
+                if (!stagingDir.mkdirs()) {
+                    throw java.io.IOException("Failed to create staging directory ${stagingDir.absolutePath}")
+                }
+                val sourceFiles = canonicalSource.listFiles() ?: return
+                for (file in sourceFiles) {
+                    val stagedTarget = File(stagingDir, file.name)
+                    moveOrCopy(file, stagedTarget)
+                }
+
+                // Clear any conflicting siblings in destDir before moving staged contents back in.
+                val stagedFiles = stagingDir.listFiles() ?: emptyArray()
+                for (file in stagedFiles) {
+                    val target = File(canonicalDest, file.name)
+                    if (target.exists() && !target.deleteRecursively()) {
+                        throw java.io.IOException("Failed to clear existing target ${target.absolutePath}")
+                    }
+                    moveOrCopy(file, target)
+                }
+                deleteEmptyDirs(canonicalSource)
+            } finally {
+                if (stagingDir.exists()) {
+                    stagingDir.deleteRecursively()
+                }
             }
         }
-        if (dir.listFiles()?.isEmpty() == true) {
-            dir.delete()
+
+        private fun moveOrCopy(source: File, target: File) {
+            if (source.renameTo(target)) return
+            if (source.isDirectory) {
+                if (!source.copyRecursively(target, overwrite = true)) {
+                    throw java.io.IOException("Failed to copy directory ${source.absolutePath} to ${target.absolutePath}")
+                }
+                source.deleteRecursively()
+            } else {
+                source.copyTo(target, overwrite = true)
+                source.delete()
+            }
+        }
+
+        private fun deleteEmptyDirs(dir: File) {
+            val files = dir.listFiles() ?: return
+            for (file in files) {
+                if (file.isDirectory) {
+                    deleteEmptyDirs(file)
+                }
+            }
+            if (dir.listFiles()?.isEmpty() == true) {
+                dir.delete()
+            }
         }
     }
 
@@ -285,7 +330,7 @@ class ArchiveManager(private val context: Context) {
                     ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_create_archive)))
 
                 try {
-                    val streamSuccess = context.contentResolver.openOutputStream(docFile.uri)?.use { out ->
+                    val streamSuccess = SafeFileIO.openTruncatingOutputStream(context.contentResolver, docFile.uri)?.use { out ->
                         ZipOutputStream(BufferedOutputStream(out, 64 * 1024)).use { zos ->
                             zipDirectory(outputDir, outputDir, zos)
                         }
@@ -330,12 +375,15 @@ class ArchiveManager(private val context: Context) {
                 val newFile = destDirDoc.createFile("application/octet-stream", file.name)
                 try {
                     if (newFile == null) throw java.io.IOException(context.getString(R.string.archive_error_create_target))
-                    val out = context.contentResolver.openOutputStream(newFile.uri)
+                    val out = SafeFileIO.openTruncatingOutputStream(context.contentResolver, newFile.uri)
                         ?: throw java.io.IOException(context.getString(R.string.archive_error_open_output))
                     out.buffered(64 * 1024).use { buffered ->
                         file.inputStream().use { input -> input.copyTo(buffered, 64 * 1024) }
                     }
-                } catch (e: Exception) { failures += file.absolutePath }
+                } catch (e: Exception) {
+                    newFile?.delete()
+                    failures += file.absolutePath
+                }
             }
         }
         return failures

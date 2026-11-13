@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { syncReleases } from '../syncer.js'
 import { getLocalReleaseData } from '../storage.js'
 import { getConfig } from '../config.js'
+import { verifyAdmin } from '../middleware/auth.js'
 
 export const syncRouter = Router()
 
@@ -23,11 +24,10 @@ syncRouter.get('/status', (req, res) => {
   })
 })
 
-// POST /api/sync - Trigger sync manually
-syncRouter.post('/', async (req, res) => {
-  const host = req.get('host')
-  const protocol = req.protocol
-  const localBaseUrl = `${protocol}://${host}`
+// POST /api/sync - Trigger sync manually (admin authenticated; never trust Host header)
+syncRouter.post('/', verifyAdmin, async (req, res) => {
+  const cfg = getConfig()
+  const localBaseUrl = cfg.server?.publicUrl || `http://localhost:${cfg.server.port}`
 
   res.json({
     code: 0,
