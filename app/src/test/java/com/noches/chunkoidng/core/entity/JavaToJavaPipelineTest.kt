@@ -122,10 +122,10 @@ class JavaToJavaPipelineTest {
         }
 
         val pipeline = JavaToJavaEntityPipeline()
-        pipeline.scan(inputDir, listOf("overworld"), "JAVA_1_21_4")
+        pipeline.scan(inputDir, listOf("overworld"), "JAVA_1_21_5")
 
         val outputDir = tempFolder.newFolder("java_output_equip")
-        val stats = pipeline.flushToJava(outputDir, "JAVA_1_21_4", inputDir)
+        val stats = pipeline.flushToJava(outputDir, "JAVA_1_21_5", inputDir)
         assertEquals(1, stats.totalActors)
 
         val outMca = File(outputDir, "entities/r.0.0.mca")

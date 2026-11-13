@@ -5,6 +5,9 @@ object EntityIdMapper {
     private val BEDROCK_RENAME_MAP = mapOf(
         "minecraft:zombified_piglin" to "minecraft:zombie_pigman",
         "minecraft:evoker" to "minecraft:evocation_illager",
+        "minecraft:evoker_fangs" to "minecraft:evocation_fang",
+        "minecraft:breeze_wind_charge" to "minecraft:breeze_wind_charge_projectile",
+        "minecraft:wind_charge" to "minecraft:wind_charge_projectile",
         "minecraft:experience_orb" to "minecraft:xp_orb",
         "minecraft:experience_bottle" to "minecraft:xp_bottle",
         "minecraft:eye_of_ender" to "minecraft:eye_of_ender_signal",
@@ -22,34 +25,36 @@ object EntityIdMapper {
 
     private val BOAT_WOODS = listOf(
         "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove",
-        "cherry", "bamboo", "pale_oak"
+        "bamboo", "cherry", "pale_oak", "poplar"
     )
 
     private val VANILLA_WHITELIST = setOf(
-        "allay", "armadillo", "armor_stand", "arrow", "axolotl", "bat", "bee", "blaze", "boat",
-        "bogged", "breeze", "breeze_wind_charge", "camel", "cat", "cave_spider", "chest_boat",
-        "chest_minecart", "chicken", "cod", "command_block_minecart", "cow", "creeper",
-        "dolphin", "donkey", "dragon_fireball", "drowned", "egg", "elder_guardian",
-        "end_crystal", "ender_dragon", "ender_pearl", "enderman", "endermite", "evoker",
-        "evoker_fangs", "experience_bottle", "experience_orb", "eye_of_ender", "falling_block",
-        "fireball", "firework_rocket", "fishing_bobber", "fox", "frog", "furnace_minecart",
-        "ghast", "giant", "glow_item_frame", "glow_squid", "goat", "guardian", "hoglin",
-        "hopper_minecart", "horse", "husk", "illusioner", "interaction", "iron_golem", "item",
-        "item_display", "item_frame", "leash_knot", "lightning_bolt", "llama", "llama_spit",
-        "magma_cube", "marker", "minecart", "mooshroom", "mule", "ocelot", "ominous_item_spawner",
-        "painting", "panda", "parrot", "phantom", "pig", "piglin", "piglin_brute", "pillager",
-        "polar_bear", "potion", "pufferfish", "rabbit", "ravager", "salmon", "sheep",
-        "shulker", "shulker_bullet", "silverfish", "skeleton", "skeleton_horse", "slime",
-        "small_fireball", "sniffer", "snow_golem", "snowball", "spawner_minecart", "spectral_arrow",
-        "spider", "squid", "stray", "strider", "tadpole", "text_display", "tnt", "tnt_minecart",
-        "trader_llama", "trident", "tropical_fish", "turtle", "vex", "villager", "vindicator",
-        "wandering_trader", "warden", "wind_charge", "witch", "wither", "wither_skeleton",
-        "wither_skull", "wolf", "zoglin", "zombie", "zombie_horse", "zombie_villager",
-        "zombified_piglin"
+        "allay", "area_effect_cloud", "armadillo", "armor_stand", "arrow", "axolotl", "bamboo_chest_raft",
+        "bamboo_raft", "bat", "bee", "blaze", "block_display", "boat", "bogged", "breeze", "breeze_wind_charge", "camel",
+        "camel_husk", "cat", "cave_spider", "chest_boat", "chest_minecart", "chicken", "cod",
+        "command_block_minecart", "copper_golem", "cow", "creaking", "creeper", "cushion", "dolphin", "donkey",
+        "dragon_fireball", "drowned", "egg", "elder_guardian", "end_crystal", "ender_dragon",
+        "ender_pearl", "enderman", "endermite", "evoker", "evoker_fangs", "experience_bottle",
+        "experience_orb", "eye_of_ender", "falling_block", "fireball", "firework_rocket",
+        "fishing_bobber", "fox", "frog", "furnace_minecart", "ghast", "giant", "glow_item_frame",
+        "glow_squid", "goat", "guardian", "happy_ghast", "hoglin", "hopper_minecart", "horse", "husk",
+        "illusioner", "interaction", "iron_golem", "item", "item_display", "item_frame", "leash_knot",
+        "lightning_bolt", "lingering_potion", "llama", "llama_spit", "magma_cube", "mannequin", "marker",
+        "minecart", "mooshroom", "mule", "nautilus", "ocelot", "ominous_item_spawner", "painting",
+        "panda", "parched", "parrot", "phantom", "pig", "piglin", "piglin_brute", "pillager",
+        "polar_bear", "poplar_boat", "poplar_chest_boat", "potion", "pufferfish", "rabbit", "ravager",
+        "salmon", "sheep", "shulker", "shulker_bullet", "silverfish", "skeleton", "skeleton_horse",
+        "slime", "small_fireball", "sniffer", "snow_golem", "snowball", "spawner_minecart",
+        "spectral_arrow", "spider", "splash_potion", "squid", "stray", "strider", "sulfur_cube",
+        "tadpole", "text_display", "tnt", "tnt_minecart", "trader_llama", "trident", "tropical_fish",
+        "turtle", "vex", "villager", "vindicator", "wandering_trader", "warden", "wind_charge",
+        "witch", "wither", "wither_skeleton", "wither_skull", "wolf", "zoglin", "zombie",
+        "zombie_horse", "zombie_nautilus", "zombie_villager", "zombified_piglin"
     )
 
     private val JAVA_REVERSE_MAP = BEDROCK_RENAME_MAP.entries.associate { (k, v) -> v to k } + mapOf(
-        "minecraft:lingering_potion" to "minecraft:potion"
+        "minecraft:lingering_potion" to "minecraft:potion",
+        "minecraft:wither_skull_dangerous" to "minecraft:wither_skull"
     )
 
     fun isVanilla(javaId: String?): Boolean {
@@ -62,25 +67,34 @@ object EntityIdMapper {
         return false
     }
 
-    fun isHandledByChunkerNative(id: String?): Boolean {
+    fun isHandledByChunkerNative(id: String?, includeBedrockExclusiveNative: Boolean = false): Boolean {
         if (id == null) return false
         val clean = id.removePrefix("minecraft:")
-        return clean in setOf("painting", "item_frame", "glow_item_frame")
+        if (clean in setOf("painting", "item_frame", "glow_item_frame")) return true
+        return includeBedrockExclusiveNative && clean == "cushion"
     }
 
-    fun toJavaId(bedrockId: String?, variant: Int? = null): String? {
+    fun toJavaId(bedrockId: String?, variant: Int? = null, modernPotionIds: Boolean = true): String? {
         if (bedrockId == null) return null
         val normalized = if (bedrockId.contains(":")) bedrockId else "minecraft:$bedrockId"
 
         if (normalized == "minecraft:boat") {
             val v = variant ?: 0
+            if (v == 7) return "minecraft:bamboo_raft"
             val wood = if (v in BOAT_WOODS.indices) BOAT_WOODS[v] else "oak"
             return "minecraft:${wood}_boat"
         }
         if (normalized == "minecraft:chest_boat") {
             val v = variant ?: 0
+            if (v == 7) return "minecraft:bamboo_chest_raft"
             val wood = if (v in BOAT_WOODS.indices) BOAT_WOODS[v] else "oak"
             return "minecraft:${wood}_chest_boat"
+        }
+        if (normalized == "minecraft:splash_potion") {
+            return if (modernPotionIds) "minecraft:splash_potion" else "minecraft:potion"
+        }
+        if (normalized == "minecraft:lingering_potion") {
+            return if (modernPotionIds) "minecraft:lingering_potion" else "minecraft:potion"
         }
 
         val mapped = JAVA_REVERSE_MAP[normalized] ?: normalized
@@ -102,6 +116,8 @@ object EntityIdMapper {
         }
 
         val clean = normalized.removePrefix("minecraft:")
+        if (clean == "bamboo_raft") return "minecraft:boat"
+        if (clean == "bamboo_chest_raft") return "minecraft:chest_boat"
         for (wood in BOAT_WOODS) {
             if (clean == "${wood}_boat") return "minecraft:boat"
             if (clean == "${wood}_chest_boat") return "minecraft:chest_boat"

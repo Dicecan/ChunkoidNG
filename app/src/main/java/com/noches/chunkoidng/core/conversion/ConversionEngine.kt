@@ -108,14 +108,22 @@ class ConversionEngine(
             cliArgs.add(worldSettingsJson)
         }
 
-        val isTargetBedrock = config.targetFormat.platform == Platform.BEDROCK
         val isInputJava = File(config.inputDir, "region").isDirectory ||
                 File(config.inputDir, "entities").isDirectory ||
                 File(config.inputDir, "dimensions").isDirectory
-        val shouldConvertJe2BeEntities = config.convertEntities && isTargetBedrock && isInputJava
-
-        val isTargetJava = config.targetFormat.platform == Platform.JAVA
         val isInputBedrock = File(config.inputDir, "db").isDirectory
+        val isInputTarget = config.targetFormat.id == "INPUT"
+        val isTargetBedrock = if (isInputTarget) {
+            isInputBedrock && !isInputJava
+        } else {
+            config.targetFormat.platform == Platform.BEDROCK
+        }
+        val isTargetJava = if (isInputTarget) {
+            isInputJava
+        } else {
+            config.targetFormat.platform == Platform.JAVA
+        }
+        val shouldConvertJe2BeEntities = config.convertEntities && isTargetBedrock && isInputJava
         val shouldConvertBe2JeEntities = config.convertEntities && isTargetJava && isInputBedrock
 
         val shouldConvertJe2JeEntities = config.convertEntities && isTargetJava && isInputJava
@@ -154,7 +162,7 @@ class ConversionEngine(
 
         if (be2JePipeline != null) {
             try {
-                be2JePipeline.scan(config.inputDir, enabledDimensions)
+                be2JePipeline.scan(config.inputDir, enabledDimensions, config.targetFormat.id)
             } catch (e: Exception) {
                 Log.e(TAG, "Bedrock entity scanning failed", e)
             }
@@ -247,7 +255,7 @@ class ConversionEngine(
         if (isSuccess && exitCode == 0 && be2JePipeline != null) {
             try {
                 emit(ConversionEvent.Progress(config.taskId, 96, "正在向 Java 版存档写入生物与实体数据...", ""))
-                val stats = be2JePipeline.flushToJava(tempOutput)
+                val stats = be2JePipeline.flushToJava(tempOutput, config.targetFormat.id, config.inputDir)
                 emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体至 ${stats.chunksWritten} 个区块，跳过 ${stats.skippedModded} 个模组实体"))
             } catch (e: Exception) {
                 Log.e(TAG, "Error flushing entities to Java MCA", e)
@@ -274,6 +282,19 @@ class ConversionEngine(
             } catch (e: Exception) {
                 Log.e(TAG, "Error flushing entities to LevelDB", e)
                 emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+            }
+        }
+
+        if (isSuccess && exitCode == 0) {
+            try {
+                emit(ConversionEvent.Progress(config.taskId, 98, "正在同步游戏规则 (GameRules)...", ""))
+                val synced = GameRuleSync.sync(config.inputDir, tempOutput, config.targetFormat)
+                if (synced > 0) {
+                    emit(ConversionEvent.LogOutput(config.taskId, "[游戏规则] 已同步 $synced 项 gamerule 设置"))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error syncing gamerules", e)
+                emit(ConversionEvent.LogOutput(config.taskId, "[游戏规则警告] 同步 gamerule 失败: ${e.message}"))
             }
         }
 

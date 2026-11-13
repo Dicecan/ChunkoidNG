@@ -47,14 +47,13 @@ class BedrockToBedrockPipelineTest {
 
         val options = Options().apply { createIfMissing(true) }
         Iq80DBFactory.factory.open(inputDb, options).use { db ->
-            db.put(ACTOR_PREFIX + EntityLinks.storageKey(cowId), cowBytes)
-            db.put(ACTOR_PREFIX + EntityLinks.storageKey(zombieId), zombieBytes)
+            val cowKey = EntityLinks.storageKey(cowId)
+            val zombieKey = EntityLinks.storageKey(zombieId)
+            db.put(ACTOR_PREFIX + cowKey, cowBytes)
+            db.put(ACTOR_PREFIX + zombieKey, zombieBytes)
 
             val digpKey = buildDigpKey(0, 5, 10)
-            val digpValue = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN).apply {
-                putLong(cowId)
-                putLong(zombieId)
-            }.array()
+            val digpValue = cowKey + zombieKey
             db.put(digpKey, digpValue)
         }
 
@@ -101,16 +100,14 @@ class BedrockToBedrockPipelineTest {
         }
 
         val options = Options().apply { createIfMissing(true) }
+        val horseKey = EntityLinks.storageKey(horseId)
+        val moddedKey = EntityLinks.storageKey(moddedId)
         Iq80DBFactory.factory.open(inputDb, options).use { db ->
-            db.put(ACTOR_PREFIX + EntityLinks.storageKey(horseId), serializeNbt(horseActor))
-            db.put(ACTOR_PREFIX + EntityLinks.storageKey(moddedId), serializeNbt(moddedActor))
+            db.put(ACTOR_PREFIX + horseKey, serializeNbt(horseActor))
+            db.put(ACTOR_PREFIX + moddedKey, serializeNbt(moddedActor))
 
             val digpKey = buildDigpKey(0, 1, 1)
-            val digpValue = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN).apply {
-                putLong(horseId)
-                putLong(moddedId)
-            }.array()
-            db.put(digpKey, digpValue)
+            db.put(digpKey, horseKey + moddedKey)
         }
 
         val pipeline = BedrockToBedrockEntityPipeline()
@@ -126,14 +123,13 @@ class BedrockToBedrockPipelineTest {
         assertEquals(1, stats.chunksWritten)
 
         Iq80DBFactory.factory.open(outputDb, options).use { db ->
-            assertNotNull(db.get(ACTOR_PREFIX + EntityLinks.storageKey(horseId)))
-            assertNull(db.get(ACTOR_PREFIX + EntityLinks.storageKey(moddedId)))
+            assertNotNull(db.get(ACTOR_PREFIX + horseKey))
+            assertNull(db.get(ACTOR_PREFIX + moddedKey))
 
             val digp = db.get(buildDigpKey(0, 1, 1))
             assertNotNull(digp)
             assertEquals(8, digp.size)
-            val remainingId = ByteBuffer.wrap(digp).order(ByteOrder.LITTLE_ENDIAN).long
-            assertEquals(horseId, remainingId)
+            assertTrue(digp.contentEquals(horseKey))
         }
     }
 
@@ -144,14 +140,16 @@ class BedrockToBedrockPipelineTest {
 
         val overworldActorId = 3001L
         val netherActorId = 3002L
+        val overworldKey = EntityLinks.storageKey(overworldActorId)
+        val netherKey = EntityLinks.storageKey(netherActorId)
 
         val options = Options().apply { createIfMissing(true) }
         Iq80DBFactory.factory.open(inputDb, options).use { db ->
-            db.put(ACTOR_PREFIX + EntityLinks.storageKey(overworldActorId), serializeNbt(NbtCompound().apply { this["identifier"] = NbtString("minecraft:pig") }))
-            db.put(ACTOR_PREFIX + EntityLinks.storageKey(netherActorId), serializeNbt(NbtCompound().apply { this["identifier"] = NbtString("minecraft:blaze") }))
+            db.put(ACTOR_PREFIX + overworldKey, serializeNbt(NbtCompound().apply { this["identifier"] = NbtString("minecraft:pig") }))
+            db.put(ACTOR_PREFIX + netherKey, serializeNbt(NbtCompound().apply { this["identifier"] = NbtString("minecraft:blaze") }))
 
-            db.put(buildDigpKey(0, 0, 0), ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(overworldActorId).array())
-            db.put(buildDigpKey(1, 0, 0), ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(netherActorId).array())
+            db.put(buildDigpKey(0, 0, 0), overworldKey)
+            db.put(buildDigpKey(1, 0, 0), netherKey)
         }
 
         val pipeline = BedrockToBedrockEntityPipeline()

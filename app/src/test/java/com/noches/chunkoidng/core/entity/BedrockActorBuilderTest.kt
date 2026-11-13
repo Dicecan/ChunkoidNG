@@ -9,6 +9,7 @@ import br.com.gamemods.nbtmanipulator.NbtList
 import br.com.gamemods.nbtmanipulator.NbtShort
 import br.com.gamemods.nbtmanipulator.NbtString
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -40,7 +41,7 @@ class BedrockActorBuilderTest {
         val definitions = actor.getNullableStringList("definitions")
         assertNotNull(definitions)
         assertTrue(definitions!!.any { it.value == "+minecraft:sheep" })
-        assertTrue(definitions.any { it.value == "+minecraft:sheep_lime" })
+        assertFalse(definitions.any { it.value == "+minecraft:sheep_lime" })
         assertTrue(definitions.any { it.value == "+minecraft:sheep_sheared" })
 
         val bedrockPos = actor.getNullableFloatList("Pos")
@@ -73,8 +74,8 @@ class BedrockActorBuilderTest {
         val defs = actor.getNullableStringList("definitions")
         assertNotNull(defs)
         assertTrue(defs!!.any { it.value == "+minecraft:horse_saddled" })
-        assertTrue(defs.any { it.value == "+minecraft:horse_chestnut" })
-        assertTrue(defs.any { it.value == "+minecraft:horse_white_dots" })
+        assertTrue(defs.any { it.value == "+minecraft:base_chestnut" })
+        assertTrue(defs.any { it.value == "+minecraft:markings_white_dots" })
     }
 
     @Test

@@ -107,4 +107,20 @@ class MinecraftVersionTest {
         val parsed = MinecraftVersion.parse("unknown-version", Platform.BEDROCK)
         assertEquals("unknown-version", parsed.displayString)
     }
+
+    @Test
+    fun testJava26VersionAndBedrock12640Format() {
+        val v263 = MinecraftVersion.parse("26.3", Platform.JAVA, 5023)
+        assertEquals(26, v263.major)
+        assertEquals(3, v263.minor)
+        assertEquals(MinecraftEpoch.EPOCH_FUTURE, v263.epoch)
+        val recommended = VersionMappingTable.findEquivalentFormat(v263, Platform.BEDROCK)
+        assertEquals("BEDROCK_1_26_0", recommended.id)
+
+        val v26ByDvOnly = MinecraftVersion.parse(null, Platform.JAVA, 5023)
+        assertEquals(26, v26ByDvOnly.major)
+        assertEquals(MinecraftEpoch.EPOCH_FUTURE, v26ByDvOnly.epoch)
+
+        assertNotNull(ChunkerFormat.findById("BEDROCK_1_26_40"))
+    }
 }

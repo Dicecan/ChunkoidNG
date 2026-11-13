@@ -32,8 +32,7 @@ class JavaToJavaEntityPipeline(
         totalExtracted.set(0)
         skippedModdedCount.set(0)
 
-        val toModern = isTargetModernEquipment(targetFormatId)
-        val toLegacy = isTargetLegacyEquipment(targetFormatId)
+        val profile = JavaTargetFormatHelper.resolveProfile(targetFormatId, outputDir = null, inputDir = inputDir)
 
         if ("overworld" in dimensions) {
             scanDimension(0, inputDir, "dimensions/minecraft/overworld", "")
@@ -45,17 +44,9 @@ class JavaToJavaEntityPipeline(
             scanDimension(2, inputDir, "dimensions/minecraft/the_end", "DIM1")
         }
 
-        if (toModern) {
-            for (list in stagedChunks.values) {
-                for (entity in list) {
-                    adaptToModernEquipment(entity)
-                }
-            }
-        } else if (toLegacy) {
-            for (list in stagedChunks.values) {
-                for (entity in list) {
-                    adaptToLegacyEquipment(entity)
-                }
+        for (list in stagedChunks.values) {
+            for (entity in list) {
+                adaptEntityRecursive(entity, profile)
             }
         }
     }
@@ -174,8 +165,9 @@ class JavaToJavaEntityPipeline(
             return PipelineStats(0, skippedModdedCount.get(), 0)
         }
 
-        val isModern = isTargetModernJava(targetFormatId, inputDir)
-        val targetDataVersion = getTargetDataVersion(targetFormatId, isModern)
+        val profile = JavaTargetFormatHelper.resolveProfile(targetFormatId, javaWorldDir, inputDir)
+        val isModern = profile.usesEntitiesDir
+        val targetDataVersion = profile.dataVersion
 
         var writtenChunks = 0
         var writtenEntities = 0
@@ -186,9 +178,17 @@ class JavaToJavaEntityPipeline(
                 if (entityList.isEmpty()) continue
 
                 val targetDir = if (isModern) {
-                    getEntitiesDirectory(javaWorldDir, chunkKey.dimensionId)
+                    JavaTargetFormatHelper.getEntitiesDirectory(
+                        javaWorldDir,
+                        chunkKey.dimensionId,
+                        profile.usesDimensionNamespaces
+                    )
                 } else {
-                    getRegionDirectory(javaWorldDir, chunkKey.dimensionId)
+                    JavaTargetFormatHelper.getRegionDirectory(
+                        javaWorldDir,
+                        chunkKey.dimensionId,
+                        profile.usesDimensionNamespaces
+                    )
                 }
                 if (!targetDir.exists()) targetDir.mkdirs()
 
@@ -254,88 +254,115 @@ class JavaToJavaEntityPipeline(
         return PipelineStats(writtenEntities, skippedModdedCount.get(), writtenChunks)
     }
 
-    private fun getEntitiesDirectory(worldDir: File, dimensionId: Int): File {
-        return when (dimensionId) {
-            1 -> File(worldDir, "DIM-1/entities")
-            2 -> File(worldDir, "DIM1/entities")
-            else -> File(worldDir, "entities")
+    private fun adaptEntityRecursive(entity: NbtCompound, profile: JavaTargetProfile) {
+        val id = entity.getNullableString("id")
+        if (id == "minecraft:potion" && profile.usesModernPotionIds) {
+            val thrownId = entity.getNullableCompound("Item")?.getNullableString("id")
+            entity["id"] = NbtString(
+                if (thrownId == "minecraft:lingering_potion") "minecraft:lingering_potion"
+                else "minecraft:splash_potion"
+            )
+        } else if ((id == "minecraft:splash_potion" || id == "minecraft:lingering_potion") && !profile.usesModernPotionIds) {
+            entity["id"] = NbtString("minecraft:potion")
+            if (entity.getNullableCompound("Item") == null) {
+                entity["Item"] = NbtCompound().apply {
+                    this["id"] = NbtString(id)
+                    if (profile.usesModernComponents) {
+                        this["count"] = NbtInt(1)
+                    } else {
+                        this["Count"] = br.com.gamemods.nbtmanipulator.NbtByte(1)
+                    }
+                }
+            }
+        }
+
+        if (id == "minecraft:tnt") {
+            val fuseVal = entity.getNullableInt("fuse") ?: entity.getNullableInt("Fuse")
+            if (fuseVal != null) {
+                if (profile.usesShortFuse) {
+                    entity.remove("Fuse")
+                    entity["fuse"] = br.com.gamemods.nbtmanipulator.NbtShort(fuseVal.coerceAtLeast(0).toShort())
+                } else {
+                    entity.remove("fuse")
+                    entity["Fuse"] = br.com.gamemods.nbtmanipulator.NbtByte(fuseVal.coerceIn(0, 127).toByte())
+                }
+            }
+        }
+
+        if (profile.usesModernEquipment) {
+            adaptToModernEquipment(entity)
+        } else {
+            adaptToLegacyEquipment(entity)
+        }
+
+        adaptEntityItems(entity, profile)
+
+        val passengers = entity.getNullableCompoundList("Passengers")
+        if (!passengers.isNullOrEmpty()) {
+            for (passenger in passengers) {
+                adaptEntityRecursive(passenger, profile)
+            }
         }
     }
 
-    private fun getRegionDirectory(worldDir: File, dimensionId: Int): File {
-        return when (dimensionId) {
-            1 -> File(worldDir, "DIM-1/region")
-            2 -> File(worldDir, "DIM1/region")
-            else -> File(worldDir, "region")
+    private fun adaptEntityItems(entity: NbtCompound, profile: JavaTargetProfile) {
+        entity.getNullableCompound("Item")?.let { adaptSingleJavaItem(it, profile) }
+        entity.getNullableCompound("ArmorItem")?.let { adaptSingleJavaItem(it, profile) }
+        entity.getNullableCompound("SaddleItem")?.let { adaptSingleJavaItem(it, profile) }
+        entity.getNullableCompoundList("Items")?.forEach { adaptSingleJavaItem(it, profile) }
+        entity.getNullableCompoundList("HandItems")?.forEach { adaptSingleJavaItem(it, profile) }
+        entity.getNullableCompoundList("ArmorItems")?.forEach { adaptSingleJavaItem(it, profile) }
+        entity.getNullableCompound("equipment")?.let { eq ->
+            for ((_, tag) in eq) {
+                if (tag is NbtCompound) adaptSingleJavaItem(tag, profile)
+            }
+        }
+        entity.getNullableCompound("Offers")?.getNullableCompoundList("Recipes")?.forEach { recipe ->
+            recipe.getNullableCompound("buy")?.let { adaptSingleJavaItem(it, profile) }
+            recipe.getNullableCompound("buyB")?.let { adaptSingleJavaItem(it, profile) }
+            recipe.getNullableCompound("sell")?.let { adaptSingleJavaItem(it, profile) }
         }
     }
 
-    private fun isTargetModernJava(targetFormatId: String, inputDir: File): Boolean {
-        if (targetFormatId == "INPUT") {
-            return File(inputDir, "entities").isDirectory
-        }
-        val parts = targetFormatId.removePrefix("JAVA_").split("_")
-        val major = parts.getOrNull(0)?.toIntOrNull() ?: 1
-        val minor = parts.getOrNull(1)?.toIntOrNull() ?: if (major >= 26) 99 else 21
-        return major > 1 || minor >= 17
-    }
-
-    private fun isTargetModernEquipment(targetFormatId: String): Boolean {
-        if (targetFormatId == "INPUT") return false
-        val parts = targetFormatId.removePrefix("JAVA_").split("_")
-        val major = parts.getOrNull(0)?.toIntOrNull() ?: 1
-        val minor = parts.getOrNull(1)?.toIntOrNull() ?: if (major >= 26) 99 else 21
-        val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
-        return major > 1 || minor > 20 || (minor == 20 && patch >= 5)
-    }
-
-    private fun isTargetLegacyEquipment(targetFormatId: String): Boolean {
-        if (targetFormatId == "INPUT") return false
-        val parts = targetFormatId.removePrefix("JAVA_").split("_")
-        val major = parts.getOrNull(0)?.toIntOrNull() ?: 1
-        val minor = parts.getOrNull(1)?.toIntOrNull() ?: if (major >= 26) 99 else 21
-        val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
-        return major == 1 && (minor < 20 || (minor == 20 && patch < 5))
-    }
-
-    private fun getTargetDataVersion(targetFormatId: String, isModern: Boolean): Int {
-        if (targetFormatId.startsWith("JAVA_1_21")) return 3953
-        if (targetFormatId.startsWith("JAVA_1_20")) return 3700
-        if (targetFormatId.startsWith("JAVA_1_19")) return 3337
-        if (targetFormatId.startsWith("JAVA_1_18")) return 2975
-        if (targetFormatId.startsWith("JAVA_1_17")) return 2730
-        if (targetFormatId.startsWith("JAVA_1_16")) return 2586
-        if (targetFormatId.startsWith("JAVA_1_15")) return 2230
-        if (targetFormatId.startsWith("JAVA_1_14")) return 1976
-        if (targetFormatId.startsWith("JAVA_1_13")) return 1631
-        if (targetFormatId.startsWith("JAVA_1_12")) return 1343
-        return if (isModern) 3953 else 2586
+    private fun adaptSingleJavaItem(item: NbtCompound, profile: JavaTargetProfile) {
+        EntityEquipment.adaptJavaItem(
+            item = item,
+            modernComponents = profile.usesModernComponents,
+            flatComponents = profile.usesFlatComponents
+        )
     }
 
     private fun adaptToModernEquipment(entity: NbtCompound) {
-        if (entity.getNullableCompound("equipment") != null) return
+        val equip = entity.getNullableCompound("equipment") ?: NbtCompound()
         val hands = entity.getNullableCompoundList("HandItems")
         val armor = entity.getNullableCompoundList("ArmorItems")
         val body = entity.getNullableCompound("ArmorItem")
-        if (hands == null && armor == null && body == null) return
+        val saddle = entity.getNullableCompound("SaddleItem")
+        if (hands == null && armor == null && body == null && saddle == null) return
 
-        val equip = NbtCompound()
         if (hands != null) {
-            if (hands.size > 0 && !isAir(hands[0])) equip["mainhand"] = hands[0]
-            if (hands.size > 1 && !isAir(hands[1])) equip["offhand"] = hands[1]
+            if (hands.size > 0 && !isAir(hands[0]) && !equip.contains("mainhand")) equip["mainhand"] = hands[0]
+            if (hands.size > 1 && !isAir(hands[1]) && !equip.contains("offhand")) equip["offhand"] = hands[1]
         }
         if (armor != null) {
-            if (armor.size > 0 && !isAir(armor[0])) equip["feet"] = armor[0]
-            if (armor.size > 1 && !isAir(armor[1])) equip["legs"] = armor[1]
-            if (armor.size > 2 && !isAir(armor[2])) equip["chest"] = armor[2]
-            if (armor.size > 3 && !isAir(armor[3])) equip["head"] = armor[3]
+            if (armor.size > 0 && !isAir(armor[0]) && !equip.contains("feet")) equip["feet"] = armor[0]
+            if (armor.size > 1 && !isAir(armor[1]) && !equip.contains("legs")) equip["legs"] = armor[1]
+            if (armor.size > 2 && !isAir(armor[2]) && !equip.contains("chest")) equip["chest"] = armor[2]
+            if (armor.size > 3 && !isAir(armor[3]) && !equip.contains("head")) equip["head"] = armor[3]
         }
-        if (body != null && !isAir(body)) {
+        if (body != null && !isAir(body) && !equip.contains("body")) {
             equip["body"] = body
+        }
+        if (saddle != null && !isAir(saddle) && !equip.contains("saddle")) {
+            equip["saddle"] = saddle
         }
         if (equip.isNotEmpty()) {
             entity["equipment"] = equip
         }
+        entity.remove("HandItems")
+        entity.remove("ArmorItems")
+        entity.remove("ArmorItem")
+        entity.remove("SaddleItem")
     }
 
     private fun adaptToLegacyEquipment(entity: NbtCompound) {
@@ -353,6 +380,10 @@ class JavaToJavaEntityPipeline(
         val body = equip.getNullableCompound("body")
         if (body != null && !isAir(body)) {
             entity["ArmorItem"] = body
+        }
+        val saddle = equip.getNullableCompound("saddle")
+        if (saddle != null && !isAir(saddle)) {
+            entity["SaddleItem"] = saddle
         }
         entity.remove("equipment")
     }

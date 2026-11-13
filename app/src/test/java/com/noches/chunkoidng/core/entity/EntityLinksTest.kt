@@ -53,8 +53,10 @@ class EntityLinksTest {
         val links = rider.getNullableCompoundList("LinksTag")
         assertNotNull(links)
         assertEquals(1, links!!.size)
-        assertEquals(riderId, links[0].getNullableLong("RideID"))
-        assertEquals(vehicleId, links[0].getNullableLong("VehicleID"))
+        assertEquals(vehicleId, links[0].getNullableLong("entityID"))
+        assertEquals(0, links[0].getNullableInt("linkID"))
+        assertEquals(vehicleId, links[0].getNullableLong("RideID"))
+        assertEquals(0L, links[0].getNullableLong("VehicleID"))
 
         val vehicle = NbtCompound()
         val riderIds = listOf(111L, 222L)
@@ -63,10 +65,14 @@ class EntityLinksTest {
         val vLinks = vehicle.getNullableCompoundList("LinksTag")
         assertNotNull(vLinks)
         assertEquals(2, vLinks!!.size)
-        assertEquals(111L, vLinks[0].getNullableLong("RideID"))
-        assertEquals(vehicleId, vLinks[0].getNullableLong("VehicleID"))
-        assertEquals(222L, vLinks[1].getNullableLong("RideID"))
-        assertEquals(vehicleId, vLinks[1].getNullableLong("VehicleID"))
+        assertEquals(111L, vLinks[0].getNullableLong("entityID"))
+        assertEquals(0, vLinks[0].getNullableInt("linkID"))
+        assertEquals(0L, vLinks[0].getNullableLong("RideID"))
+        assertEquals(111L, vLinks[0].getNullableLong("VehicleID"))
+        assertEquals(222L, vLinks[1].getNullableLong("entityID"))
+        assertEquals(1, vLinks[1].getNullableInt("linkID"))
+        assertEquals(0L, vLinks[1].getNullableLong("RideID"))
+        assertEquals(222L, vLinks[1].getNullableLong("VehicleID"))
     }
 
     @Test

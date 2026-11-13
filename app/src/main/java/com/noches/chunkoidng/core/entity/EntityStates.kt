@@ -15,7 +15,9 @@ object EntityStates {
 
     private val MOUNTS = setOf(
         "minecraft:pig", "minecraft:horse", "minecraft:donkey", "minecraft:mule",
-        "minecraft:camel", "minecraft:strider", "minecraft:skeleton_horse", "minecraft:zombie_horse"
+        "minecraft:camel", "minecraft:camel_husk", "minecraft:strider",
+        "minecraft:skeleton_horse", "minecraft:zombie_horse",
+        "minecraft:nautilus", "minecraft:zombie_nautilus"
     )
 
     fun apply(
@@ -29,6 +31,19 @@ object EntityStates {
         sitting(actor, identifier, javaEntity, definitions)
         chested(actor, identifier, javaEntity)
         villager(actor, identifier, javaEntity, definitions)
+        hopperMinecart(identifier, javaEntity, definitions)
+    }
+
+    private fun hopperMinecart(
+        identifier: String,
+        entity: NbtCompound,
+        definitions: MutableList<String>
+    ) {
+        if (identifier != "minecraft:hopper_minecart") return
+        val enabledTag = entity["Enabled"]
+        val enabled = enabledTag == null || isTruthy(enabledTag)
+        val group = if (enabled) "hopper_active" else "hopper_inactive"
+        EntityVariants.addGroup(definitions, identifier, group)
     }
 
     private fun saddle(
@@ -44,7 +59,12 @@ object EntityStates {
         if (itemId == SADDLE || itemId.endsWith("saddle")) {
             actor["Saddled"] = NbtByte(1)
             val bare = identifier.removePrefix(NAMESPACE)
-            EntityVariants.addGroup(definitions, "${bare}_saddled")
+            val saddleGroup = when (bare) {
+                "zombie_horse" -> "horse_saddled"
+                "nautilus", "zombie_nautilus" -> "${bare}_tame_saddled"
+                else -> "${bare}_saddled"
+            }
+            EntityVariants.addGroup(definitions, identifier, saddleGroup)
         }
     }
 
@@ -103,12 +123,12 @@ object EntityStates {
         val data = entity.getNullableCompound("VillagerData") ?: return
         val profession = data.getNullableString("profession")?.removePrefix(NAMESPACE)
         if (!profession.isNullOrEmpty() && profession != "none") {
-            EntityVariants.addGroup(definitions, profession)
+            EntityVariants.addGroup(definitions, identifier, profession)
         }
 
         val type = data.getNullableString("type")?.removePrefix(NAMESPACE)
         if (!type.isNullOrEmpty() && type != "plains") {
-            EntityVariants.addGroup(definitions, "${type}_villager")
+            EntityVariants.addGroup(definitions, identifier, "${type}_villager")
         }
 
         val level = getInt(data, "level", 1)
@@ -152,19 +172,29 @@ object EntityStates {
         return offers
     }
 
-    fun mapOffersToJava(bedrockOffers: NbtCompound?): NbtCompound? {
+    fun mapOffersToJava(
+        bedrockOffers: NbtCompound?,
+        modernComponents: Boolean = true,
+        flatComponents: Boolean = true
+    ): NbtCompound? {
         if (bedrockOffers == null) return null
         val bedrockRecipes = bedrockOffers.getNullableCompoundList("Recipes") ?: return null
         val javaRecipes = NbtList<NbtCompound>()
         for (r in bedrockRecipes) {
             val recipe = NbtCompound()
-            val buyA = convertBedrockItemToJavaItem(r.getNullableCompound("buyA")) ?: continue
+            val buyA = EntityEquipment.convertBedrockItemToJava(
+                r.getNullableCompound("buyA"), modernComponents, flatComponents
+            ) ?: continue
             recipe["buy"] = buyA
-            val buyB = convertBedrockItemToJavaItem(r.getNullableCompound("buyB"))
+            val buyB = EntityEquipment.convertBedrockItemToJava(
+                r.getNullableCompound("buyB"), modernComponents, flatComponents
+            )
             if (buyB != null && buyB.getNullableString("id") != "minecraft:air") {
                 recipe["buyB"] = buyB
             }
-            val sell = convertBedrockItemToJavaItem(r.getNullableCompound("sell")) ?: continue
+            val sell = EntityEquipment.convertBedrockItemToJava(
+                r.getNullableCompound("sell"), modernComponents, flatComponents
+            ) ?: continue
             recipe["sell"] = sell
             recipe["uses"] = NbtInt(r.getNullableInt("uses") ?: 0)
             recipe["maxUses"] = NbtInt(r.getNullableInt("maxUses") ?: 16)
@@ -181,15 +211,12 @@ object EntityStates {
         return offers
     }
 
-    fun convertBedrockItemToJavaItem(bedrockItem: NbtCompound?): NbtCompound? {
-        if (bedrockItem == null) return null
-        val name = bedrockItem.getNullableString("Name") ?: return null
-        if (name.isEmpty() || name == "minecraft:air") return null
-        val count = bedrockItem.getNullableByte("Count") ?: 1
-        val item = NbtCompound()
-        item["id"] = NbtString(name)
-        item["Count"] = NbtByte(count)
-        return item
+    fun convertBedrockItemToJavaItem(
+        bedrockItem: NbtCompound?,
+        modernComponents: Boolean = false,
+        flatComponents: Boolean = true
+    ): NbtCompound? {
+        return EntityEquipment.convertBedrockItemToJava(bedrockItem, modernComponents, flatComponents)
     }
 
     private fun isTruthy(tag: br.com.gamemods.nbtmanipulator.NbtTag?): Boolean {

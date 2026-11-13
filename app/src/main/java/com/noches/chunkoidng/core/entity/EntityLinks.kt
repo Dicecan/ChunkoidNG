@@ -133,11 +133,12 @@ object EntityLinks {
 
         val links = NbtList<NbtCompound>()
         if (vehicleId != 0L) {
-            links.add(createLinkEntry(rideId = actorId, vehicleId = vehicleId))
+            links.add(createPassengerLinkEntry(vehicleId = vehicleId))
         }
         if (riderIds != null) {
+            var seat = 0
             for (riderId in riderIds) {
-                links.add(createLinkEntry(rideId = riderId, vehicleId = actorId))
+                links.add(createVehicleLinkEntry(riderId = riderId, seat = seat++))
             }
         }
         actor["LinksTag"] = links
@@ -147,7 +148,7 @@ object EntityLinks {
         val existing = rider.getNullableCompoundList("LinksTag")
         val links = NbtList<NbtCompound>()
         existing?.forEach { links.add(it) }
-        links.add(createLinkEntry(rideId = riderId, vehicleId = vehicleId))
+        links.add(createPassengerLinkEntry(vehicleId = vehicleId))
         rider["LinksTag"] = links
     }
 
@@ -156,8 +157,9 @@ object EntityLinks {
         val existing = vehicle.getNullableCompoundList("LinksTag")
         val links = NbtList<NbtCompound>()
         existing?.forEach { links.add(it) }
+        var seat = existing?.size ?: 0
         for (riderId in riderIds) {
-            links.add(createLinkEntry(rideId = riderId, vehicleId = vehicleId))
+            links.add(createVehicleLinkEntry(riderId = riderId, seat = seat++))
         }
         vehicle["LinksTag"] = links
     }
@@ -176,10 +178,21 @@ object EntityLinks {
 
     fun deterministicKnotId(x: Int, y: Int, z: Int): Long = knotId(x.toLong(), y.toLong(), z.toLong())
 
-    fun createLinkEntry(rideId: Long, vehicleId: Long): NbtCompound {
+    fun createPassengerLinkEntry(vehicleId: Long): NbtCompound {
         val entry = NbtCompound()
-        entry["RideID"] = NbtLong(rideId)
-        entry["VehicleID"] = NbtLong(vehicleId)
+        entry["entityID"] = NbtLong(vehicleId)
+        entry["linkID"] = NbtInt(0)
+        entry["RideID"] = NbtLong(vehicleId)
+        entry["VehicleID"] = NbtLong(0L)
+        return entry
+    }
+
+    fun createVehicleLinkEntry(riderId: Long, seat: Int): NbtCompound {
+        val entry = NbtCompound()
+        entry["entityID"] = NbtLong(riderId)
+        entry["linkID"] = NbtInt(seat)
+        entry["RideID"] = NbtLong(0L)
+        entry["VehicleID"] = NbtLong(riderId)
         return entry
     }
 }

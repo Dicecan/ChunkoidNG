@@ -59,9 +59,15 @@ class JavaEntityBuilderTest {
         val variant = javaHorse.getNullableInt("Variant")
         assertEquals((2 shl 8) or 3, variant)
 
-        val saddle = javaHorse.getNullableCompound("SaddleItem")
-        assertNotNull("Must have SaddleItem", saddle)
+        val saddle = javaHorse.getNullableCompound("equipment")?.getNullableCompound("saddle")
+        assertNotNull("Must have equipment.saddle", saddle)
         assertEquals("minecraft:saddle", saddle!!.getNullableString("id"))
+
+        val legacyHorse = JavaEntityBuilder.build(
+            bedrockHorse,
+            JavaEntityBuilder.JavaTargetOptions(modernEquipment = false, modernComponents = false)
+        )
+        assertEquals("minecraft:saddle", legacyHorse!!.getNullableCompound("SaddleItem")?.getNullableString("id"))
 
         val chested = javaHorse.getNullableByte("ChestedHorse")
         assertEquals(1.toByte(), chested)

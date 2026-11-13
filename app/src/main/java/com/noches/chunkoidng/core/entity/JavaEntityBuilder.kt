@@ -5,6 +5,27 @@ import br.com.gamemods.nbtmanipulator.*
 object JavaEntityBuilder {
 
     private const val NAMESPACE = "minecraft:"
+    private const val MINECART_LIFT = 0.35
+
+    data class JavaTargetOptions(
+        val modernPotionIds: Boolean = true,
+        val modernComponents: Boolean = true,
+        val flatComponents: Boolean = true,
+        val modernEquipment: Boolean = true,
+        val shortFuse: Boolean = true
+    ) {
+        companion object {
+            fun fromProfile(profile: JavaTargetProfile): JavaTargetOptions {
+                return JavaTargetOptions(
+                    modernPotionIds = profile.usesModernPotionIds,
+                    modernComponents = profile.usesModernComponents,
+                    flatComponents = profile.usesFlatComponents,
+                    modernEquipment = profile.usesModernEquipment,
+                    shortFuse = profile.usesShortFuse
+                )
+            }
+        }
+    }
 
     private val CAT_VARIANTS_REVERSE = mapOf(
         0 to "white",
@@ -22,11 +43,11 @@ object JavaEntityBuilder {
 
     private val FROG_VARIANTS = listOf("temperate", "warm", "cold")
 
-    fun build(bedrockActor: NbtCompound): NbtCompound? {
+    fun build(bedrockActor: NbtCompound, options: JavaTargetOptions = JavaTargetOptions()): NbtCompound? {
         val bedrockId = bedrockActor.getNullableString("identifier") ?: return null
 
         val variant = getInt(bedrockActor, "Variant", 0)
-        val javaId = EntityIdMapper.toJavaId(bedrockId, variant) ?: return null
+        val javaId = EntityIdMapper.toJavaId(bedrockId, variant, options.modernPotionIds) ?: return null
 
         val javaEntity = NbtCompound()
         javaEntity["id"] = NbtString(javaId)
@@ -35,35 +56,39 @@ object JavaEntityBuilder {
         val uuidArray = EntityLinks.uuidFromUniqueId(uniqueId)
         javaEntity["UUID"] = NbtIntArray(uuidArray)
 
+        val isMinecart = bedrockId == "minecraft:minecart" || bedrockId.endsWith("_minecart")
         val posList = bedrockActor.getNullableFloatList("Pos")
         val javaPos = NbtList<NbtDouble>()
         for (i in 0 until 3) {
-            val f = if (posList != null && posList.size > i) posList[i].value else 0f
-            javaPos.add(NbtDouble(f.toDouble()))
+            val f = if (posList != null && posList.size > i && posList[i].value.isFinite()) posList[i].value else 0f
+            val yAdjust = if (isMinecart && i == 1) -MINECART_LIFT else 0.0
+            javaPos.add(NbtDouble(f.toDouble() + yAdjust))
         }
         javaEntity["Pos"] = javaPos
 
         val motionList = bedrockActor.getNullableFloatList("Motion")
         val javaMotion = NbtList<NbtDouble>()
         for (i in 0 until 3) {
-            val f = if (motionList != null && motionList.size > i) motionList[i].value else 0f
+            val f = if (motionList != null && motionList.size > i && motionList[i].value.isFinite()) motionList[i].value else 0f
             javaMotion.add(NbtDouble(f.toDouble()))
         }
         javaEntity["Motion"] = javaMotion
 
         val rotList = bedrockActor.getNullableFloatList("Rotation")
         val javaRot = NbtList<NbtFloat>()
-        val r0 = if (rotList != null && rotList.size > 0) rotList[0].value else 0f
-        val r1 = if (rotList != null && rotList.size > 1) rotList[1].value else 0f
+        val r0 = if (rotList != null && rotList.size > 0 && rotList[0].value.isFinite()) rotList[0].value else 0f
+        val r1 = if (rotList != null && rotList.size > 1 && rotList[1].value.isFinite()) rotList[1].value else 0f
         javaRot.add(NbtFloat(r0))
         javaRot.add(NbtFloat(r1))
         javaEntity["Rotation"] = javaRot
 
-        val health = extractHealth(bedrockActor)
-        javaEntity["Health"] = NbtFloat(health)
+        val tableMaxHp = EntityGroupTable.healthOrNull(bedrockId)
+        if (tableMaxHp != null) {
+            val health = extractHealth(bedrockActor, tableMaxHp)
+            javaEntity["Health"] = NbtFloat(health)
 
-        val maxHealth = extractMaxHealth(bedrockActor)
-        if (maxHealth > 0f) {
+            val attrMax = extractMaxHealth(bedrockActor)
+            val maxHealth = if (attrMax > 0f) attrMax else tableMaxHp
             val attrList = NbtList<NbtCompound>()
             val maxHealthAttr = NbtCompound()
             maxHealthAttr["Name"] = NbtString("minecraft:generic.max_health")
@@ -86,14 +111,31 @@ object JavaEntityBuilder {
             javaEntity["Invulnerable"] = NbtByte(1)
         }
 
+        if (getByte(bedrockActor, "Persistent", 0) != 0.toByte()) {
+            javaEntity["PersistenceRequired"] = NbtByte(1)
+        }
+
         val flags = bedrockActor.getNullableLong("Flags") ?: 0L
         unpackFlags(javaEntity, bedrockActor, flags)
 
         val customName = bedrockActor.getNullableString("CustomName")
         if (!customName.isNullOrEmpty()) {
-            javaEntity["CustomName"] = NbtString(toJsonText(customName))
+            javaEntity["CustomName"] = if (options.flatComponents) {
+                NbtCompound().apply { this["text"] = NbtString(customName) }
+            } else {
+                NbtString(toJsonText(customName))
+            }
             val nameVisible = getByte(bedrockActor, "CustomNameVisible", 0)
             javaEntity["CustomNameVisible"] = NbtByte(nameVisible)
+        }
+
+        val tags = bedrockActor.getNullableStringList("Tags")
+        if (!tags.isNullOrEmpty()) {
+            val javaTags = NbtList<NbtString>()
+            for (tag in tags) {
+                javaTags.add(NbtString(tag.value))
+            }
+            javaEntity["Tags"] = javaTags
         }
 
         val definitions = bedrockActor.getNullableStringList("definitions")?.map { it.value } ?: emptyList()
@@ -108,6 +150,7 @@ object JavaEntityBuilder {
 
         when (bedrockId) {
             "minecraft:sheep" -> sheep(javaEntity, bedrockActor)
+            "minecraft:mooshroom" -> mooshroom(javaEntity, bedrockActor, definitions)
             "minecraft:horse" -> horse(javaEntity, bedrockActor)
             "minecraft:cat" -> cat(javaEntity, bedrockActor)
             "minecraft:wolf" -> wolf(javaEntity, bedrockActor, definitions)
@@ -117,11 +160,25 @@ object JavaEntityBuilder {
             "minecraft:llama", "minecraft:trader_llama" -> llama(javaEntity, bedrockActor)
             "minecraft:frog" -> frog(javaEntity, definitions)
             "minecraft:villager", "minecraft:villager_v2",
-            "minecraft:zombie_villager", "minecraft:zombie_villager_v2" -> villager(javaEntity, bedrockActor, definitions)
-            "minecraft:item" -> item(javaEntity, bedrockActor)
+            "minecraft:zombie_villager", "minecraft:zombie_villager_v2" -> villager(javaEntity, bedrockActor, definitions, options)
+            "minecraft:item" -> item(javaEntity, bedrockActor, options)
             "minecraft:xp_orb" -> xpOrb(javaEntity, bedrockActor)
-            "minecraft:tnt" -> tnt(javaEntity, bedrockActor)
+            "minecraft:falling_block" -> fallingBlock(javaEntity, bedrockActor)
+            "minecraft:tnt" -> tnt(javaEntity, bedrockActor, options)
             "minecraft:ender_crystal" -> endCrystal(javaEntity, bedrockActor)
+            "minecraft:splash_potion", "minecraft:lingering_potion" -> potion(javaEntity, bedrockId, bedrockActor, options)
+            "minecraft:command_block_minecart" -> {
+                val cmd = bedrockActor.getNullableString("Command")
+                if (!cmd.isNullOrEmpty()) {
+                    javaEntity["Command"] = NbtString(cmd)
+                }
+            }
+            "minecraft:evocation_fang" -> {
+                val warmup = bedrockActor.getNullableInt("Warmup")
+                if (warmup != null) {
+                    javaEntity["Warmup"] = NbtInt(warmup)
+                }
+            }
             "minecraft:creeper" -> {
                 val powered = getByte(bedrockActor, "powered", 0) != 0.toByte() || definitions.any { it.contains("charged") }
                 if (powered) javaEntity["powered"] = NbtByte(1)
@@ -152,9 +209,18 @@ object JavaEntityBuilder {
             }
         }
 
-        restoreEquipment(javaEntity, bedrockActor)
+        if (EntityGroupTable.hasHealth(bedrockId) || bedrockId == "minecraft:armor_stand") {
+            restoreEquipment(javaEntity, bedrockActor, options)
+        }
 
-        restoreSaddleAndChest(javaEntity, bedrockId, bedrockActor, definitions, flags)
+        restoreSaddleAndChest(javaEntity, bedrockId, bedrockActor, definitions, flags, options)
+        EntityContainers.applyToJava(
+            javaEntity = javaEntity,
+            actor = bedrockActor,
+            bedrockId = bedrockId,
+            modernComponents = options.modernComponents,
+            flatComponents = options.flatComponents
+        )
 
         val leasherId = bedrockActor.getNullableLong("LeasherID") ?: 0L
         if (leasherId != 0L && leasherId != -1L) {
@@ -192,6 +258,36 @@ object JavaEntityBuilder {
         if (isTamed) {
             javaEntity["Tamed"] = NbtByte(1)
         }
+    }
+
+    private fun mooshroom(javaEntity: NbtCompound, bedrockActor: NbtCompound, definitions: List<String>) {
+        val isBrown = getInt(bedrockActor, "Variant", 0) == 1 ||
+                definitions.any { it.contains("mooshroom_brown") }
+        javaEntity["Type"] = NbtString(if (isBrown) "brown" else "red")
+    }
+
+    private fun fallingBlock(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
+        val falling = bedrockActor.getNullableCompound("FallingBlock") ?: return
+        val name = falling.getNullableString("name") ?: falling.getNullableString("Name") ?: return
+        val blockState = NbtCompound()
+        blockState["Name"] = NbtString(if (name.contains(":")) name else "minecraft:$name")
+        val states = falling.getNullableCompound("states") ?: falling.getNullableCompound("States")
+        if (states != null && states.isNotEmpty()) {
+            val props = NbtCompound()
+            for ((k, v) in states) {
+                when (v) {
+                    is NbtString -> props[k] = NbtString(v.value)
+                    is NbtByte -> props[k] = NbtString(if (v.signed != 0.toByte()) "true" else "false")
+                    is NbtInt -> props[k] = NbtString(v.value.toString())
+                    is NbtShort -> props[k] = NbtString(v.value.toString())
+                    else -> {}
+                }
+            }
+            if (props.isNotEmpty()) {
+                blockState["Properties"] = props
+            }
+        }
+        javaEntity["BlockState"] = blockState
     }
 
     private fun sheep(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
@@ -274,7 +370,12 @@ object JavaEntityBuilder {
         javaEntity["variant"] = NbtString(NAMESPACE + variant)
     }
 
-    private fun villager(javaEntity: NbtCompound, bedrockActor: NbtCompound, definitions: List<String>) {
+    private fun villager(
+        javaEntity: NbtCompound,
+        bedrockActor: NbtCompound,
+        definitions: List<String>,
+        options: JavaTargetOptions
+    ) {
         var profession = "none"
         var type = "plains"
 
@@ -306,56 +407,68 @@ object JavaEntityBuilder {
         }
 
         val bedrockOffers = bedrockActor.getNullableCompound("Offers")
-        val javaOffers = EntityStates.mapOffersToJava(bedrockOffers)
+        val javaOffers = EntityStates.mapOffersToJava(
+            bedrockOffers,
+            modernComponents = options.modernComponents,
+            flatComponents = options.flatComponents
+        )
         if (javaOffers != null) {
             javaEntity["Offers"] = javaOffers
         }
     }
 
-    private fun restoreEquipment(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
-
-        val handItems = NbtList<NbtCompound>()
-        val mainhand = bedrockActor.getNullableCompoundList("Mainhand")?.firstOrNull()
-        val offhand = bedrockActor.getNullableCompoundList("Offhand")?.firstOrNull()
-
-        handItems.add(convertBedrockItemToJava(mainhand))
-        handItems.add(convertBedrockItemToJava(offhand))
-        javaEntity["HandItems"] = handItems
+    private fun restoreEquipment(
+        javaEntity: NbtCompound,
+        bedrockActor: NbtCompound,
+        options: JavaTargetOptions
+    ) {
+        val mainhand = EntityEquipment.convertBedrockItemToJava(
+            bedrockActor.getNullableCompoundList("Mainhand")?.firstOrNull(),
+            options.modernComponents,
+            options.flatComponents
+        )
+        val offhand = EntityEquipment.convertBedrockItemToJava(
+            bedrockActor.getNullableCompoundList("Offhand")?.firstOrNull(),
+            options.modernComponents,
+            options.flatComponents
+        )
 
         val armorList = bedrockActor.getNullableCompoundList("Armor")
-        val armorItems = NbtList<NbtCompound>()
+        val head = EntityEquipment.convertBedrockItemToJava(armorList?.getOrNull(0), options.modernComponents, options.flatComponents)
+        val chest = EntityEquipment.convertBedrockItemToJava(armorList?.getOrNull(1), options.modernComponents, options.flatComponents)
+        val legs = EntityEquipment.convertBedrockItemToJava(armorList?.getOrNull(2), options.modernComponents, options.flatComponents)
+        val feet = EntityEquipment.convertBedrockItemToJava(armorList?.getOrNull(3), options.modernComponents, options.flatComponents)
+        val body = EntityEquipment.convertBedrockItemToJava(armorList?.getOrNull(4), options.modernComponents, options.flatComponents)
 
-        val head = armorList?.getOrNull(0)
-        val chest = armorList?.getOrNull(1)
-        val legs = armorList?.getOrNull(2)
-        val feet = armorList?.getOrNull(3)
+        if (options.modernEquipment) {
+            val equip = NbtCompound()
+            if (mainhand != null) equip["mainhand"] = mainhand
+            if (offhand != null) equip["offhand"] = offhand
+            if (head != null) equip["head"] = head
+            if (chest != null) equip["chest"] = chest
+            if (legs != null) equip["legs"] = legs
+            if (feet != null) equip["feet"] = feet
+            if (body != null) equip["body"] = body
+            if (equip.isNotEmpty()) {
+                javaEntity["equipment"] = equip
+            }
+        } else {
+            val handItems = NbtList<NbtCompound>()
+            handItems.add(mainhand ?: NbtCompound())
+            handItems.add(offhand ?: NbtCompound())
+            javaEntity["HandItems"] = handItems
 
-        armorItems.add(convertBedrockItemToJava(feet))
-        armorItems.add(convertBedrockItemToJava(legs))
-        armorItems.add(convertBedrockItemToJava(chest))
-        armorItems.add(convertBedrockItemToJava(head))
-        javaEntity["ArmorItems"] = armorItems
-    }
+            val armorItems = NbtList<NbtCompound>()
+            armorItems.add(feet ?: NbtCompound())
+            armorItems.add(legs ?: NbtCompound())
+            armorItems.add(chest ?: NbtCompound())
+            armorItems.add(head ?: NbtCompound())
+            javaEntity["ArmorItems"] = armorItems
 
-    private fun convertBedrockItemToJava(bItem: NbtCompound?): NbtCompound {
-        val result = NbtCompound()
-        if (bItem == null) return result
-
-        val name = bItem.getNullableString("Name")
-        if (name.isNullOrEmpty() || name == "minecraft:air") return result
-
-        result["id"] = NbtString(name)
-        val count = getByte(bItem, "Count", 1).coerceAtLeast(1)
-        result["Count"] = NbtByte(count)
-
-        val damage = getShort(bItem, "Damage", 0)
-        if (damage > 0) {
-            val tag = NbtCompound()
-            tag["Damage"] = NbtInt(damage.toInt())
-            result["tag"] = tag
+            if (body != null) {
+                javaEntity["ArmorItem"] = body
+            }
         }
-
-        return result
     }
 
     private fun restoreSaddleAndChest(
@@ -363,25 +476,34 @@ object JavaEntityBuilder {
         bedrockId: String,
         bedrockActor: NbtCompound,
         definitions: List<String>,
-        flags: Long
+        flags: Long,
+        options: JavaTargetOptions
     ) {
-
         val isSaddled = (flags and (1L shl 48)) != 0L ||
                 getByte(bedrockActor, "Saddled", 0) != 0.toByte() ||
                 definitions.any { it.contains("saddled") }
 
         if (isSaddled) {
-            val saddleTag = NbtCompound()
-            saddleTag["id"] = NbtString("minecraft:saddle")
-            saddleTag["Count"] = NbtByte(1)
-            javaEntity["SaddleItem"] = saddleTag
-
-            val eq = NbtCompound()
-            val body = NbtCompound()
-            body["id"] = NbtString("minecraft:saddle")
-            body["count"] = NbtInt(1)
-            eq["body"] = body
-            javaEntity["equipment"] = eq
+            if (options.modernEquipment) {
+                val eq = javaEntity.getNullableCompound("equipment") ?: NbtCompound().also {
+                    javaEntity["equipment"] = it
+                }
+                val saddle = NbtCompound().apply {
+                    this["id"] = NbtString("minecraft:saddle")
+                    this["count"] = NbtInt(1)
+                }
+                eq["saddle"] = saddle
+            } else {
+                val saddleTag = NbtCompound().apply {
+                    this["id"] = NbtString("minecraft:saddle")
+                    if (options.modernComponents) {
+                        this["count"] = NbtInt(1)
+                    } else {
+                        this["Count"] = NbtByte(1)
+                    }
+                }
+                javaEntity["SaddleItem"] = saddleTag
+            }
         }
 
         val isChested = getByte(bedrockActor, "Chested", 0) != 0.toByte() ||
@@ -391,10 +513,14 @@ object JavaEntityBuilder {
         }
     }
 
-    private fun item(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
+    private fun item(javaEntity: NbtCompound, bedrockActor: NbtCompound, options: JavaTargetOptions) {
         val bItem = bedrockActor.getNullableCompound("Item")
-        val jItem = convertBedrockItemToJava(bItem)
-        if (jItem.isNotEmpty()) {
+        val jItem = EntityEquipment.convertBedrockItemToJava(
+            bItem,
+            options.modernComponents,
+            options.flatComponents
+        )
+        if (jItem != null && jItem.isNotEmpty()) {
             javaEntity["Item"] = jItem
         }
         val age = getShort(bedrockActor, "Age", 0)
@@ -403,15 +529,50 @@ object JavaEntityBuilder {
     }
 
     private fun xpOrb(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
-        val value = getShort(bedrockActor, "Value", 1)
+        val value = getInt(
+            bedrockActor,
+            "experience value",
+            getInt(bedrockActor, "Value", 1)
+        ).coerceIn(1, Short.MAX_VALUE.toInt()).toShort()
         javaEntity["Value"] = NbtShort(value)
         val age = getShort(bedrockActor, "Age", 0)
         javaEntity["Age"] = NbtShort(age)
     }
 
-    private fun tnt(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
-        val fuse = getByte(bedrockActor, "Fuse", 80)
-        javaEntity["Fuse"] = NbtShort(fuse.toShort())
+    private fun tnt(javaEntity: NbtCompound, bedrockActor: NbtCompound, options: JavaTargetOptions) {
+        val fuse = getShort(bedrockActor, "Fuse", getShort(bedrockActor, "fuse", 80)).coerceAtLeast(0)
+        if (options.shortFuse) {
+            javaEntity["fuse"] = NbtShort(fuse)
+        } else {
+            javaEntity["Fuse"] = NbtByte(fuse.coerceIn(0, 127).toByte())
+        }
+    }
+
+    private fun potion(
+        javaEntity: NbtCompound,
+        bedrockId: String,
+        bedrockActor: NbtCompound,
+        options: JavaTargetOptions
+    ) {
+        val bItem = bedrockActor.getNullableCompound("Item")
+        val converted = EntityEquipment.convertBedrockItemToJava(
+            bItem,
+            options.modernComponents,
+            options.flatComponents
+        )
+        if (converted != null) {
+            javaEntity["Item"] = converted
+        } else if (!options.modernPotionIds || bedrockId == "minecraft:lingering_potion") {
+            val fallbackItem = NbtCompound().apply {
+                this["id"] = NbtString(bedrockId)
+                if (options.modernComponents) {
+                    this["count"] = NbtInt(1)
+                } else {
+                    this["Count"] = NbtByte(1)
+                }
+            }
+            javaEntity["Item"] = fallbackItem
+        }
     }
 
     private fun endCrystal(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
@@ -419,7 +580,7 @@ object JavaEntityBuilder {
         javaEntity["ShowBottom"] = NbtByte(showBottom)
     }
 
-    private fun extractHealth(bedrockActor: NbtCompound): Float {
+    private fun extractHealth(bedrockActor: NbtCompound, defaultHp: Float = 20f): Float {
         val direct = getFloat(bedrockActor, "Health", -1f)
         if (direct >= 0f) return direct
 
@@ -432,7 +593,7 @@ object JavaEntityBuilder {
                 }
             }
         }
-        return 20f
+        return defaultHp
     }
 
     private fun extractMaxHealth(bedrockActor: NbtCompound): Float {

@@ -114,35 +114,17 @@ class EntityConversionPipeline(
             db = Iq80DBFactory.factory.open(dbDir, options)
             val batch = db.createWriteBatch()
             try {
-                // 1. Write staged regular actors
-                for ((chunkKey, records) in stagedChunks) {
-                    if (records.isEmpty()) continue
+                // 1. Write staged regular actors and pending leash knots in a single pass per chunk
+                // so a knot in the same chunk never overwrites that chunk's digp actor list.
+                val allChunkKeys = (stagedChunks.keys + pendingKnots.keys).distinct()
+                for (chunkKey in allChunkKeys) {
+                    val records = stagedChunks[chunkKey].orEmpty()
+                    val knots = pendingKnots[chunkKey].orEmpty()
+                    if (records.isEmpty() && knots.isEmpty()) continue
 
                     val digpKey = buildDigpKey(chunkKey.dimensionId, chunkKey.chunkX, chunkKey.chunkZ)
                     val existingDigp = try { db.get(digpKey) } catch (_: Exception) { null }
-                    val digpStream = ByteArrayOutputStream((existingDigp?.size ?: 0) + records.size * 8)
-                    if (existingDigp != null) {
-                        digpStream.write(existingDigp)
-                    }
-
-                    for (record in records) {
-                        val actorKey = ACTOR_PREFIX + record.storageKey
-                        batch.put(actorKey, record.nbtBytes)
-                        digpStream.write(record.storageKey)
-                        writtenActors++
-                    }
-
-                    batch.put(digpKey, digpStream.toByteArray())
-                    writtenChunks++
-                }
-
-                // 2. Write pending leash knots
-                for ((chunkKey, knots) in pendingKnots) {
-                    if (knots.isEmpty()) continue
-
-                    val digpKey = buildDigpKey(chunkKey.dimensionId, chunkKey.chunkX, chunkKey.chunkZ)
-                    val existingDigp = try { db.get(digpKey) } catch (_: Exception) { null }
-                    val digpStream = ByteArrayOutputStream()
+                    val digpStream = ByteArrayOutputStream((existingDigp?.size ?: 0) + (records.size + knots.size) * 8)
                     val existingKeys = mutableSetOf<Long>()
                     if (existingDigp != null) {
                         digpStream.write(existingDigp)
@@ -150,6 +132,15 @@ class EntityConversionPipeline(
                         while (buf.remaining() >= 8) {
                             existingKeys.add(buf.long)
                         }
+                    }
+
+                    for (record in records) {
+                        val storageKeyLong = ByteBuffer.wrap(record.storageKey).order(ByteOrder.BIG_ENDIAN).long
+                        if (!existingKeys.add(storageKeyLong)) continue
+                        val actorKey = ACTOR_PREFIX + record.storageKey
+                        batch.put(actorKey, record.nbtBytes)
+                        digpStream.write(record.storageKey)
+                        writtenActors++
                     }
 
                     for (knot in knots) {
@@ -305,14 +296,19 @@ class EntityConversionPipeline(
         }
     }
 
-    internal fun processEntity(chunkKey: ChunkKey, javaEntity: NbtCompound, vehicleId: Long) {
+    internal fun processEntity(
+        chunkKey: ChunkKey,
+        javaEntity: NbtCompound,
+        vehicleId: Long,
+        preAssignedId: Long = 0L
+    ) {
         // Bedrock creates leash knot actors deterministically at fence locations; skip standalone knot entities
         if (EntityLinks.isLeashKnot(javaEntity)) {
             return
         }
 
         val rawId = javaEntity.getNullableString("id")
-        if (EntityIdMapper.isHandledByChunkerNative(rawId)) {
+        if (EntityIdMapper.isHandledByChunkerNative(rawId, includeBedrockExclusiveNative = true)) {
             return
         }
         if (!EntityIdMapper.isVanilla(rawId)) {
@@ -320,25 +316,52 @@ class EntityConversionPipeline(
             return
         }
 
-        val uuidArray = javaEntity.getNullableIntArray("UUID")
-        val uniqueId = if (uuidArray != null) {
-            EntityLinks.uniqueIdFromUuid(uuidArray)
+        val uniqueId = if (preAssignedId != 0L) {
+            preAssignedId
         } else {
-            fallbackIdCounter.getAndIncrement() or (0xFFFFFFFFL shl 32)
+            val uuidArray = javaEntity.getNullableIntArray("UUID")
+            if (uuidArray != null) {
+                EntityLinks.uniqueIdFromUuid(uuidArray)
+            } else {
+                fallbackIdCounter.getAndIncrement() or (0xFFFFFFFFL shl 32)
+            }
         }
 
+        val rawPassengers = javaEntity.getNullableCompoundList("Passengers")
+        val resolvedPassengers = rawPassengers?.mapNotNull { p ->
+            val pRawId = p.getNullableString("id")
+            if (EntityLinks.isLeashKnot(p) ||
+                EntityIdMapper.isHandledByChunkerNative(pRawId, includeBedrockExclusiveNative = true) ||
+                !EntityIdMapper.isVanilla(pRawId)
+            ) {
+                if (pRawId != null && !EntityIdMapper.isHandledByChunkerNative(pRawId, includeBedrockExclusiveNative = true) && !EntityIdMapper.isVanilla(pRawId)) {
+                    skippedModdedCount.incrementAndGet()
+                }
+                null
+            } else {
+                val pUuid = p.getNullableIntArray("UUID")
+                val pId = if (pUuid != null) {
+                    EntityLinks.uniqueIdFromUuid(pUuid)
+                } else {
+                    fallbackIdCounter.getAndIncrement() or (0xFFFFFFFFL shl 32)
+                }
+                Pair(p, pId)
+            }
+        } ?: emptyList()
+
         val actor = try {
-            BedrockActorBuilder.build(javaEntity, uniqueId)
+            BedrockActorBuilder.build(
+                javaEntity = javaEntity,
+                uniqueId = uniqueId,
+                hasPassengers = resolvedPassengers.isNotEmpty(),
+                isPassenger = vehicleId != 0L
+            )
         } catch (e: Exception) {
             log("构建实体异常 [$rawId]: ${e.message}")
             null
         } ?: return
 
-        val passengers = javaEntity.getNullableCompoundList("Passengers")
-        val passengerIds = passengers?.mapNotNull { p ->
-            val pUuid = p.getNullableIntArray("UUID")
-            if (pUuid != null) EntityLinks.uniqueIdFromUuid(pUuid) else null
-        }
+        val passengerIds = resolvedPassengers.map { it.second }
         EntityLinks.link(actor, uniqueId, vehicleId, passengerIds)
 
         // Resolve leash
@@ -367,10 +390,8 @@ class EntityConversionPipeline(
         stagedChunks.computeIfAbsent(chunkKey) { mutableListOf() }.add(record)
         totalExtracted.incrementAndGet()
 
-        if (!passengers.isNullOrEmpty()) {
-            for (passenger in passengers) {
-                processEntity(chunkKey, passenger, vehicleId = uniqueId)
-            }
+        for ((passenger, pId) in resolvedPassengers) {
+            processEntity(chunkKey, passenger, vehicleId = uniqueId, preAssignedId = pId)
         }
     }
 

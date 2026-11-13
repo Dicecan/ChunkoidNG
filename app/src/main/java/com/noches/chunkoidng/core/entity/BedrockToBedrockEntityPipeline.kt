@@ -81,11 +81,11 @@ class BedrockToBedrockEntityPipeline(
                         if (isDimEnabled) {
                             stagedDigpList.add(DigpEntry(key, value, dim, chunkX, chunkZ))
                             if (value.size >= 8) {
-                                val vBuf = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN)
+                                val vBuf = ByteBuffer.wrap(value).order(ByteOrder.BIG_ENDIAN)
                                 val count = value.size / 8
                                 for (i in 0 until count) {
-                                    val actorId = vBuf.getLong(i * 8)
-                                    actorDimensions[actorId] = dim
+                                    val storageKey = vBuf.getLong(i * 8)
+                                    actorDimensions[storageKey] = dim
                                 }
                             }
                         }
@@ -156,25 +156,27 @@ class BedrockToBedrockEntityPipeline(
                     val valBytes = digp.value
                     if (valBytes.isEmpty()) continue
 
-                    val vBuf = ByteBuffer.wrap(valBytes).order(ByteOrder.LITTLE_ENDIAN)
+                    val vBuf = ByteBuffer.wrap(valBytes).order(ByteOrder.BIG_ENDIAN)
                     val count = valBytes.size / 8
                     val survivors = mutableListOf<Long>()
 
                     for (i in 0 until count) {
-                        val actorId = vBuf.getLong(i * 8)
-                        if (actorId in validActorIds) {
-                            survivors.add(actorId)
+                        val storageKey = vBuf.getLong(i * 8)
+                        if (storageKey in validActorIds) {
+                            survivors.add(storageKey)
                         }
                     }
 
                     if (survivors.isNotEmpty()) {
-                        val outBuf = ByteBuffer.allocate(survivors.size * 8).order(ByteOrder.LITTLE_ENDIAN)
-                        for (actorId in survivors) {
-                            outBuf.putLong(actorId)
-                            val actorBytes = filteredActors[actorId]
+                        val outBuf = ByteBuffer.allocate(survivors.size * 8).order(ByteOrder.BIG_ENDIAN)
+                        for (storageKey in survivors) {
+                            outBuf.putLong(storageKey)
+                            val actorBytes = filteredActors[storageKey]
                             if (actorBytes != null) {
-                                val storageKey = EntityLinks.storageKey(actorId)
-                                batch.put(ACTOR_PREFIX + storageKey, actorBytes)
+                                val keyBytes = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN)
+                                    .putLong(storageKey)
+                                    .array()
+                                batch.put(ACTOR_PREFIX + keyBytes, actorBytes)
                                 writtenActors++
                             }
                         }

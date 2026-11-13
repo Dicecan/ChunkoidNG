@@ -182,7 +182,14 @@ class EntityFuzzingAndRobustnessTest {
 
         val zombieLinks = zombieActor!!.second.getNullableCompoundList("LinksTag")
         assertNotNull("Zombie must have LinksTag", zombieLinks)
-        assertTrue(zombieLinks!!.any { it.getNullableLong("VehicleID") == chickenActor!!.first.uniqueId })
+        assertTrue(zombieLinks!!.any {
+            it.getNullableLong("RideID") == chickenActor!!.first.uniqueId &&
+                it.getNullableLong("VehicleID") == 0L
+        })
+        assertTrue(zombieLinks.any {
+            it.getNullableLong("RideID") == 0L &&
+                it.getNullableLong("VehicleID") == skeletonActor!!.first.uniqueId
+        })
     }
 
     @Test

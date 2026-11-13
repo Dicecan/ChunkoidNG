@@ -13,7 +13,7 @@ data class MinecraftVersion(
 ) : Comparable<MinecraftVersion> {
 
     val epoch: MinecraftEpoch
-        get() = MinecraftEpoch.fromMinor(minor)
+        get() = if (major >= 26) MinecraftEpoch.EPOCH_FUTURE else MinecraftEpoch.fromMinor(minor)
 
     val displayString: String
         get() = when {
@@ -48,6 +48,10 @@ data class MinecraftVersion(
             dataVersion: Int? = null
         ): MinecraftVersion {
             if (platform == Platform.JAVA && dataVersion != null && dataVersion > 1000) {
+                val parsedFromStr = if (!versionStr.isNullOrBlank()) parseVersionStringOnly(versionStr, platform, dataVersion) else null
+                if (parsedFromStr != null && parsedFromStr.major >= 26) {
+                    return parsedFromStr
+                }
                 val mapped = mapDataVersionToJava(dataVersion)
                 if (mapped != null) {
                     return mapped.copy(rawString = versionStr ?: mapped.displayString)
@@ -55,17 +59,24 @@ data class MinecraftVersion(
             }
 
             if (versionStr.isNullOrBlank()) {
-                val fallbackMinor = if (platform == Platform.JAVA) 21 else 21
                 return MinecraftVersion(
                     platform = platform,
                     major = 1,
-                    minor = fallbackMinor,
+                    minor = 21,
                     patch = 0,
                     dataVersion = dataVersion,
-                    rawString = "1.$fallbackMinor"
+                    rawString = "1.21"
                 )
             }
 
+            return parseVersionStringOnly(versionStr, platform, dataVersion)
+        }
+
+        private fun parseVersionStringOnly(
+            versionStr: String,
+            platform: Platform,
+            dataVersion: Int?
+        ): MinecraftVersion {
             val cleaned = versionStr.trim()
                 .replace(Regex("(?i)^minecraft\\s*"), "")
                 .replace(Regex("(?i)^bedrock\\s*"), "")
@@ -111,6 +122,7 @@ data class MinecraftVersion(
 
         private fun mapDataVersionToJava(dataVersion: Int): MinecraftVersion? {
             return when {
+                dataVersion >= 4700 -> MinecraftVersion(Platform.JAVA, 26, 1, 0, dataVersion = dataVersion)
                 dataVersion >= 3953 -> MinecraftVersion(Platform.JAVA, 1, 21, 0, dataVersion = dataVersion)
                 dataVersion >= 3839 -> MinecraftVersion(Platform.JAVA, 1, 20, 5, dataVersion = dataVersion)
                 dataVersion >= 3700 -> MinecraftVersion(Platform.JAVA, 1, 20, 4, dataVersion = dataVersion)

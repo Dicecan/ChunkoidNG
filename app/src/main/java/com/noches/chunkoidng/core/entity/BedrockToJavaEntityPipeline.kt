@@ -33,7 +33,11 @@ class BedrockToJavaEntityPipeline(
     private val totalExtracted = AtomicInteger(0)
     private val skippedModdedCount = AtomicInteger(0)
 
-    fun scan(bedrockWorldDir: File, enabledDimensions: List<String> = listOf("overworld", "the_nether", "the_end")) {
+    fun scan(
+        bedrockWorldDir: File,
+        enabledDimensions: List<String> = listOf("overworld", "the_nether", "the_end"),
+        targetFormatId: String = ""
+    ) {
         stagedChunks.clear()
         totalExtracted.set(0)
         skippedModdedCount.set(0)
@@ -43,6 +47,10 @@ class BedrockToJavaEntityPipeline(
             log("未找到基岩版数据库目录 (db/)，跳过实体扫描。")
             return
         }
+
+        val targetOptions = JavaEntityBuilder.JavaTargetOptions.fromProfile(
+            JavaTargetFormatHelper.resolveProfile(targetFormatId)
+        )
 
         log("开始扫描基岩版 LevelDB 实体数据...")
 
@@ -67,7 +75,7 @@ class BedrockToJavaEntityPipeline(
                         val nbtFile = NbtIO.readNbtFile(bis, compressed = false, littleEndian = true)
                         val actor = nbtFile.compound
 
-                        processBedrockActor(actor, enabledDimensions)
+                        processBedrockActor(actor, enabledDimensions, targetOptions)
                     } catch (e: Exception) {
                         log("解析单个基岩版实体异常: ${e.message}")
                     }
@@ -81,7 +89,11 @@ class BedrockToJavaEntityPipeline(
         log("基岩版实体扫描完成：已提取 ${totalExtracted.get()} 个实体，跳过 ${skippedModdedCount.get()} 个未知/模组实体。")
     }
 
-    internal fun processBedrockActor(actor: NbtCompound, enabledDimensions: List<String>) {
+    internal fun processBedrockActor(
+        actor: NbtCompound,
+        enabledDimensions: List<String>,
+        targetOptions: JavaEntityBuilder.JavaTargetOptions = JavaEntityBuilder.JavaTargetOptions()
+    ) {
         val bedrockId = actor.getNullableString("identifier")
         if (EntityIdMapper.isHandledByChunkerNative(bedrockId)) return
 
@@ -99,27 +111,13 @@ class BedrockToJavaEntityPipeline(
         val chunkX = blockX shr 4
         val chunkZ = blockZ shr 4
 
-        val javaCompound = JavaEntityBuilder.build(actor)
+        val javaCompound = JavaEntityBuilder.build(actor, targetOptions)
         if (javaCompound == null) {
             skippedModdedCount.incrementAndGet()
             return
         }
 
-        var vehicleId = 0L
-        val links = actor.getNullableCompoundList("LinksTag")
-        if (links != null) {
-            for (link in links) {
-                val rideId = link.getNullableLong("RideID") ?: 0L
-                val vId = link.getNullableLong("VehicleID") ?: 0L
-                if (rideId != 0L && rideId != uniqueId) {
-                    vehicleId = rideId
-                    break
-                } else if (rideId == uniqueId && vId != 0L && vId != uniqueId) {
-                    vehicleId = vId
-                    break
-                }
-            }
-        }
+        val vehicleId = extractVehicleId(actor, uniqueId)
 
         val chunkKey = ChunkKey(dim, chunkX, chunkZ)
         val entity = StagedEntity(uniqueId, vehicleId, javaCompound)
@@ -127,14 +125,34 @@ class BedrockToJavaEntityPipeline(
         totalExtracted.incrementAndGet()
     }
 
-    fun flushToJava(javaWorldDir: File): PipelineStats {
+    internal fun extractVehicleId(actor: NbtCompound, uniqueId: Long): Long {
+        val links = actor.getNullableCompoundList("LinksTag") ?: return 0L
+        for (link in links) {
+            val rideId = link.getNullableLong("RideID") ?: 0L
+            val vId = link.getNullableLong("VehicleID") ?: 0L
+            if (rideId != 0L && rideId != uniqueId && vId == 0L) {
+                return rideId
+            }
+            if (rideId == uniqueId && vId != 0L && vId != uniqueId) {
+                return vId
+            }
+        }
+        return 0L
+    }
+
+    fun flushToJava(
+        javaWorldDir: File,
+        targetFormatId: String = "",
+        inputDir: File? = null
+    ): PipelineStats {
         val total = totalExtracted.get()
         if (total == 0 || stagedChunks.isEmpty()) {
             log("无待写入的 Java 实体记录，跳过写入。")
             return PipelineStats(0, skippedModdedCount.get(), 0)
         }
 
-        log("正在向 Java 版存档写入 $total 个实体与乘骑树...")
+        val profile = JavaTargetFormatHelper.resolveProfile(targetFormatId, javaWorldDir, inputDir)
+        log("正在向 Java 版存档写入 $total 个实体与乘骑树 (DataVersion=${profile.dataVersion})...")
 
         var writtenChunks = 0
         var writtenEntities = 0
@@ -148,39 +166,72 @@ class BedrockToJavaEntityPipeline(
                 val rootEntities = reconstructPassengersTree(stagedList)
                 if (rootEntities.isEmpty()) continue
 
-                val entitiesDir = getEntitiesDirectory(javaWorldDir, chunkKey.dimensionId)
-                if (!entitiesDir.exists()) entitiesDir.mkdirs()
+                val targetDir = if (profile.usesEntitiesDir) {
+                    JavaTargetFormatHelper.getEntitiesDirectory(
+                        javaWorldDir,
+                        chunkKey.dimensionId,
+                        profile.usesDimensionNamespaces
+                    )
+                } else {
+                    JavaTargetFormatHelper.getRegionDirectory(
+                        javaWorldDir,
+                        chunkKey.dimensionId,
+                        profile.usesDimensionNamespaces
+                    )
+                }
+                if (!targetDir.exists()) targetDir.mkdirs()
 
                 val regionX = Math.floorDiv(chunkKey.chunkX, 32)
                 val regionZ = Math.floorDiv(chunkKey.chunkZ, 32)
                 val localX = Math.floorMod(chunkKey.chunkX, 32)
                 val localZ = Math.floorMod(chunkKey.chunkZ, 32)
 
-                val mcaFile = File(entitiesDir, "r.$regionX.$regionZ.mca")
+                val mcaFile = File(targetDir, "r.$regionX.$regionZ.mca")
                 val regionFile = openRegionFiles.computeIfAbsent(mcaFile) { AnvilRegionFile(it) }
 
                 try {
+                    if (profile.usesEntitiesDir) {
+                        val existingFile = regionFile.readChunkNbt(localX, localZ)
+                        val chunkRoot = existingFile?.compound ?: NbtCompound().apply {
+                            this["Position"] = NbtIntArray(intArrayOf(chunkKey.chunkX, chunkKey.chunkZ))
+                            this["DataVersion"] = NbtInt(profile.dataVersion)
+                        }
+                        chunkRoot["DataVersion"] = NbtInt(profile.dataVersion)
 
-                    val existingFile = regionFile.readChunkNbt(localX, localZ)
-                    val chunkRoot = existingFile?.compound ?: NbtCompound().apply {
-                        this["Position"] = NbtIntArray(intArrayOf(chunkKey.chunkX, chunkKey.chunkZ))
-                        this["DataVersion"] = NbtInt(3953)
+                        val existingList = chunkRoot.getNullableCompoundList("Entities")?.toMutableList() ?: mutableListOf()
+                        for (entity in rootEntities) {
+                            existingList.add(entity)
+                            writtenEntities++
+                        }
+
+                        val mergedList = NbtList<NbtCompound>()
+                        for (e in existingList) {
+                            mergedList.add(e)
+                        }
+                        chunkRoot["Entities"] = mergedList
+
+                        regionFile.writeChunkNbt(localX, localZ, NbtFile("", chunkRoot))
+                        writtenChunks++
+                    } else {
+                        val existingFile = regionFile.readChunkNbt(localX, localZ) ?: continue
+                        val root = existingFile.compound
+                        val level = root.getNullableCompound("Level") ?: continue
+
+                        val existingList = level.getNullableCompoundList("Entities")?.toMutableList() ?: mutableListOf()
+                        for (entity in rootEntities) {
+                            existingList.add(entity)
+                            writtenEntities++
+                        }
+
+                        val mergedList = NbtList<NbtCompound>()
+                        for (e in existingList) {
+                            mergedList.add(e)
+                        }
+                        level["Entities"] = mergedList
+
+                        regionFile.writeChunkNbt(localX, localZ, NbtFile("", root))
+                        writtenChunks++
                     }
-
-                    val existingList = chunkRoot.getNullableCompoundList("Entities")?.toMutableList() ?: mutableListOf()
-                    for (entity in rootEntities) {
-                        existingList.add(entity)
-                        writtenEntities++
-                    }
-
-                    val mergedList = NbtList<NbtCompound>()
-                    for (e in existingList) {
-                        mergedList.add(e)
-                    }
-                    chunkRoot["Entities"] = mergedList
-
-                    regionFile.writeChunkNbt(localX, localZ, NbtFile("", chunkRoot))
-                    writtenChunks++
                 } catch (e: Exception) {
                     log("写入区块实体失败 [dim=${chunkKey.dimensionId}, chunk=${chunkKey.chunkX},${chunkKey.chunkZ}]: ${e.message}")
                 }
@@ -202,7 +253,8 @@ class BedrockToJavaEntityPipeline(
         val isPassengerSet = mutableSetOf<Long>()
 
         for (staged in entities) {
-            if (staged.vehicleUniqueId != 0L) {
+            if (staged.vehicleUniqueId != 0L && staged.vehicleUniqueId != staged.uniqueId) {
+                if (createsCycle(staged.uniqueId, staged.vehicleUniqueId, entityMap)) continue
                 val vehicle = entityMap[staged.vehicleUniqueId]
                 if (vehicle != null) {
                     val pList = vehicle.javaCompound.getNullableCompoundList("Passengers")?.toMutableList() ?: mutableListOf()
@@ -218,12 +270,14 @@ class BedrockToJavaEntityPipeline(
         return entities.filter { it.uniqueId !in isPassengerSet }.map { it.javaCompound }
     }
 
-    private fun getEntitiesDirectory(worldDir: File, dimensionId: Int): File {
-        return when (dimensionId) {
-            1 -> File(worldDir, "DIM-1/entities")
-            2 -> File(worldDir, "DIM1/entities")
-            else -> File(worldDir, "entities")
+    private fun createsCycle(startId: Long, targetVehicleId: Long, entityMap: Map<Long, StagedEntity>): Boolean {
+        val visited = mutableSetOf(startId)
+        var cur = targetVehicleId
+        while (cur != 0L) {
+            if (!visited.add(cur)) return true
+            cur = entityMap[cur]?.vehicleUniqueId ?: 0L
         }
+        return false
     }
 
     private fun isDimensionEnabled(dim: Int, enabledDimensions: List<String>): Boolean {

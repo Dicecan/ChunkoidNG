@@ -50,13 +50,13 @@ object EntityVariants {
         "persian" to Pair("cat_persian", 6),
         "ragdoll" to Pair("cat_ragdoll", 7),
         "tabby" to Pair("cat_tabby", 8),
-        "all_black" to Pair("cat_all_black", 9),
+        "all_black" to Pair("cat_black", 9),
         "jellie" to Pair("cat_jellie", 10)
     )
 
     private val BOAT_WOODS = listOf(
         "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove",
-        "cherry", "bamboo", "pale_oak"
+        "bamboo", "cherry", "pale_oak", "poplar"
     )
 
     fun apply(
@@ -74,25 +74,25 @@ object EntityVariants {
             "minecraft:fox" -> fox(actor, javaEntity, definitions)
             "minecraft:rabbit" -> rabbit(actor, javaEntity, definitions)
             "minecraft:parrot" -> parrot(actor, javaEntity, definitions)
-            "minecraft:llama", "minecraft:trader_llama" -> llama(actor, javaEntity, definitions)
+            "minecraft:llama", "minecraft:trader_llama" -> llama(actor, identifier, javaEntity, definitions)
             "minecraft:axolotl" -> axolotl(actor, javaEntity, definitions)
             "minecraft:frog" -> frog(actor, javaEntity, definitions)
             "minecraft:goat" -> goat(actor, javaEntity, definitions)
             "minecraft:panda" -> panda(actor, javaEntity, definitions)
             "minecraft:tropicalfish" -> tropicalFish(actor, javaEntity)
-            "minecraft:boat", "minecraft:chest_boat" -> boat(actor, javaEntity)
+            "minecraft:boat", "minecraft:chest_boat" -> boat(actor, javaEntity, definitions)
         }
     }
 
     private fun sheep(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val color = getInt(entity, "Color", 0).coerceIn(0, 15)
         actor["Color"] = NbtByte(color.toByte())
-        addGroup(definitions, "sheep_${DYE_COLOURS[color]}")
+        addGroup(definitions, "minecraft:sheep", "sheep_${DYE_COLOURS[color]}")
 
         val sheared = getByte(entity, "Sheared", 0)
         if (sheared != 0.toByte()) {
             actor["Sheared"] = NbtByte(1)
-            addGroup(definitions, "sheep_sheared")
+            addGroup(definitions, "minecraft:sheep", "sheep_sheared")
         }
     }
 
@@ -104,20 +104,20 @@ object EntityVariants {
         actor["Variant"] = NbtInt(coatIndex)
         actor["MarkVariant"] = NbtInt(markIndex)
 
-        addGroup(definitions, "horse_${HORSE_COLOURS[coatIndex]}")
+        addGroup(definitions, "minecraft:horse", "base_${HORSE_COLOURS[coatIndex]}")
         if (markIndex > 0) {
-            addGroup(definitions, "horse_${HORSE_MARKINGS[markIndex]}")
+            addGroup(definitions, "minecraft:horse", "markings_${HORSE_MARKINGS[markIndex]}")
         }
     }
 
     private fun mooshroom(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val type = entity.getNullableString("Type")?.lowercase()
         if (type == "brown") {
-            actor["Type"] = NbtInt(1)
-            addGroup(definitions, "brown_mooshroom")
+            actor["Variant"] = NbtInt(1)
+            addGroup(definitions, "minecraft:mooshroom", "mooshroom_brown")
         } else {
-            actor["Type"] = NbtInt(0)
-            addGroup(definitions, "red_mooshroom")
+            actor["Variant"] = NbtInt(0)
+            addGroup(definitions, "minecraft:mooshroom", "mooshroom_red")
         }
     }
 
@@ -126,23 +126,27 @@ object EntityVariants {
         val variantName = raw?.removePrefix(NAMESPACE)?.lowercase() ?: "black"
         val mapped = CAT_VARIANTS[variantName] ?: Pair("cat_tabby", 0)
         actor["Variant"] = NbtInt(mapped.second)
-        addGroup(definitions, mapped.first)
+        addGroup(definitions, "minecraft:cat", mapped.first)
     }
 
     private fun wolf(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val raw = entity.getNullableString("variant") ?: entity.getNullableString("Variant")
         val variantName = raw?.removePrefix(NAMESPACE)?.lowercase() ?: "pale"
-        addGroup(definitions, "wolf_$variantName")
+        val group = "wolf_$variantName"
+        EntityGroupTable.variant("minecraft:wolf", group)?.let { (_, v) ->
+            actor["Variant"] = NbtInt(v)
+        }
+        addGroup(definitions, "minecraft:wolf", group)
     }
 
     private fun fox(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val type = entity.getNullableString("Type")?.lowercase()
         if (type == "snow") {
             actor["Variant"] = NbtInt(1)
-            addGroup(definitions, "fox_snow")
+            addGroup(definitions, "minecraft:fox", "fox_arctic")
         } else {
             actor["Variant"] = NbtInt(0)
-            addGroup(definitions, "fox_red")
+            addGroup(definitions, "minecraft:fox", "fox_red")
         }
     }
 
@@ -150,7 +154,7 @@ object EntityVariants {
         val type = getInt(entity, "RabbitType", 0)
         if (type in RABBIT_COATS.indices) {
             actor["Variant"] = NbtInt(type)
-            addGroup(definitions, "coat_${RABBIT_COATS[type]}")
+            addGroup(definitions, "minecraft:rabbit", "coat_${RABBIT_COATS[type]}")
         } else if (type == 99) {
             actor["Variant"] = NbtInt(99)
         }
@@ -159,25 +163,36 @@ object EntityVariants {
     private fun parrot(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val variant = getInt(entity, "Variant", 0).coerceIn(0, PARROT_COLOURS.size - 1)
         actor["Variant"] = NbtInt(variant)
-        addGroup(definitions, "parrot_${PARROT_COLOURS[variant]}")
+        addGroup(definitions, "minecraft:parrot", "parrot_${PARROT_COLOURS[variant]}")
     }
 
-    private fun llama(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
+    private fun llama(
+        actor: NbtCompound,
+        identifier: String,
+        entity: NbtCompound,
+        definitions: MutableList<String>
+    ) {
         val variant = getInt(entity, "Variant", 0).coerceIn(0, LLAMA_COLOURS.size - 1)
         actor["Variant"] = NbtInt(variant)
-        addGroup(definitions, "llama_${LLAMA_COLOURS[variant]}")
+        addGroup(definitions, identifier, "llama_${LLAMA_COLOURS[variant]}")
     }
 
     private fun axolotl(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val variant = getInt(entity, "Variant", 0).coerceIn(0, AXOLOTL_COLOURS.size - 1)
         actor["Variant"] = NbtInt(variant)
-        addGroup(definitions, "axolotl_${AXOLOTL_COLOURS[variant]}")
+        addGroup(definitions, "minecraft:axolotl", "axolotl_${AXOLOTL_COLOURS[variant]}")
     }
 
     private fun frog(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val raw = entity.getNullableString("variant") ?: entity.getNullableString("Variant")
         val variantName = raw?.removePrefix(NAMESPACE)?.lowercase() ?: "temperate"
-        addGroup(definitions, "frog_$variantName")
+        val (group, variantInt) = when (variantName) {
+            "cold" -> "cold_frog" to 1
+            "warm" -> "warm_frog" to 2
+            else -> "temperate_frog" to 0
+        }
+        actor["Variant"] = NbtInt(variantInt)
+        addGroup(definitions, "minecraft:frog", group)
     }
 
     private fun goat(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
@@ -185,17 +200,17 @@ object EntityVariants {
                 getInt(entity, "IsScreamingGoat", 0) != 0
         if (isScreamer) {
             actor["Variant"] = NbtInt(1)
-            addGroup(definitions, "goat_screamer")
+            addGroup(definitions, "minecraft:goat", "goat_screamer")
         } else {
             actor["Variant"] = NbtInt(0)
-            addGroup(definitions, "goat_default")
+            addGroup(definitions, "minecraft:goat", "goat_default")
         }
     }
 
     private fun panda(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val gene = entity.getNullableString("MainGene")?.lowercase()
         if (gene != null && gene != "normal") {
-            addGroup(definitions, "panda_$gene")
+            addGroup(definitions, "minecraft:panda", "panda_$gene")
         }
     }
 
@@ -204,24 +219,41 @@ object EntityVariants {
         actor["Variant"] = NbtInt(variant)
     }
 
-    private fun boat(actor: NbtCompound, entity: NbtCompound) {
+    private fun boat(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
+        val variant = resolveBoatVariant(entity)
+        actor["Variant"] = NbtInt(variant)
+        val group = if (variant == 7) "can_ride_bamboo" else "can_ride_default"
+        val id = entity.getNullableString("id")?.removePrefix(NAMESPACE) ?: ""
+        val targetId = if (id.contains("chest")) "minecraft:chest_boat" else "minecraft:boat"
+        addGroup(definitions, targetId, group)
+    }
+
+    private fun resolveBoatVariant(entity: NbtCompound): Int {
         val javaId = entity.getNullableString("id")?.removePrefix(NAMESPACE) ?: "boat"
+        if (javaId == "bamboo_raft" || javaId == "bamboo_chest_raft") return 7
         for (i in BOAT_WOODS.indices) {
-            if (javaId.startsWith(BOAT_WOODS[i])) {
-                actor["Variant"] = NbtInt(i)
-                return
-            }
+            if (javaId.startsWith(BOAT_WOODS[i])) return i
         }
-        val typeStr = entity.getNullableString("Type")?.lowercase()
+        val typeStr = entity.getNullableString("Type")?.lowercase()?.removePrefix(NAMESPACE)
         if (typeStr != null) {
             val idx = BOAT_WOODS.indexOf(typeStr)
-            if (idx >= 0) actor["Variant"] = NbtInt(idx)
+            if (idx >= 0) return idx
         }
+        return 0
     }
 
     fun addGroup(definitions: MutableList<String>, bareGroup: String) {
         val full = "+$NAMESPACE$bareGroup"
         if (full !in definitions) {
+            definitions.add(full)
+        }
+    }
+
+    fun addGroup(definitions: MutableList<String>, identifier: String, bareGroup: String) {
+        val full = "+$NAMESPACE$bareGroup"
+        if (full in definitions) return
+        val row = EntityGroupTable.of(identifier)
+        if (row != null && row.hasGroup(bareGroup)) {
             definitions.add(full)
         }
     }

@@ -82,6 +82,7 @@ data class ChunkerFormat(
             ChunkerFormat("BEDROCK_1_12_0", Platform.BEDROCK, "1.13 / 1.12", "Bedrock 1.12.0"),
 
             ChunkerFormat("BEDROCK_1_26_50", Platform.BEDROCK, "1.26.x", "Bedrock 1.26.50"),
+            ChunkerFormat("BEDROCK_1_26_40", Platform.BEDROCK, "1.26.x", "Bedrock 1.26.40"),
             ChunkerFormat("BEDROCK_1_26_30", Platform.BEDROCK, "1.26.x", "Bedrock 1.26.30"),
             ChunkerFormat("BEDROCK_1_26_20", Platform.BEDROCK, "1.26.x", "Bedrock 1.26.20"),
             ChunkerFormat("BEDROCK_1_26_10", Platform.BEDROCK, "1.26.x", "Bedrock 1.26.10"),
