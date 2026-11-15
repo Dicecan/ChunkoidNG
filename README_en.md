@@ -87,3 +87,4 @@ Run the following command to assemble a Debug APK:
 - Core conversion engine powered by [Chunker CLI](https://github.com/HiveGames/Chunker) (The Hive, MIT License).
 - Sincere thanks to founder **Dozener** for their exceptional foundation and open-source contributions.
 - Special thanks to [**FreneticWind60**](https://github.com/FreneticWind60/) for their tremendous help and technical support across various aspects of the project, especially entity conversion.
+- We consistently credit every upstream library, license, and contributor prominently in our README, website, and in-app About page — true open-source respect is practiced openly, not tucked away in an obscure corner.

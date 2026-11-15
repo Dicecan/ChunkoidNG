@@ -213,6 +213,7 @@ export default {
     "thComponent": "项目",
     "thUsage": "用途",
     "thLicense": "协议",
+    "openSourceNote": "我们始终坚持将所有引用组件、协议与原作者署名坦诚列于 README、官网与软件关于页的醒目位置——开源礼仪贵在以己度人，而非只写在角落的说明文件里。",
     "licenseTitle": "开源协议",
     "licenseDesc": "本项目采用 GNU General Public License v3.0 协议开源。你可以在遵循该协议的前提下自由使用、修改与分发本项目。",
     "readLicense": "阅读协议全文",

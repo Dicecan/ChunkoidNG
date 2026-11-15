@@ -213,6 +213,7 @@ export default {
     "thComponent": "Project",
     "thUsage": "Purpose",
     "thLicense": "License",
+    "openSourceNote": "We consistently credit every upstream library, license, and contributor prominently in our README, website, and About page — open-source respect is practiced openly, not tucked away in an obscure corner.",
     "licenseTitle": "License",
     "licenseDesc": "This project is open sourced under the GNU General Public License v3.0. You are free to use, modify and distribute it in compliance with that license.",
     "readLicense": "Read the full license",

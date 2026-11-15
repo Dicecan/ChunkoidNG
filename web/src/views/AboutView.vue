@@ -297,6 +297,7 @@ function fallbackCopy(text) {
               </tr>
             </tbody>
           </table>
+          <p class="small muted" style="margin: 12px 0 0">{{ t('about.openSourceNote') }}</p>
         </div>
       </section>
 

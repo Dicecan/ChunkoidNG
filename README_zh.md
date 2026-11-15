@@ -87,3 +87,4 @@
 - 转换核心基于 [Chunker CLI](https://github.com/HiveGames/Chunker)（The Hive，基于 MIT 协议开源）。
 - 衷心感谢原作者 **Dozener** 为本项目做出的卓越奠基与无私开源精神。
 - 特别感谢 [**FreneticWind60**](https://github.com/FreneticWind60/) 在项目各方面以及实体转换方面提供的巨大帮助与技术支持。
+- 我们始终坚持将所有引用组件、协议与原作者署名坦诚列于 README、官网及软件关于页的醒目位置——开源精神贵在以己度人，而非只写在角落的文件里。

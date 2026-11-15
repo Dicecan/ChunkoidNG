@@ -213,6 +213,7 @@ export default {
     "thComponent": "プロジェクト",
     "thUsage": "用途",
     "thLicense": "ライセンス",
+    "openSourceNote": "当プロジェクトは引用ライブラリ・ライセンス・原作者クレジットを README、公式サイト、アプリ内の情報画面に明示しています——オープンソースの敬意は目立たない片隅ではなく、表立って実践されるべきものです。",
     "licenseTitle": "ライセンス",
     "licenseDesc": "本プロジェクトは GNU General Public License v3.0 のもとで公開されています。同ライセンスに従う限り、自由に使用・改変・配布できます。",
     "readLicense": "ライセンス全文を読む",
