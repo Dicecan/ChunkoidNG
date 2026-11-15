@@ -24,10 +24,9 @@ syncRouter.get('/status', (req, res) => {
   })
 })
 
-// POST /api/sync - Trigger sync manually (admin authenticated; never trust Host header)
 syncRouter.post('/', verifyAdmin, async (req, res) => {
   const cfg = getConfig()
-  const localBaseUrl = cfg.server?.publicUrl || `http://localhost:${cfg.server.port}`
+  const localBaseUrl = cfg.server?.publicUrl || `http:
 
   res.json({
     code: 0,

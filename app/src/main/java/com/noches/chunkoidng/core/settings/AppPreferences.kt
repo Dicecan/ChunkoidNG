@@ -80,7 +80,10 @@ class AppPreferences(private val context: Context) {
 
     var appLanguage: String
         get() = prefs.getString("app_language", "system") ?: "system"
-        set(value) = prefs.edit().putString("app_language", value).apply()
+        set(value) {
+            prefs.edit().putString("app_language", value).apply()
+            LocaleHelper.notifyLanguageChanged(value)
+        }
 
     var notificationPermissionRequested: Boolean
         get() = prefs.getBoolean("notification_permission_requested", false)

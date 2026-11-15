@@ -22,7 +22,7 @@ class PagingAdvisor(private val securityAuditor: SecurityAuditor) {
         securityAuditor.recordGentleTruncate(
             type = ViolationType.FRAME_COUNT_LIMIT,
             module = "PackConverter",
-            message = "动画展开帧数超限，MAID™已温和截断至安全上限",
+            message = "Animation frame count exceeded limit; MAID™ gently clamped to safe cap",
             requestedValue = requestedFrames,
             clampedValue = maxFrames.toLong(),
             pathOrTarget = texturePath
@@ -42,7 +42,7 @@ class PagingAdvisor(private val securityAuditor: SecurityAuditor) {
         securityAuditor.recordGentleTruncate(
             type = ViolationType.NOTE_COUNT_LIMIT,
             module = "MidiConverter",
-            message = "MIDI音符总数超标，MAID™已温和截断至安全上限以防内存溢出",
+            message = "MIDI note count exceeded limit; MAID™ gently clamped to prevent OOM",
             requestedValue = requestedNotes.toLong(),
             clampedValue = maxNotes.toLong(),
             pathOrTarget = songTitle

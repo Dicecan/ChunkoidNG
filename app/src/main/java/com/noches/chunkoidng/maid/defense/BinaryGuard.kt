@@ -28,7 +28,7 @@ class BinaryGuard(private val securityAuditor: SecurityAuditor) {
             securityAuditor.recordBlock(
                 type = ViolationType.BUFFER_OVERFLOW_ATTEMPT,
                 module = module,
-                message = "二进制读取越界拦截: offset=$offset, length=$length, capacity=$totalCapacity",
+                message = "Out-of-bounds binary read blocked: offset=$offset, length=$length, capacity=$totalCapacity",
                 pathOrTarget = target
             )
             throw IndexOutOfBoundsException("Invalid binary read range: offset=$offset, length=$length, capacity=$totalCapacity")
@@ -46,7 +46,7 @@ class BinaryGuard(private val securityAuditor: SecurityAuditor) {
             securityAuditor.recordBlock(
                 type = type,
                 module = module,
-                message = "文件大小 ($size bytes) 超出安全上限 ($maxBytes bytes)",
+                message = "File size ($size bytes) exceeded safety limit ($maxBytes bytes)",
                 pathOrTarget = target,
                 requestedValue = size
             )

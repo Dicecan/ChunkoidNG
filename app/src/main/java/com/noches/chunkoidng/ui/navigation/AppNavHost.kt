@@ -213,7 +213,8 @@ fun MainAppScaffold(
 
             composable(Screen.Settings.route) {
                 SettingsScreen(
-                    onNavigateToWelcome = { navController.navigate("welcome") }
+                    onNavigateToWelcome = { navController.navigate("welcome") },
+                    onLanguageSelected = onLanguageSelected
                 )
             }
 

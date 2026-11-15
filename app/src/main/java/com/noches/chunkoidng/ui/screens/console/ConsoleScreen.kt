@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -71,7 +72,10 @@ import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
+import com.noches.chunkoidng.core.runtime.TerminalEasterEggEngine
 import androidx.annotation.StringRes
+import com.noches.chunkoidng.ui.theme.WindowWidthTier
+import com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics
 import kotlinx.coroutines.launch
 
 private const val MAX_CONSOLE_LOG_LINES = 2000
@@ -86,7 +90,8 @@ private val quickCommands = listOf(
     QuickCommand(R.string.console_cmd_java_version, "java -version"),
     QuickCommand(R.string.console_cmd_list_dir, "ls"),
     QuickCommand(R.string.console_cmd_current_path, "pwd"),
-    QuickCommand(R.string.console_cmd_kernel_info, "uname -a")
+    QuickCommand(R.string.console_cmd_kernel_info, "uname -a"),
+    QuickCommand(R.string.console_cmd_help, "help")
 )
 
 private fun trimLogs(logs: MutableList<String>) {
@@ -104,6 +109,7 @@ fun ConsoleScreen(
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val metrics = rememberAdaptiveMetrics()
 
     val runtimeEnv = remember { JavaRuntimeEnvironment(context) }
     val processManager = remember { JavaProcessManager(context, runtimeEnv) }
@@ -116,6 +122,8 @@ fun ConsoleScreen(
         )
     }
     var isExecuting by remember { mutableStateOf(false) }
+    var isMatrixMode by remember { mutableStateOf(false) }
+    var konamiUnlocked by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
 
@@ -133,13 +141,33 @@ fun ConsoleScreen(
 
     fun executeCommand(cmd: String) {
         if (cmd.isNotBlank() && !isExecuting) {
-            logs.add("$ $cmd")
+            val trimmedCmd = cmd.trim()
             command = ""
+
+            val easterResponse = TerminalEasterEggEngine.evaluate(trimmedCmd)
+            if (easterResponse != null) {
+                if (easterResponse.clearLogs) {
+                    logs.clear()
+                } else {
+                    logs.add("$ $trimmedCmd")
+                }
+                if (easterResponse.toggleMatrixMode == true) {
+                    isMatrixMode = !isMatrixMode
+                }
+                if (easterResponse.unlockKonami) {
+                    konamiUnlocked = true
+                }
+                logs.addAll(easterResponse.lines)
+                trimLogs(logs)
+                return
+            }
+
+            logs.add("$ $trimmedCmd")
             isExecuting = true
             coroutineScope.launch {
                 val batch = mutableListOf<String>()
                 var lastFlush = System.currentTimeMillis()
-                processManager.executeShellCommand(cmd).collect { outputLine ->
+                processManager.executeShellCommand(trimmedCmd).collect { outputLine ->
                     batch.add(outputLine)
                     val now = System.currentTimeMillis()
                     if (now - lastFlush >= 50 || batch.size >= 15) {
@@ -224,7 +252,8 @@ fun ConsoleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .imePadding()
+                .padding(horizontal = if (metrics.widthTier == WindowWidthTier.COMPACT_NARROW) 8.dp else 12.dp, vertical = 6.dp)
         ) {
 
             Column(
@@ -232,14 +261,18 @@ fun ConsoleScreen(
                     .fillMaxWidth()
                     .weight(1f)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF0F1117))
-                    .border(1.dp, Color(0xFF23283B), RoundedCornerShape(18.dp))
+                    .background(if (isMatrixMode) Color(0xFF041409) else Color(0xFF0F1117))
+                    .border(
+                        1.dp,
+                        if (isMatrixMode) Color(0xFF00FF66).copy(alpha = 0.45f) else Color(0xFF23283B),
+                        RoundedCornerShape(18.dp)
+                    )
             ) {
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF161924))
+                        .background(if (isMatrixMode) Color(0xFF072210) else Color(0xFF161924))
                         .padding(horizontal = 14.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -255,9 +288,27 @@ fun ConsoleScreen(
                         text = "~/filesDir/rootfs",
                         fontFamily = FontFamily.Monospace,
                         fontSize = 11.sp,
-                        color = Color(0xFF8B949E),
+                        color = if (isMatrixMode) Color(0xFF50FA7B) else Color(0xFF8B949E),
                         fontWeight = FontWeight.Medium
                     )
+
+                    if (konamiUnlocked) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF332A00))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "+30 LIVES",
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF1FA8C)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.weight(1f))
 
@@ -294,11 +345,13 @@ fun ConsoleScreen(
                                 text = line,
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontFamily = FontFamily.Monospace,
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 17.5.sp,
+                                    fontSize = if (metrics.widthTier == WindowWidthTier.COMPACT_NARROW) 11.5.sp else 12.5.sp,
+                                    lineHeight = if (metrics.widthTier == WindowWidthTier.COMPACT_NARROW) 16.sp else 17.5.sp,
                                     letterSpacing = 0.2.sp
                                 ),
                                 color = when {
+                                    line.startsWith("[EASTER]") -> Color(0xFFF1FA8C)
+                                    line.contains("[HEROBRINE]") || line.contains("[MAID™ BLOCKED]") -> Color(0xFFFF79C6)
                                     line.startsWith("[SYSTEM]") -> Color(0xFF56B6C2)
                                     line.startsWith("$") -> Color(0xFF61AFEF)
                                     line.contains("Missing required options", ignoreCase = true) ||
@@ -307,6 +360,7 @@ fun ConsoleScreen(
                                     line.contains("Permission denied", ignoreCase = true) -> Color(0xFFE06C75)
                                     line.trim().startsWith("-") || line.trim().startsWith("'--") -> Color(0xFFE5C07B)
                                     line.startsWith("Usage:") -> Color(0xFF98C379)
+                                    isMatrixMode -> Color(0xFF50FA7B)
                                     else -> Color(0xFFABB2BF)
                                 }
                             )

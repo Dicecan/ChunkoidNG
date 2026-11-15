@@ -48,7 +48,7 @@ class ArchiveShield(
                     securityAuditor.recordBlock(
                         type = ViolationType.ZIP_ENTRY_COUNT_LIMIT,
                         module = module,
-                        message = "归档条目数量超出安全阈值 (${limits.archiveMaxEntries})，判定为疑似Zip炸弹",
+                        message = "Archive entry count exceeded safety limit (${limits.archiveMaxEntries}); potential zip bomb",
                         requestedValue = entryCount.toLong()
                     )
                     throw IllegalArgumentException("Archive entry limit exceeded: max allowed is ${limits.archiveMaxEntries}")
@@ -63,7 +63,7 @@ class ArchiveShield(
                         securityAuditor.recordBlock(
                             type = ViolationType.ZIP_SLIP,
                             module = module,
-                            message = "检测到指向根目录本身的非法文件条目，已拦截",
+                            message = "Blocked invalid archive entry targeting base directory",
                             pathOrTarget = entry.name
                         )
                         throw SecurityException("Invalid zip file entry targeting base directory: ${entry.name}")
@@ -73,7 +73,7 @@ class ArchiveShield(
                         securityAuditor.recordBlock(
                             type = ViolationType.ZIP_SLIP,
                             module = module,
-                            message = "检测到符号链接目标路径，已拦截",
+                            message = "Blocked archive extraction onto symbolic link target",
                             pathOrTarget = entry.name
                         )
                         throw SecurityException("Security violation: symlink target refused: ${entry.name}")
@@ -95,7 +95,7 @@ class ArchiveShield(
                                     securityAuditor.recordBlock(
                                         type = ViolationType.ZIP_BOMB_ENTRY_SIZE,
                                         module = module,
-                                        message = "单条目解压大小超出配额 (${limits.archiveMaxEntryBytes} bytes)，已安全阻断",
+                                        message = "Single entry extracted size exceeded quota (${limits.archiveMaxEntryBytes} bytes)",
                                         pathOrTarget = entry.name,
                                         requestedValue = entryBytes
                                     )
@@ -106,7 +106,7 @@ class ArchiveShield(
                                     securityAuditor.recordBlock(
                                         type = ViolationType.ZIP_BOMB_TOTAL_SIZE,
                                         module = module,
-                                        message = "归档累计解压体积超出总体配额 (${limits.archiveMaxTotalBytes} bytes)，疑似Zip炸弹攻击",
+                                        message = "Total archive extracted size exceeded quota (${limits.archiveMaxTotalBytes} bytes); potential zip bomb",
                                         requestedValue = totalBytes
                                     )
                                     throw IllegalArgumentException("Total extracted size exceeded quota: $totalBytes bytes")

@@ -15,6 +15,7 @@ import com.noches.chunkoidng.core.conversion.ConversionConfig
 import com.noches.chunkoidng.core.conversion.ConversionEvent
 import com.noches.chunkoidng.core.conversion.PruningProfile
 import com.noches.chunkoidng.core.settings.AppPreferences
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.core.world.ArchiveManager
 import com.noches.chunkoidng.core.world.HistoryManager
 import com.noches.chunkoidng.core.version.MinecraftVersion
@@ -77,6 +78,8 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
 
     private val _uiState = MutableStateFlow(ConverterUiState())
     val uiState: StateFlow<ConverterUiState> = _uiState.asStateFlow()
+
+    private val l10n get() = LocaleHelper.localizedContext(getApplication())
 
     private var boundService: ConversionForegroundService? = null
     private var serviceJob: Job? = null
@@ -144,7 +147,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                                     it.copy(
                                         stage = ConverterStage.COMPLETED,
                                         conversionProgress = 100,
-                                        conversionStageText = getApplication<Application>().getString(R.string.converter_stage_completed),
+                                        conversionStageText = l10n.getString(R.string.converter_stage_completed),
                                         latestHistoryId = historyId
                                     )
                                 }
@@ -190,7 +193,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                 it.copy(
                     stage = ConverterStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = getApplication<Application>().getString(R.string.converter_staging_archive)
+                    stagingMessage = l10n.getString(R.string.converter_staging_archive)
                 )
             }
 
@@ -214,7 +217,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                     _uiState.update {
                         it.copy(
                             stage = ConverterStage.ERROR,
-                            errorMessage = getApplication<Application>().getString(R.string.converter_error_archive_load, error.message ?: "")
+                            errorMessage = l10n.getString(R.string.converter_error_archive_load, error.message ?: "")
                         )
                     }
                 }
@@ -228,7 +231,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                 it.copy(
                     stage = ConverterStage.STAGING,
                     stagingProgress = 0,
-                    stagingMessage = getApplication<Application>().getString(R.string.converter_staging_directory)
+                    stagingMessage = l10n.getString(R.string.converter_staging_directory)
                 )
             }
 
@@ -252,7 +255,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                     _uiState.update {
                         it.copy(
                             stage = ConverterStage.ERROR,
-                            errorMessage = getApplication<Application>().getString(R.string.converter_error_dir_import, error.message ?: "")
+                            errorMessage = l10n.getString(R.string.converter_error_dir_import, error.message ?: "")
                         )
                     }
                 }
@@ -363,7 +366,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             it.copy(
                 stage = ConverterStage.CONVERTING,
                 conversionProgress = 0,
-                conversionStageText = getApplication<Application>().getString(R.string.converter_stage_starting),
+                conversionStageText = l10n.getString(R.string.converter_stage_starting),
                 conversionLogs = emptyList(),
                 startTimestamp = System.currentTimeMillis()
             )
@@ -385,7 +388,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
             it.copy(
                 stage = ConverterStage.CONFIGURE,
                 conversionProgress = 0,
-                conversionStageText = getApplication<Application>().getString(R.string.converter_stage_cancelled)
+                conversionStageText = l10n.getString(R.string.converter_stage_cancelled)
             )
         }
     }
@@ -408,7 +411,7 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
                 _uiState.update { it.copy(exportedUri = exportedUri) }
                 onDone(exportedUri)
             }.onFailure { error ->
-                _uiState.update { it.copy(errorMessage = getApplication<Application>().getString(R.string.converter_error_export, error.message ?: "")) }
+                _uiState.update { it.copy(errorMessage = l10n.getString(R.string.converter_error_export, error.message ?: "")) }
             }
         }
     }

@@ -5,10 +5,11 @@ import br.com.gamemods.nbtmanipulator.AnvilRegionFile
 import br.com.gamemods.nbtmanipulator.NbtCompound
 import br.com.gamemods.nbtmanipulator.NbtFile
 import br.com.gamemods.nbtmanipulator.NbtIO
+import com.noches.chunkoidng.core.leveldb.SafeEnv
 import org.iq80.leveldb.CompressionType
 import org.iq80.leveldb.DB
 import org.iq80.leveldb.Options
-import org.iq80.leveldb.impl.Iq80DBFactory
+import org.iq80.leveldb.impl.DbImpl
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer
@@ -111,11 +112,9 @@ class EntityConversionPipeline(
 
         var db: DB? = null
         try {
-            db = Iq80DBFactory.factory.open(dbDir, options)
+            db = DbImpl(options, dbDir.absolutePath, SafeEnv())
             val batch = db.createWriteBatch()
             try {
-                // 1. Write staged regular actors and pending leash knots in a single pass per chunk
-                // so a knot in the same chunk never overwrites that chunk's digp actor list.
                 val allChunkKeys = (stagedChunks.keys + pendingKnots.keys).distinct()
                 for (chunkKey in allChunkKeys) {
                     val records = stagedChunks[chunkKey].orEmpty()
@@ -302,7 +301,6 @@ class EntityConversionPipeline(
         vehicleId: Long,
         preAssignedId: Long = 0L
     ) {
-        // Bedrock creates leash knot actors deterministically at fence locations; skip standalone knot entities
         if (EntityLinks.isLeashKnot(javaEntity)) {
             return
         }
@@ -364,7 +362,6 @@ class EntityConversionPipeline(
         val passengerIds = resolvedPassengers.map { it.second }
         EntityLinks.link(actor, uniqueId, vehicleId, passengerIds)
 
-        // Resolve leash
         val leash = EntityLinks.leash(javaEntity) { EntityLinks.uniqueIdFromUuid(it) }
         if (leash != null) {
             val block = when (leash) {

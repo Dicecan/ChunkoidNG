@@ -3,10 +3,12 @@ package com.noches.chunkoidng.ui.screens.welcome
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
 import com.noches.chunkoidng.core.settings.AppPreferences
 import com.noches.chunkoidng.core.settings.DeviceHardwareInfo
 import com.noches.chunkoidng.core.settings.DevicePerformanceEvaluator
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.core.settings.PerformanceMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +67,7 @@ class WelcomeViewModel(application: Application) : AndroidViewModel(application)
                 runtimeEnv.ensureCliJar()
                 _isRootfsReady.value = runtimeEnv.isRootfsReady()
             } catch (e: Exception) {
-                _deploymentStatusText.value = e.localizedMessage ?: "Deployment failed"
+                _deploymentStatusText.value = e.localizedMessage ?: LocaleHelper.localizedContext(getApplication()).getString(R.string.welcome_deploy_failed)
             } finally {
                 _isDeployingEnvironment.value = false
             }

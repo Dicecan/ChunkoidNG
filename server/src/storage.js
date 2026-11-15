@@ -137,10 +137,8 @@ export async function downloadFileStream(url, destPath) {
   const fileStream = fs.createWriteStream(tmpPath)
 
   try {
-    // Use pipeline for robust stream piping
     await pipeline(res.body, fileStream)
 
-    // Rename atomically on completion
     fs.renameSync(tmpPath, destPath)
     logger.info(`Asset downloaded successfully: ${destPath}`)
   } catch (err) {

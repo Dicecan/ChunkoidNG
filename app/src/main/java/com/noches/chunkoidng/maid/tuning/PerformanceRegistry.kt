@@ -48,7 +48,10 @@ class PerformanceRegistry(private val hardwareButler: HardwareButler) {
                 midiMaxNotes = 1_000_000
             )
             DeviceTier.MID_RANGE -> PerformanceLimits(
-                jvmMaxMemoryMb = ((info.totalRamMb * 0.45f).toInt()).coerceIn(2048, 3072),
+                jvmMaxMemoryMb = ((info.totalRamMb * 0.45f).toInt()).coerceIn(
+                    if (info.totalRamMb <= 4500) 1536 else 2048,
+                    3072
+                ),
                 parallelism = 2,
                 useSerialGc = true,
                 minHeapFreeRatio = 15,

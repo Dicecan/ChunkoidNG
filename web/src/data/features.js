@@ -3,8 +3,8 @@
 export const site = {
   name: 'Chunkoid NG',
   fullName: 'Chunkoid NG (Next-Generation)',
-  version: 'Beta 0.7',
-  versionCode: 7,
+  version: 'Beta 0.8',
+  versionCode: 8,
   license: 'GPLv3',
   repo: 'https://github.com/Dicecan/ChunkoidNG',
   author: 'Dozener (DozenesStudio)',
@@ -21,9 +21,9 @@ export const release = {
   apkUrl: '',
   sha256: '',
   note: {
-    'zh-CN': 'Beta 0.7 为全新版本，重磅实装全量生物与实体智能迁移引擎及 MAID™ 女仆安全与性能治理底座。',
-    en: 'Beta 0.7 introduces the full-featured entity migration pipeline and the MAID™ security & resource governance framework.',
-    ja: 'Beta 0.7 は生物・エンティティ全量移行エンジンと MAID™ メイド統合セキュリティ基盤を搭載した最新版です。'
+    'zh-CN': 'Beta 0.8 新增游戏规则跨端同步、载具/容器/马匹属性与猫/潜影贝颜色等实体转换修复，并加固导出安全性。',
+    en: 'Beta 0.8 adds gamerule sync, comprehensive entity/vehicle/container/equine & cat/shulker color fixes, and hardened export integrity.',
+    ja: 'Beta 0.8 ではゲームルール同期、乗り物・コンテナ・馬属性やネコ・シュルカー色変換の修正、およびエクスポート安全性の強化を実施しました。'
   },
   size: {
     'zh-CN': '约 56 MB',

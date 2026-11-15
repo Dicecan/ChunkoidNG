@@ -34,14 +34,14 @@
 - **Open-Source License**: Strictly adheres to the original **[GNU General Public License v3.0 (GPLv3)](LICENSE)**.
 - **Founder Attribution**: Founder attribution to Dozener is permanently retained across code repositories, documentation, and the application's About screen.
 
-The latest public release is **Beta 0.7** (featuring the smart full-entity migration pipeline and MAID™ security & resource governance framework).
+The latest public release is **Beta 0.8** (introducing cross-edition gamerule synchronization, comprehensive entity/vehicle/container/equine attribute & cat/shulker color fixes, and hardened export integrity).
 
 ---
 
 ## Features
 
-- **World Conversion**: Bidirectional conversion between Java Edition and Bedrock Edition (BE), with version mapping, cross-version compatibility warnings, and foreground service persistence.
-- **Smart Bi-directional Entity Migration (Beta 0.7 Core Feature)**: Full entity migration pipeline supporting JE ↔ BE and same-platform cross-version conversion; preserves villager trades (`Offers.Recipes`) and enchanted books, resolves cross-chunk leashes and vehicle links, and automatically filters modded entities.
+- **World Conversion (Enhanced in Beta 0.8)**: Bidirectional conversion between Java Edition and Bedrock Edition (BE), with automatic gamerule sync, version mapping, cross-version compatibility warnings, and foreground service persistence.
+- **Smart Bi-directional Entity Migration (Beta 0.8 Core Feature)**: Full entity migration pipeline supporting JE ↔ BE and same-platform cross-version conversion; preserves villager trades (`Offers.Recipes`), enchanted books, hopper/chest minecart inventories, and cat/shulker/boat variants; fixes cross-chunk leashes, empty vehicle persistence, and equine movement/jump attributes, while automatically filtering modded entities.
 - **MAID™ Security & Resource Governance (Beta 0.7 Core Feature)**: Built-in **MAID™** (**M**anaged **A**rchitecture for **I**ntegrity & **D**efense) framework providing centralized Zip-Slip directory traversal blocking, multi-tier archive quotas, zip bomb circuit breaking, and binary magic number verification.
 - **Gentle Truncation Strategy (Beta 0.7 Core Feature)**: Oversized resource pack animation frames and extreme MIDI note counts are safely clamped to device hardware thresholds without interrupting the workflow, preventing out-of-memory crashes while recording audit logs.
 - **MAID™ Inspection Dashboard & Live Audit (Beta 0.7 Core Feature)**: A dedicated in-app dashboard accessible via Settings to monitor device compute score, ART heap watermarks, active quotas, and recent security events with one-click report export.
@@ -86,3 +86,4 @@ Run the following command to assemble a Debug APK:
 - Licensed under the **GNU General Public License v3.0**, see [LICENSE](LICENSE).
 - Core conversion engine powered by [Chunker CLI](https://github.com/HiveGames/Chunker) (The Hive, MIT License).
 - Sincere thanks to founder **Dozener** for their exceptional foundation and open-source contributions.
+- Special thanks to [**FreneticWind60**](https://github.com/FreneticWind60/) for their tremendous help and technical support across various aspects of the project, especially entity conversion.

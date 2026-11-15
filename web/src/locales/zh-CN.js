@@ -1,7 +1,7 @@
 export default {
   "meta": {
     "siteName": "Chunkoid NG",
-    "version": "Beta 0.7",
+    "version": "Beta 0.8",
     "homeTitle": "首页",
     "featuresTitle": "功能",
     "featureDetailTitle": "功能详情",

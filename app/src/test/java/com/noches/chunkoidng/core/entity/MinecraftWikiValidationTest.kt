@@ -90,7 +90,8 @@ class MinecraftWikiValidationTest {
             assertNotNull(bedrockWolf)
             val defs = bedrockWolf!!.getNullableStringList("definitions")?.map { it.value } ?: emptyList()
             assertTrue("Must contain +minecraft:wolf_$variant", defs.contains("+minecraft:wolf_$variant"))
-            assertEquals(14.toByte(), bedrockWolf.getNullableByte("Color"))
+            assertEquals(14.toByte(), bedrockWolf.getNullableByte("CollarColor"))
+            assertNull("Wolf must not write Color (tints whole skin)", bedrockWolf.getNullableByte("Color"))
             assertEquals(1.toByte(), bedrockWolf.getNullableByte("Sitting"))
 
             val reconstructed = JavaEntityBuilder.build(bedrockWolf)

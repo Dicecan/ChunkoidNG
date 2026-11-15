@@ -103,7 +103,6 @@ class SecurityAndExportIntegrityTest {
                 sanitizer.resolveUnderBase(tempDir, "world\u0000/level.dat")
             }
 
-            // Test crafted file entry named "." targeting base directory itself
             val dotZip = ByteArrayOutputStream().use { baos ->
                 ZipOutputStream(baos).use { zos ->
                     zos.putNextEntry(ZipEntry("."))
@@ -117,7 +116,6 @@ class SecurityAndExportIntegrityTest {
                 shield.extractZipSecurely(ByteArrayInputStream(dotZip), dotDest, testLimits())
             }
 
-            // Test partial entry cleanup on size limit breach
             val bigPayload = ByteArray(4096) { 0x41 }
             val bombZip = ByteArrayOutputStream().use { baos ->
                 ZipOutputStream(baos).use { zos ->
@@ -146,7 +144,6 @@ class SecurityAndExportIntegrityTest {
         val tempDir = Files.createTempDirectory("chunkoid_anvil_limit").toFile()
         try {
             val mcaFile = File(tempDir, "r.0.0.mca")
-            // Incompressible random bytes larger than 255 sectors (~1,044,480 bytes)
             val hugeBytes = ByteArray(1_150_000)
             Random(42L).nextBytes(hugeBytes)
             val root = NbtCompound()
@@ -171,13 +168,11 @@ class SecurityAndExportIntegrityTest {
             val mcaFile = File(tempDir, "r.0.0.mca")
             RandomAccessFile(mcaFile, "rw").use { raf ->
                 raf.write(ByteArray(8192 + 4096))
-                // Chunk (0,0) points to sector 2, count 1
                 raf.seek(0)
                 raf.write(0)
                 raf.write(0)
                 raf.write(2)
                 raf.write(1)
-                // Write absurd compressed chunk length (50MB) inside sector 2 (only 4KB allocated)
                 raf.seek(8192)
                 raf.writeInt(50_000_000)
                 raf.write(2)
@@ -193,12 +188,11 @@ class SecurityAndExportIntegrityTest {
 
     @Test
     fun nbtIoRejectsMaliciousArraySizesDepthAndUnknownTags() {
-        // 1. Huge ByteArray header (0x7FFFFFFF) -> IOException, not OOM
         val hugeArrayBytes = ByteArrayOutputStream().apply {
             DataOutputStream(this).apply {
-                writeByte(10) // Compound
+                writeByte(10)
                 writeUTF("")
-                writeByte(7) // TAG_Byte_Array
+                writeByte(7)
                 writeUTF("bad")
                 writeInt(Int.MAX_VALUE)
                 writeByte(0)
@@ -208,7 +202,6 @@ class SecurityAndExportIntegrityTest {
             NbtIO.readNbtFileDirectly(DataInputStream(ByteArrayInputStream(hugeArrayBytes)))
         }
 
-        // 2. Unsupported tag type id (99) -> IOException, not ArrayIndexOutOfBoundsException
         val badTypeBytes = ByteArrayOutputStream().apply {
             DataOutputStream(this).apply {
                 writeByte(99)
@@ -219,7 +212,6 @@ class SecurityAndExportIntegrityTest {
             NbtIO.readNbtFileDirectly(DataInputStream(ByteArrayInputStream(badTypeBytes)))
         }
 
-        // 3. Excessive recursion (>512 nested compounds) -> IOException, not StackOverflowError
         val deepBytes = ByteArrayOutputStream().apply {
             DataOutputStream(this).apply {
                 for (i in 0..520) {
@@ -235,7 +227,6 @@ class SecurityAndExportIntegrityTest {
             NbtIO.readNbtFileDirectly(DataInputStream(ByteArrayInputStream(deepBytes)))
         }
 
-        // 4. Detecting settings on garbage file includes suppressed causes on IOException
         val tempFile = File.createTempFile("bad_nbt", ".dat")
         try {
             tempFile.writeBytes(byteArrayOf(0x01, 0x02, 0x03))

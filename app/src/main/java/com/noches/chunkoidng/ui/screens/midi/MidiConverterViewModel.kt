@@ -4,7 +4,9 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.io.SafeFileIO
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.core.world.ArchiveManager
 import com.noches.chunkoidng.core.midi.*
 import com.noches.chunkoidng.core.midi.exporters.*
@@ -61,6 +63,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
     private val _uiState = MutableStateFlow(MidiConverterUiState())
     val uiState: StateFlow<MidiConverterUiState> = _uiState.asStateFlow()
     private val archiveManager = ArchiveManager(application)
+    private val l10n get() = LocaleHelper.localizedContext(getApplication())
 
     private fun addLog(message: String) {
         val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
@@ -85,18 +88,18 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                     selectedMidiName = displayName,
                     parsedSong = null,
                     isParsing = true,
-                    statusMessage = "正在读取并解析 MIDI 文件...",
+                    statusMessage = l10n.getString(R.string.midi_status_reading),
                     errorMessage = null
                 )
             }
-            addLog("选择 MIDI 文件: $displayName")
-            addLog("正在解析二进制 SMF 结构与音轨...")
+            addLog(l10n.getString(R.string.midi_log_selected, displayName))
+            addLog(l10n.getString(R.string.midi_log_parsing_smf))
 
             try {
                 val parsed = withContext(Dispatchers.IO) {
                     val context = getApplication<Application>()
                     val input = context.contentResolver.openInputStream(uri)
-                        ?: throw IllegalArgumentException("Cannot open MIDI file")
+                        ?: throw IllegalArgumentException(l10n.getString(R.string.midi_err_open_file))
                     val bytes = input.use { stream ->
                         val output = java.io.ByteArrayOutputStream()
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -106,7 +109,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                             if (count < 0) break
                             total += count
                             if (total > MAX_MIDI_INPUT_BYTES) {
-                                throw IllegalArgumentException("MIDI file is too large")
+                                throw IllegalArgumentException(l10n.getString(R.string.midi_err_too_large))
                             }
                             output.write(buffer, 0, count)
                         }
@@ -115,23 +118,23 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                     MidiParser.parse(bytes, displayName.substringBeforeLast('.'))
                 }
 
-                addLog("成功解析 MIDI: 格式 ${parsed.format}, 分辨率 ${parsed.division} PPQ")
-                addLog("音轨数: ${parsed.tracks.size}, 音符总计: ${parsed.notes.size}, 时长: ${parsed.durationMs / 1000} 秒, 初始 BPM: ${parsed.initialBpm.toInt()}")
+                addLog(l10n.getString(R.string.midi_log_parsed, parsed.format, parsed.division))
+                addLog(l10n.getString(R.string.midi_log_parsed_stats, parsed.tracks.size, parsed.notes.size, (parsed.durationMs / 1000).toInt(), parsed.initialBpm.toInt()))
 
                 _uiState.update {
                     it.copy(
                         parsedSong = parsed,
                         isParsing = false,
-                        statusMessage = "解析完成"
+                        statusMessage = l10n.getString(R.string.midi_status_parsed)
                     )
                 }
             } catch (e: Exception) {
-                addLog("解析失败: ${e.message}")
+                addLog(l10n.getString(R.string.midi_log_parse_failed, e.message ?: ""))
                 _uiState.update {
                     it.copy(
                         isParsing = false,
-                        errorMessage = e.message ?: "Failed to parse MIDI",
-                        statusMessage = "解析失败"
+                        errorMessage = e.message ?: l10n.getString(R.string.midi_err_parse_failed),
+                        statusMessage = l10n.getString(R.string.midi_status_parse_failed)
                     )
                 }
             }
@@ -156,7 +159,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
         _uiState.update {
             it.copy(targetWorldDir = dir, targetWorldName = dir.name)
         }
-        addLog("已选择目标世界存档: ${dir.name}")
+        addLog(l10n.getString(R.string.midi_log_target_selected, dir.name))
     }
 
     fun onTargetWorldTreeSelected(uri: Uri) {
@@ -164,32 +167,32 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
             _uiState.update {
                 it.copy(
                     isStagingWorld = true,
-                    statusMessage = "正在通过 SAF 准备目标世界存档文件夹...",
+                    statusMessage = l10n.getString(R.string.midi_status_staging_saf),
                     errorMessage = null
                 )
             }
-            addLog("选择目标世界文件夹 (SAF): $uri")
+            addLog(l10n.getString(R.string.midi_log_target_saf, uri.toString()))
             val stagingDir = File(getApplication<Application>().cacheDir, "midi_target_world")
             val result = archiveManager.stageTreeUriToDir(uri, stagingDir) { _, status ->
                 _uiState.update { it.copy(statusMessage = status) }
             }
             result.onSuccess { worldInfo ->
-                addLog("成功加载目标世界: ${worldInfo.name} (${worldInfo.platform.name})")
+                addLog(l10n.getString(R.string.midi_log_target_loaded, worldInfo.name, worldInfo.platform.name))
                 _uiState.update {
                     it.copy(
                         targetWorldDir = stagingDir,
                         targetWorldName = worldInfo.name,
                         isStagingWorld = false,
-                        statusMessage = "目标世界准备就绪"
+                        statusMessage = l10n.getString(R.string.midi_status_target_ready)
                     )
                 }
             }.onFailure { e ->
-                addLog("加载目标世界失败: ${e.message}")
+                addLog(l10n.getString(R.string.midi_log_target_load_failed, e.message ?: ""))
                 _uiState.update {
                     it.copy(
                         isStagingWorld = false,
-                        errorMessage = e.message ?: "Failed to stage target world",
-                        statusMessage = "目标世界加载失败"
+                        errorMessage = e.message ?: l10n.getString(R.string.midi_err_target_stage),
+                        statusMessage = l10n.getString(R.string.midi_status_target_load_failed)
                     )
                 }
             }
@@ -201,32 +204,32 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
             _uiState.update {
                 it.copy(
                     isStagingWorld = true,
-                    statusMessage = "正在解压目标世界压缩包...",
+                    statusMessage = l10n.getString(R.string.midi_status_extracting_world),
                     errorMessage = null
                 )
             }
-            addLog("选择目标世界压缩包: $uri")
+            addLog(l10n.getString(R.string.midi_log_target_archive, uri.toString()))
             val stagingDir = File(getApplication<Application>().cacheDir, "midi_target_world")
             val result = archiveManager.extractArchiveToDir(uri, stagingDir) { _, status ->
                 _uiState.update { it.copy(statusMessage = status) }
             }
             result.onSuccess { worldInfo ->
-                addLog("成功加载目标世界: ${worldInfo.name} (${worldInfo.platform.name})")
+                addLog(l10n.getString(R.string.midi_log_target_loaded, worldInfo.name, worldInfo.platform.name))
                 _uiState.update {
                     it.copy(
                         targetWorldDir = stagingDir,
                         targetWorldName = worldInfo.name,
                         isStagingWorld = false,
-                        statusMessage = "目标世界准备就绪"
+                        statusMessage = l10n.getString(R.string.midi_status_target_ready)
                     )
                 }
             }.onFailure { e ->
-                addLog("加载目标世界压缩包失败: ${e.message}")
+                addLog(l10n.getString(R.string.midi_log_target_archive_failed, e.message ?: ""))
                 _uiState.update {
                     it.copy(
                         isStagingWorld = false,
-                        errorMessage = e.message ?: "Failed to stage target world archive",
-                        statusMessage = "目标世界加载失败"
+                        errorMessage = e.message ?: l10n.getString(R.string.midi_err_target_archive_stage),
+                        statusMessage = l10n.getString(R.string.midi_status_target_load_failed)
                     )
                 }
             }
@@ -252,14 +255,14 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                     errorMessage = null,
                     injectionResult = null,
                     generatedFile = null,
-                    statusMessage = "开始合成红石音乐..."
+                    statusMessage = l10n.getString(R.string.midi_status_generating)
                 )
             }
-            addLog("开始生成红石音乐 - 模式: ${state.selectedExportMode.name}")
-            addLog("配置: 速度 ${state.ticksPerSecond} ticks/s, 最优移调: ${state.autoTranspose}")
+            addLog(l10n.getString(R.string.midi_log_gen_start, state.selectedExportMode.name))
+            addLog(l10n.getString(R.string.midi_log_gen_config, state.ticksPerSecond.toString(), state.autoTranspose.toString()))
 
             try {
-                addLog("正在量化时序至 0.1s 红石刻并进行乐器基座方块映射...")
+                addLog(l10n.getString(R.string.midi_log_quantizing))
                 val quantConfig = QuantizationConfig(
                     ticksPerSecond = state.ticksPerSecond,
                     autoTransposition = state.autoTranspose
@@ -267,7 +270,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                 val song = withContext(Dispatchers.IO) {
                     RedstoneQuantizer.quantize(parsed, quantConfig)
                 }
-                addLog("时序量化完成: ${song.notes.size} 个音符事件, 总时长 ${song.lengthTicks} 红石刻")
+                addLog(l10n.getString(R.string.midi_log_quantized, song.notes.size, song.lengthTicks))
 
                 val cacheDir = getApplication<Application>().cacheDir
                 val title = song.title.ifBlank { "music" }
@@ -277,7 +280,7 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
 
                 when (state.selectedExportMode) {
                     MidiExportMode.FLAT_WORLD -> {
-                        addLog("正在组装基岩版超平坦即听世界 (.mcworld)...")
+                        addLog(l10n.getString(R.string.midi_log_flatworld_assembling))
                         val outputWorld = File(cacheDir, "$title.mcworld")
                         withContext(Dispatchers.IO) {
                             FlatWorldMusicGenerator.generateFlatWorld(song, outputWorld) { step ->
@@ -285,16 +288,16 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                             }
                         }
                         val sizeMb = outputWorld.length().toDouble() / (1024.0 * 1024.0)
-                        addLog("超平坦世界生成成功！文件大小: %.2f MB".format(sizeMb))
+                        addLog(l10n.getString(R.string.midi_log_flatworld_done, String.format(Locale.US, "%.2f", sizeMb)))
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = outputWorld, statusMessage = "超平坦世界生成成功")
+                            it.copy(isGenerating = false, generatedFile = outputWorld, statusMessage = l10n.getString(R.string.midi_status_flatworld_done))
                         }
                     }
 
                     MidiExportMode.INJECT_WORLD -> {
                         val targetDir = state.targetWorldDir
-                            ?: throw IllegalArgumentException("Target world folder not selected")
-                        addLog("正在注入目标世界存档: ${targetDir.name} (目标坐标: X=${state.coordX}, Y=${state.coordY}, Z=${state.coordZ})...")
+                            ?: throw IllegalArgumentException(l10n.getString(R.string.midi_err_target_not_selected))
+                        addLog(l10n.getString(R.string.midi_log_injecting, targetDir.name, state.coordX, state.coordY, state.coordZ))
                         val injectConfig = WorldInjectionConfig(
                             targetX = state.coordX,
                             targetY = state.coordY,
@@ -306,46 +309,46 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                             WorldBlockInjector.injectSongIntoWorld(targetDir, song, injectConfig)
                         }
                         if (result.backupFile != null) {
-                            addLog("已创建安全备份: ${result.backupFile.name}")
+                            addLog(l10n.getString(R.string.midi_log_backup_created, result.backupFile.name))
                         }
                         addLog(result.message)
-                        addLog("游戏内触发命令: ${result.inGameCommand}")
+                        addLog(l10n.getString(R.string.midi_log_ingame_cmd, result.inGameCommand))
                         var exportedWorldFile: File? = null
                         if (result.success) {
                             val safeWorldName = state.targetWorldName.ifBlank { "injected_world" }
                                 .replace(Regex("[^a-zA-Z0-9_-]"), "_")
                             val outputWorld = File(cacheDir, "${safeWorldName}_injected.mcworld")
-                            addLog("正在打包已注入的世界存档为 .mcworld...")
+                            addLog(l10n.getString(R.string.midi_log_packing_world))
                             withContext(Dispatchers.IO) {
                                 archiveManager.zipDirectoryToFile(targetDir, outputWorld)
                             }
                             exportedWorldFile = outputWorld
-                            addLog("已生成注入世界导出文件: ${outputWorld.name} (${outputWorld.length() / 1024} KB)")
+                            addLog(l10n.getString(R.string.midi_log_packed_world, outputWorld.name, outputWorld.length() / 1024))
                         }
                         _uiState.update {
                             it.copy(
                                 isGenerating = false,
                                 injectionResult = result,
                                 generatedFile = exportedWorldFile,
-                                statusMessage = if (result.success) "注入完成，可导出世界" else "注入失败"
+                                statusMessage = if (result.success) l10n.getString(R.string.midi_status_inject_done) else l10n.getString(R.string.midi_status_inject_failed)
                             )
                         }
                     }
 
                     MidiExportMode.STRUCTURE -> {
-                        addLog("正在生成基岩版物理结构文件 (.mcstructure)...")
+                        addLog(l10n.getString(R.string.midi_log_struct_building))
                         val outputStruct = File(cacheDir, "$title.mcstructure")
                         withContext(Dispatchers.IO) {
                             StructureExporter.exportBedrockMcStructure(song, outputStruct)
                         }
-                        addLog("结构文件生成成功: ${outputStruct.name} (${outputStruct.length()} 字节)")
+                        addLog(l10n.getString(R.string.midi_log_struct_done, outputStruct.name, outputStruct.length()))
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = outputStruct, statusMessage = "结构导出完成")
+                            it.copy(isGenerating = false, generatedFile = outputStruct, statusMessage = l10n.getString(R.string.midi_status_struct_done))
                         }
                     }
 
                     MidiExportMode.FUNCTION -> {
-                        addLog("正在生成全版本指令数据包...")
+                        addLog(l10n.getString(R.string.midi_log_dp_building))
                         val dpDir = File(cacheDir, "music_${title}_datapack")
                         withContext(Dispatchers.IO) {
                             dpDir.deleteRecursively()
@@ -366,31 +369,31 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                                 }
                             }
                         }
-                        addLog("指令数据包生成成功: ${zipFile.name}")
+                        addLog(l10n.getString(R.string.midi_log_dp_done, zipFile.name))
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = zipFile, statusMessage = "数据包导出完成")
+                            it.copy(isGenerating = false, generatedFile = zipFile, statusMessage = l10n.getString(R.string.midi_status_dp_done))
                         }
                     }
 
                     MidiExportMode.NBS -> {
-                        addLog("正在导出 Note Block Studio (.nbs) 文件...")
+                        addLog(l10n.getString(R.string.midi_log_nbs_building))
                         val outputNbs = File(cacheDir, "$title.nbs")
                         withContext(Dispatchers.IO) {
                             NbsExporter.export(song, outputNbs)
                         }
-                        addLog("NBS 文件导出成功: ${outputNbs.name} (${outputNbs.length()} 字节)")
+                        addLog(l10n.getString(R.string.midi_log_nbs_done, outputNbs.name, outputNbs.length()))
                         _uiState.update {
-                            it.copy(isGenerating = false, generatedFile = outputNbs, statusMessage = "NBS 导出完成")
+                            it.copy(isGenerating = false, generatedFile = outputNbs, statusMessage = l10n.getString(R.string.midi_status_nbs_done))
                         }
                     }
                 }
             } catch (e: Exception) {
-                addLog("合成失败: ${e.message}")
+                addLog(l10n.getString(R.string.midi_log_gen_failed, e.message ?: ""))
                 _uiState.update {
                     it.copy(
                         isGenerating = false,
-                        errorMessage = e.message ?: "Failed to generate redstone music",
-                        statusMessage = "合成失败"
+                        errorMessage = e.message ?: l10n.getString(R.string.midi_err_gen_failed),
+                        statusMessage = l10n.getString(R.string.midi_status_gen_failed)
                     )
                 }
             }
@@ -405,15 +408,15 @@ class MidiConverterViewModel(application: Application) : AndroidViewModel(applic
                     val out = SafeFileIO.openTruncatingOutputStream(
                         getApplication<Application>().contentResolver,
                         destinationUri
-                    ) ?: throw java.io.IOException("Unable to open destination")
+                    ) ?: throw java.io.IOException(l10n.getString(R.string.midi_err_open_dest))
                     out.use { output ->
                         file.inputStream().use { input -> input.copyTo(output) }
                     }
                 }
-                addLog("成功保存产物至: ${destinationUri.path ?: "外部存储"}")
+                addLog(l10n.getString(R.string.midi_log_saved, destinationUri.path ?: l10n.getString(R.string.midi_external_storage)))
                 onFinished(true)
             } catch (e: Exception) {
-                addLog("保存失败: ${e.message}")
+                addLog(l10n.getString(R.string.midi_log_save_failed, e.message ?: ""))
                 onFinished(false)
             }
         }

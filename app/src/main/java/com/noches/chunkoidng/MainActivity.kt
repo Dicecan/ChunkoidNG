@@ -1,6 +1,7 @@
 package com.noches.chunkoidng
 
 import android.Manifest
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,15 +27,23 @@ import com.noches.chunkoidng.ui.screens.settings.SettingsViewModel
 import com.noches.chunkoidng.ui.theme.ChunkoidNGTheme
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.localizedContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
             val uiState by settingsViewModel.uiState.collectAsState()
+            val activeLanguage by LocaleHelper.observeLanguage(this).collectAsState()
+            val currentConfiguration = LocalConfiguration.current
             val baseContext = LocalContext.current
-            val localizedContext = LocaleHelper.applyLocale(baseContext, uiState.appLanguage)
             val activity = this@MainActivity
+
+            LocaleHelper.applyLocaleInPlace(activity, activeLanguage)
+            val localizedContext = LocaleHelper.applyLocale(baseContext, activeLanguage, currentConfiguration)
 
             val notificationPermissionLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission()

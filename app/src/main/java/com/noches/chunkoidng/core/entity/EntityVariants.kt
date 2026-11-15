@@ -54,6 +54,11 @@ object EntityVariants {
         "jellie" to Pair("cat_jellie", 10)
     )
 
+    private val LEGACY_CAT_TYPES = listOf(
+        "tabby", "black", "red", "siamese", "british_shorthair",
+        "calico", "persian", "ragdoll", "white", "jellie", "all_black"
+    )
+
     private val BOAT_WOODS = listOf(
         "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove",
         "bamboo", "cherry", "pale_oak", "poplar"
@@ -80,6 +85,7 @@ object EntityVariants {
             "minecraft:goat" -> goat(actor, javaEntity, definitions)
             "minecraft:panda" -> panda(actor, javaEntity, definitions)
             "minecraft:tropicalfish" -> tropicalFish(actor, javaEntity)
+            "minecraft:shulker" -> shulker(actor, javaEntity, definitions)
             "minecraft:boat", "minecraft:chest_boat" -> boat(actor, javaEntity, definitions)
         }
     }
@@ -121,10 +127,33 @@ object EntityVariants {
         }
     }
 
+    private fun shulker(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
+        val jeColor = getInt(entity, "Color", 16)
+        if (jeColor in 0..15) {
+            val beVariant = 15 - jeColor
+            val colorName = DYE_COLOURS[jeColor]
+            val group = if (colorName == "light_gray") "shulker_silver" else "shulker_$colorName"
+            actor["Variant"] = NbtInt(beVariant)
+            actor["Color"] = NbtByte(jeColor.toByte())
+            addGroup(definitions, "minecraft:shulker", group)
+        } else {
+            actor["Variant"] = NbtInt(16)
+            actor["Color"] = NbtByte(16)
+            addGroup(definitions, "minecraft:shulker", "shulker_undyed")
+        }
+    }
+
     private fun cat(actor: NbtCompound, entity: NbtCompound, definitions: MutableList<String>) {
         val raw = entity.getNullableString("variant") ?: entity.getNullableString("Variant")
-        val variantName = raw?.removePrefix(NAMESPACE)?.lowercase() ?: "black"
-        val mapped = CAT_VARIANTS[variantName] ?: Pair("cat_tabby", 0)
+        val variantName = if (raw != null) {
+            raw.removePrefix(NAMESPACE).lowercase()
+        } else if (entity.contains("CatType")) {
+            val catType = getInt(entity, "CatType", 1)
+            LEGACY_CAT_TYPES.getOrElse(catType) { "black" }
+        } else {
+            "black"
+        }
+        val mapped = CAT_VARIANTS[variantName] ?: Pair("cat_tabby", 8)
         actor["Variant"] = NbtInt(mapped.second)
         addGroup(definitions, "minecraft:cat", mapped.first)
     }

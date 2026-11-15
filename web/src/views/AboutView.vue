@@ -6,13 +6,15 @@ import { t, localized } from '../i18n'
 const thanks = [
   { name: 'Dozener (DozenesStudio)', roleKey: 'aboutRoleOriginal' },
   { name: 'DICECAN (EncoreTeam)', roleKey: 'aboutRoleMaintainer' },
-  { name: 'Ryan Steven', roleKey: 'aboutRoleContributor' }
+  { name: 'Ryan Steven', roleKey: 'aboutRoleContributor' },
+  { name: 'FreneticWind60', roleKey: 'aboutRoleSpecialThanks', url: 'https://github.com/FreneticWind60/' }
 ]
 
 const roles = computed(() => ({
   aboutRoleOriginal: { 'zh-CN': '原作者与奠基人', en: 'Original author & founder', ja: '原作者・創始者' },
   aboutRoleMaintainer: { 'zh-CN': '当前维护与重构团队', en: 'Current maintainer & rewrite team', ja: '現在のメンテナンス・リファクタリングチーム' },
-  aboutRoleContributor: { 'zh-CN': '核心贡献者', en: 'Core contributor', ja: '主要コントリビューター' }
+  aboutRoleContributor: { 'zh-CN': '核心贡献者', en: 'Core contributor', ja: '主要コントリビューター' },
+  aboutRoleSpecialThanks: { 'zh-CN': '特别致谢：在项目各方面及实体转换方面提供巨大帮助', en: 'Special thanks: tremendous help across the project & entity conversion', ja: '特別謝辞：各側面およびエンティティ変換における多大な支援' }
 }))
 
 const deps = [
@@ -24,7 +26,7 @@ const deps = [
   { name: 'Dicecan - NetEaseDecryptorSDK', desc: { 'zh-CN': '网易解密 SDK', en: 'NetEase decryption SDK', ja: 'NetEase 復号 SDK' }, license: 'GPL-3.0', url: 'https://github.com/Dicecan/NetEaseDecryptorSDK' }
 ]
 
-const people = computed(() => thanks.map((p) => ({ name: p.name, role: localized(roles.value[p.roleKey]) })))
+const people = computed(() => thanks.map((p) => ({ name: p.name, url: p.url, role: localized(roles.value[p.roleKey]) })))
 const dependencyList = computed(() => deps.map((d) => ({ ...d, descText: localized(d.desc) })))
 const friendlyLinksList = computed(() =>
   friendlyLinks.map((l) => ({
@@ -264,7 +266,10 @@ function fallbackCopy(text) {
         <h2>{{ t('about.thanks') }}</h2>
         <div class="grid grid-3">
           <div v-for="p in people" :key="p.name" class="card">
-            <div class="person-name">{{ p.name }}</div>
+            <div class="person-name">
+              <a v-if="p.url" :href="p.url" target="_blank" rel="noopener">{{ p.name }} ↗</a>
+              <span v-else>{{ p.name }}</span>
+            </div>
             <div class="small muted">{{ p.role }}</div>
           </div>
         </div>

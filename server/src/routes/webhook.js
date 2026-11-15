@@ -12,7 +12,6 @@ webhookRouter.post('/github', (req, res) => {
   const cfg = getConfig()
   const secret = cfg.github.webhookSecret
 
-  // Require configured secret and verify HMAC over exact raw request bytes
   if (!secret) {
     logger.warn('GitHub webhook rejected: webhookSecret is not configured')
     return res.status(503).send('Webhook secret not configured')

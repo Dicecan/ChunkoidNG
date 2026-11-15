@@ -12,14 +12,6 @@ import com.noches.chunkoidng.core.entity.JavaTargetFormatHelper
 import com.noches.chunkoidng.core.world.Platform
 import java.io.File
 
-/**
- * Synchronizes gamerules across all conversion pipelines (JE2BE, BE2JE, JE2JE, BE2BE) and all
- * Java/Bedrock storage layouts:
- * - JE <= 1.21.10: `level.dat` -> `Data.GameRules` (camelCase keys, NbtString values)
- * - JE 1.21.11:    `level.dat` -> `Data.game_rules` (`minecraft:*` keys, NbtByte/NbtInt values)
- * - JE 26.1+:      `data/minecraft/game_rules.dat` -> `data` (`minecraft:*` keys, NbtByte/NbtInt values)
- * - BE:            `level.dat` (8-byte LE header + root flat keys, NbtByte/NbtInt values)
- */
 object GameRuleSync {
 
     private const val NAMESPACE = "minecraft:"
@@ -66,7 +58,6 @@ object GameRuleSync {
         RuleSpec("respawn_radius", RuleType.INT, "spawnRadius", beKeys = listOf("spawnradius")),
         RuleSpec("max_command_sequence_length", RuleType.INT, "maxCommandChainLength", beKeys = listOf("maxcommandchainlength")),
 
-        // JE-only rules synced accurately across JE versions (incl. 1.21.10 <-> 1.21.11 <-> 26.x)
         RuleSpec("raids", RuleType.BOOL, "disableRaids", jeLegacyInverted = true),
         RuleSpec("elytra_movement_check", RuleType.BOOL, "disableElytraMovementCheck", jeLegacyInverted = true),
         RuleSpec("player_movement_check", RuleType.BOOL, "disablePlayerMovementCheck", jeLegacyInverted = true),

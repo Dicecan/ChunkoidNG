@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BatterySaver
@@ -86,12 +87,14 @@ import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     onNavigateToWelcome: (() -> Unit)? = null,
+    onLanguageSelected: ((String) -> Unit)? = null,
     viewModel: SettingsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = LocalActivityResultRegistryOwner.current as? Activity
     val preferences = remember(context) { AppPreferences(context) }
+    val metrics = com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics()
 
     var hasNotificationPermission by remember {
         mutableStateOf(PermissionHelper.hasNotificationPermission(context))
@@ -141,9 +144,15 @@ fun SettingsScreen(
         )
     }
 
-    LazyColumn(
+    Box(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .widthIn(max = metrics.maxContentWidth),
+        contentPadding = PaddingValues(start = metrics.horizontalPadding, end = metrics.horizontalPadding, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
@@ -205,11 +214,20 @@ fun SettingsScreen(
                         languages.forEachIndexed { index, (langCode, langName) ->
                             SegmentedButton(
                                 selected = uiState.appLanguage == langCode,
-                                onClick = { viewModel.updateAppLanguage(langCode) },
+                                onClick = {
+                                    viewModel.updateAppLanguage(langCode)
+                                    onLanguageSelected?.invoke(langCode)
+                                },
                                 shape = SegmentedButtonDefaults.itemShape(index = index, count = languages.size),
                                 icon = {}
                             ) {
-                                Text(langName, fontSize = 11.5.sp, maxLines = 1, softWrap = false)
+                                Text(
+                                    text = langName,
+                                    fontSize = if (metrics.widthTier == com.noches.chunkoidng.ui.theme.WindowWidthTier.COMPACT_NARROW) 10.sp else 11.5.sp,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         }
                     }
@@ -895,6 +913,7 @@ fun SettingsScreen(
                 }
             }
         }
+    }
     }
 }
 

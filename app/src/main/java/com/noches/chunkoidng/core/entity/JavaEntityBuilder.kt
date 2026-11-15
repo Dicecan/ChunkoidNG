@@ -188,8 +188,15 @@ object JavaEntityBuilder {
                 javaEntity["Size"] = NbtInt(size)
             }
             "minecraft:shulker" -> {
-                val color = getByte(bedrockActor, "Color", 16)
-                javaEntity["Color"] = NbtByte(color)
+                val jeColor = if (bedrockActor.contains("Color")) {
+                    getByte(bedrockActor, "Color", 16).toInt() and 0xFF
+                } else if (bedrockActor.contains("Variant")) {
+                    val v = getInt(bedrockActor, "Variant", 16)
+                    if (v in 0..15) 15 - v else 16
+                } else {
+                    16
+                }
+                javaEntity["Color"] = NbtByte(jeColor.toByte())
             }
             "minecraft:goat" -> {
                 val variant = getInt(bedrockActor, "Variant", 0)
@@ -306,14 +313,17 @@ object JavaEntityBuilder {
         javaEntity["Variant"] = NbtInt(javaVariant)
     }
 
+    private fun readCollarColor(bedrockActor: NbtCompound): NbtByte {
+        val collar = getByte(bedrockActor, "CollarColor", -1)
+        val color = if (collar >= 0) collar else getByte(bedrockActor, "Color", 14)
+        return NbtByte(color.coerceIn(0, 15))
+    }
+
     private fun cat(javaEntity: NbtCompound, bedrockActor: NbtCompound) {
         val variantIndex = getInt(bedrockActor, "Variant", 0)
         val breed = CAT_VARIANTS_REVERSE[variantIndex] ?: "black"
         javaEntity["variant"] = NbtString(NAMESPACE + breed)
-
-        val collar = getByte(bedrockActor, "CollarColor", -1)
-        val color = if (collar >= 0) collar else getByte(bedrockActor, "Color", 14)
-        javaEntity["CollarColor"] = NbtByte(color.coerceIn(0, 15))
+        javaEntity["CollarColor"] = readCollarColor(bedrockActor)
     }
 
     private val WOLF_VARIANTS = setOf(
@@ -331,10 +341,7 @@ object JavaEntityBuilder {
             }
         }
         javaEntity["variant"] = NbtString(NAMESPACE + breed)
-
-        val collar = getByte(bedrockActor, "CollarColor", -1)
-        val color = if (collar >= 0) collar else getByte(bedrockActor, "Color", 14)
-        javaEntity["CollarColor"] = NbtByte(color.coerceIn(0, 15))
+        javaEntity["CollarColor"] = readCollarColor(bedrockActor)
     }
 
     private fun fox(javaEntity: NbtCompound, bedrockActor: NbtCompound) {

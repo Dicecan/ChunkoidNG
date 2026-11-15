@@ -44,14 +44,19 @@ fun MaidDashboardDialog(
     val report = remember { Maid.audit.createReport() }
     val violations by Maid.securityAuditor.violationsFlow.collectAsState()
 
+    val metrics = com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics()
+    val dialogPadding = if (metrics.widthTier == com.noches.chunkoidng.ui.theme.WindowWidthTier.COMPACT_NARROW) 14.dp else 20.dp
+
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .fillMaxHeight(0.85f),
+                .fillMaxWidth(metrics.dialogWidthFraction)
+                .widthIn(max = metrics.dialogMaxWidth)
+                .fillMaxHeight(metrics.dialogHeightFraction)
+                .heightIn(max = metrics.dialogMaxHeight),
             shape = ExpressiveShapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp
@@ -59,7 +64,7 @@ fun MaidDashboardDialog(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp)
+                    .padding(dialogPadding)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -154,16 +159,16 @@ fun MaidDashboardDialog(
                     OutlinedButton(
                         onClick = {
                             val text = buildString {
-                                appendLine("=== MAID™ INSPECTION REPORT ===")
-                                appendLine("Device: ${report.deviceModel} (${report.deviceTier})")
-                                appendLine("CPU: ${report.cpuCores} cores @ ${report.cpuMaxFreqMhz} MHz (Score: ${report.computeScore})")
-                                appendLine("RAM: Total ${report.totalRamMb}MB, Free ${report.freeRamMb}MB")
-                                appendLine("Heap: Used ${report.currentHeapUsedMb}MB / Max ${report.currentHeapMaxMb}MB")
-                                appendLine("Storage Free: ${report.freeStorageMb}MB")
-                                appendLine("Active JVM Heap: ${report.activeLimits.jvmMaxMemoryMb}MB, Parallelism: ${report.activeLimits.parallelism}")
-                                appendLine("Recent Audit Events: ${violations.size}")
+                                appendLine(context.getString(R.string.maid_report_header))
+                                appendLine(context.getString(R.string.maid_report_device, report.deviceModel, context.getString(report.deviceTier.titleRes)))
+                                appendLine(context.getString(R.string.maid_report_cpu, report.cpuCores, report.cpuMaxFreqMhz, report.computeScore))
+                                appendLine(context.getString(R.string.maid_report_ram, report.totalRamMb, report.freeRamMb))
+                                appendLine(context.getString(R.string.maid_report_heap, report.currentHeapUsedMb, report.currentHeapMaxMb))
+                                appendLine(context.getString(R.string.maid_report_storage, report.freeStorageMb))
+                                appendLine(context.getString(R.string.maid_report_limits, report.activeLimits.jvmMaxMemoryMb, report.activeLimits.parallelism))
+                                appendLine(context.getString(R.string.maid_report_events, violations.size))
                                 violations.forEach { v ->
-                                    appendLine(" - [${v.severity}] [${v.module}] ${v.type}: ${v.message} (target: ${v.pathOrTarget ?: "N/A"})")
+                                    appendLine(context.getString(R.string.maid_report_event_line, v.severity.name, v.module, v.type.name, v.message, v.pathOrTarget ?: "N/A"))
                                 }
                             }
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -255,12 +260,12 @@ private fun DashboardOverviewTab(report: com.noches.chunkoidng.maid.model.MaidAu
                         )
                     }
                     Text(
-                        text = "设备型号: ${report.deviceModel}",
+                        text = stringResource(R.string.maid_overview_device_model, report.deviceModel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "CPU 规格: ${report.cpuCores} 核心 · 主频 ${report.cpuMaxFreqMhz} MHz · 算力得分: ${report.computeScore}",
+                        text = stringResource(R.string.maid_overview_cpu_specs, report.cpuCores, report.cpuMaxFreqMhz, report.computeScore),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -275,7 +280,7 @@ private fun DashboardOverviewTab(report: com.noches.chunkoidng.maid.model.MaidAu
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "内存与运行水位",
+                        text = stringResource(R.string.maid_overview_memory_section),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -291,7 +296,7 @@ private fun DashboardOverviewTab(report: com.noches.chunkoidng.maid.model.MaidAu
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "ART 堆占用: ${report.currentHeapUsedMb} MB / ${report.currentHeapMaxMb} MB",
+                            text = stringResource(R.string.maid_overview_art_heap, report.currentHeapUsedMb, report.currentHeapMaxMb),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -303,12 +308,12 @@ private fun DashboardOverviewTab(report: com.noches.chunkoidng.maid.model.MaidAu
                     }
                     HorizontalDivider(thickness = 0.5.dp)
                     Text(
-                        text = "物理运行内存: 总计 ${report.totalRamMb} MB · 可用 ${report.freeRamMb} MB",
+                        text = stringResource(R.string.maid_overview_physical_ram, report.totalRamMb, report.freeRamMb),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "机身存储空间: 剩余 ${report.freeStorageMb} MB",
+                        text = stringResource(R.string.maid_overview_free_storage, report.freeStorageMb),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -321,22 +326,22 @@ private fun DashboardOverviewTab(report: com.noches.chunkoidng.maid.model.MaidAu
 @Composable
 private fun DashboardQuotasTab(report: com.noches.chunkoidng.maid.model.MaidAuditReport) {
     val limits = report.activeLimits
+    val items = listOf(
+        stringResource(R.string.maid_quota_jvm_heap) to "${limits.jvmMaxMemoryMb} MB",
+        stringResource(R.string.maid_quota_parallelism) to stringResource(R.string.maid_quota_parallelism_val, limits.parallelism),
+        stringResource(R.string.maid_quota_gc_strategy) to if (limits.useSerialGc) stringResource(R.string.maid_quota_gc_serial) else stringResource(R.string.maid_quota_gc_parallel),
+        stringResource(R.string.maid_quota_archive_entry) to "${limits.archiveMaxEntryBytes / (1024 * 1024)} MB",
+        stringResource(R.string.maid_quota_archive_total) to "${limits.archiveMaxTotalBytes / (1024 * 1024)} MB",
+        stringResource(R.string.maid_quota_archive_count) to stringResource(R.string.maid_quota_archive_count_val, limits.archiveMaxEntries),
+        stringResource(R.string.maid_quota_nbt_page) to stringResource(R.string.maid_quota_nbt_page_val, limits.nbtArrayPageSize),
+        stringResource(R.string.maid_quota_pack_frames) to stringResource(R.string.maid_quota_pack_frames_val, limits.packMaxFrames),
+        stringResource(R.string.maid_quota_midi_notes) to stringResource(R.string.maid_quota_midi_notes_val, limits.midiMaxNotes),
+        stringResource(R.string.maid_quota_midi_size) to "${limits.midiMaxFileBytes / (1024 * 1024)} MB"
+    )
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        val items = listOf(
-            "JVM 堆内存上限" to "${limits.jvmMaxMemoryMb} MB",
-            "工作并发线程数" to "${limits.parallelism} 线程",
-            "GC 回收策略" to if (limits.useSerialGc) "SerialGC (轻量单线程串行)" else "ParallelGC (高通量并发)",
-            "单文件解包上限" to "${limits.archiveMaxEntryBytes / (1024 * 1024)} MB",
-            "总解压体积上限" to "${limits.archiveMaxTotalBytes / (1024 * 1024)} MB",
-            "最大归档条目数" to "${limits.archiveMaxEntries} entries",
-            "NBT 大数组分页" to "${limits.nbtArrayPageSize} 项 / 页",
-            "材质动画展开熔断" to "${limits.packMaxFrames} 帧 (超额温和截断)",
-            "MIDI 单曲音符上限" to "${limits.midiMaxNotes} 个 (超额温和截断)",
-            "MIDI 文件体积上限" to "${limits.midiMaxFileBytes / (1024 * 1024)} MB"
-        )
 
         items(items) { (k, v) ->
             Card(
@@ -348,7 +353,12 @@ private fun DashboardQuotasTab(report: com.noches.chunkoidng.maid.model.MaidAudi
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = k, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        text = k,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f).padding(end = 10.dp)
+                    )
                     Text(text = v, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -390,7 +400,7 @@ private fun DashboardAuditTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "最近审计事件 (${violations.size} 条)",
+                    text = stringResource(R.string.maid_audit_recent_count, violations.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -462,7 +472,7 @@ private fun DashboardAuditTab(
                             )
                             if (v.pathOrTarget != null) {
                                 Text(
-                                    text = "目标: ${v.pathOrTarget}",
+                                    text = stringResource(R.string.maid_audit_target, v.pathOrTarget),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontFamily = FontFamily.Monospace,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -470,7 +480,7 @@ private fun DashboardAuditTab(
                             }
                             if (v.requestedValue != null && v.clampedValue != null) {
                                 Text(
-                                    text = "请求值: ${v.requestedValue} -> 截断为: ${v.clampedValue}",
+                                    text = stringResource(R.string.maid_audit_clamped, v.requestedValue, v.clampedValue),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.tertiary
                                 )

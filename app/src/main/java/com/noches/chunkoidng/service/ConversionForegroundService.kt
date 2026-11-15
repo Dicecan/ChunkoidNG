@@ -21,6 +21,7 @@ import com.noches.chunkoidng.core.conversion.ConversionEngine
 import com.noches.chunkoidng.core.conversion.ConversionEvent
 import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -80,13 +81,14 @@ class ConversionForegroundService : Service() {
     }
 
     private fun startConversionInternal(config: ConversionConfig) {
+        val l10n = LocaleHelper.localizedContext(this)
 
         _isRunning.value = true
         _progressPercent.value = 0
-        _statusMessage.value = getString(R.string.service_initializing)
+        _statusMessage.value = l10n.getString(R.string.service_initializing)
         acquireWakeLock()
 
-        val notification = buildNotification(getString(R.string.service_starting_engine), 0, indeterminate = true)
+        val notification = buildNotification(l10n.getString(R.string.service_starting_engine), 0, indeterminate = true)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -110,13 +112,13 @@ class ConversionForegroundService : Service() {
                         }
                         is ConversionEvent.Success -> {
                             _progressPercent.value = 100
-                            _statusMessage.value = getString(R.string.service_completed_status)
-                            updateNotification(getString(R.string.service_completed_notif), 100, false)
+                            _statusMessage.value = l10n.getString(R.string.service_completed_status)
+                            updateNotification(l10n.getString(R.string.service_completed_notif), 100, false)
                             finishService(success = true)
                         }
                         is ConversionEvent.Failure -> {
-                            _statusMessage.value = getString(R.string.service_failed_status, event.error)
-                            updateNotification(getString(R.string.service_failed_notif), 0, false)
+                            _statusMessage.value = l10n.getString(R.string.service_failed_status, event.error)
+                            updateNotification(l10n.getString(R.string.service_failed_notif), 0, false)
                             finishService(success = false)
                         }
                         is ConversionEvent.LogOutput -> {}
@@ -124,16 +126,17 @@ class ConversionForegroundService : Service() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Conversion job threw exception", e)
-                _events.emit(ConversionEvent.Failure(config.taskId, getString(R.string.service_exception, e.message ?: "")))
+                _events.emit(ConversionEvent.Failure(config.taskId, l10n.getString(R.string.service_exception, e.message ?: "")))
                 finishService(success = false)
             }
         }
     }
 
     fun cancelConversion() {
+        val l10n = LocaleHelper.localizedContext(this)
         engine?.cancel()
         conversionJob?.cancel()
-        _statusMessage.value = getString(R.string.service_cancelled)
+        _statusMessage.value = l10n.getString(R.string.service_cancelled)
         _isRunning.value = false
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,6 +52,8 @@ fun AboutScreen(
 ) {
     val context = LocalContext.current
 
+    val metrics = com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics()
+
     fun openUrl(url: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -58,11 +61,17 @@ fun AboutScreen(
         } catch (_: Exception) {}
     }
 
-    LazyColumn(
+    Box(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentAlignment = Alignment.TopCenter
     ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .widthIn(max = metrics.maxContentWidth),
+            contentPadding = PaddingValues(start = metrics.horizontalPadding, end = metrics.horizontalPadding, top = 8.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
 
         item {
             Card(
@@ -241,6 +250,10 @@ fun AboutScreen(
                     DependencyRow("Jetpack Compose", "Google / AOSP", "Apache 2.0", stringResource(R.string.about_dep_compose_desc)) {
                         openUrl("https://developer.android.com/jetpack/compose")
                     }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    DependencyRow("FreneticWind60", "GitHub", "Special Thanks", stringResource(R.string.about_dep_frenetic_desc)) {
+                        openUrl("https://github.com/FreneticWind60/")
+                    }
                 }
             }
         }
@@ -278,6 +291,7 @@ fun AboutScreen(
                     Text(stringResource(R.string.about_website_btn))
                 }
             }
+        }
         }
     }
 }

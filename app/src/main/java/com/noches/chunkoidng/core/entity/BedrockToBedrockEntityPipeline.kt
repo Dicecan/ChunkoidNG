@@ -2,10 +2,11 @@ package com.noches.chunkoidng.core.entity
 
 import android.util.Log
 import br.com.gamemods.nbtmanipulator.NbtIO
+import com.noches.chunkoidng.core.leveldb.SafeEnv
 import org.iq80.leveldb.CompressionType
 import org.iq80.leveldb.DB
 import org.iq80.leveldb.Options
-import org.iq80.leveldb.impl.Iq80DBFactory
+import org.iq80.leveldb.impl.DbImpl
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -52,7 +53,7 @@ class BedrockToBedrockEntityPipeline(
         var db: DB? = null
 
         try {
-            db = Iq80DBFactory.factory.open(dbDir, options)
+            db = DbImpl(options, dbDir.absolutePath, SafeEnv())
             val iterator = db.iterator()
             try {
                 iterator.seekToFirst()
@@ -149,7 +150,7 @@ class BedrockToBedrockEntityPipeline(
         }
 
         try {
-            db = Iq80DBFactory.factory.open(destDbDir, options)
+            db = DbImpl(options, destDbDir.absolutePath, SafeEnv())
             val batch = db.createWriteBatch()
             try {
                 for (digp in stagedDigpList) {

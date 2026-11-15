@@ -10,6 +10,7 @@ import com.noches.chunkoidng.core.entity.EntityConversionPipeline
 import com.noches.chunkoidng.core.entity.JavaToJavaEntityPipeline
 import com.noches.chunkoidng.core.runtime.JavaProcessManager
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.core.world.Platform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,9 +48,10 @@ class ConversionEngine(
 
     fun execute(config: ConversionConfig): Flow<ConversionEvent> = flow {
         val startTime = System.currentTimeMillis()
+        val l10n = LocaleHelper.localizedContext(context)
 
         if (!config.inputDir.exists()) {
-            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_input_not_exist, config.inputDir.absolutePath)))
+            emit(ConversionEvent.Failure(config.taskId, l10n.getString(R.string.engine_error_input_not_exist, config.inputDir.absolutePath)))
             return@flow
         }
 
@@ -59,16 +61,34 @@ class ConversionEngine(
 
         if (!runtimeEnv.ensureCliJar()) {
             tempOutput.deleteRecursively()
-            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_prep_cli)))
+            emit(ConversionEvent.Failure(config.taskId, l10n.getString(R.string.engine_error_prep_cli)))
             return@flow
         }
         val cliJar = File(context.filesDir, "cli.jar")
         if (!cliJar.exists()) {
-            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_cli_missing)))
+            tempOutput.deleteRecursively()
+            emit(ConversionEvent.Failure(config.taskId, l10n.getString(R.string.engine_error_cli_missing)))
             return@flow
         }
 
-        emit(ConversionEvent.Progress(config.taskId, 5, context.getString(R.string.engine_status_init), context.getString(R.string.engine_status_prep_jre)))
+        if (!runtimeEnv.isRootfsReady()) {
+            emit(ConversionEvent.Progress(config.taskId, 2, l10n.getString(R.string.engine_status_deploying_rootfs), ""))
+            try {
+                runtimeEnv.extractRootFS().collect { pct ->
+                    val scaled = (2 + (pct * 0.03f).toInt()).coerceIn(2, 5)
+                    emit(ConversionEvent.Progress(config.taskId, scaled, l10n.getString(R.string.engine_status_deploying_rootfs), "$pct%"))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Auto RootFS extraction failed", e)
+            }
+            if (!runtimeEnv.isRootfsReady()) {
+                tempOutput.deleteRecursively()
+                emit(ConversionEvent.Failure(config.taskId, l10n.getString(R.string.engine_error_rootfs_not_ready)))
+                return@flow
+            }
+        }
+
+        emit(ConversionEvent.Progress(config.taskId, 5, l10n.getString(R.string.engine_status_init), l10n.getString(R.string.engine_status_prep_jre)))
 
         processManager.setMaxMemory(config.maxMemoryMB)
         val jvmOpts = mutableListOf<String>()
@@ -184,11 +204,13 @@ class ConversionEngine(
             }
         }
 
-        emit(ConversionEvent.Progress(config.taskId, 15, context.getString(R.string.engine_status_starting_chunker), context.getString(R.string.engine_status_args, cliArgs.joinToString(" "))))
+        emit(ConversionEvent.Progress(config.taskId, 15, l10n.getString(R.string.engine_status_starting_chunker), l10n.getString(R.string.engine_status_args, cliArgs.joinToString(" "))))
 
         var lastPercent = 15
         var exitCode: Int? = null
         var isSuccess = false
+        var lastSystemError: String? = null
+        var lastDiagnosticLine: String? = null
 
         try {
             processManager.runCliJarAdvanced(
@@ -206,6 +228,31 @@ class ConversionEngine(
 
                 emit(ConversionEvent.LogOutput(config.taskId, line))
 
+                val trimmedLine = line.trim()
+                when {
+                    trimmedLine.startsWith("[SYSTEM] Critical Error:") -> {
+                        lastSystemError = trimmedLine.removePrefix("[SYSTEM] Critical Error:").trim()
+                    }
+                    trimmedLine.startsWith("[SYSTEM] Error:") -> {
+                        lastSystemError = trimmedLine.removePrefix("[SYSTEM] Error:").trim()
+                    }
+                    trimmedLine.contains("Failed to find suitable reader", ignoreCase = true) ||
+                        trimmedLine.contains("Failed to find suitable writer", ignoreCase = true) ||
+                        trimmedLine.contains("Original NBT is not available", ignoreCase = true) ||
+                        trimmedLine.contains("Failed with exception", ignoreCase = true) ||
+                        trimmedLine.contains("Error occurred during initialization of VM", ignoreCase = true) ||
+                        trimmedLine.contains("Could not reserve enough space", ignoreCase = true) ||
+                        trimmedLine.contains("OutOfMemoryError", ignoreCase = true) ||
+                        trimmedLine.contains("No space left on device", ignoreCase = true) ||
+                        trimmedLine.contains("CANNOT LINK EXECUTABLE", ignoreCase = true) ||
+                        trimmedLine.contains("Exec format error", ignoreCase = true) ||
+                        trimmedLine.contains("is for EM_", ignoreCase = true) ||
+                        trimmedLine.contains("Exception in thread", ignoreCase = true) ||
+                        trimmedLine.contains("UnsatisfiedLinkError", ignoreCase = true) -> {
+                        lastDiagnosticLine = trimmedLine
+                    }
+                }
+
                 val percentMatch = Regex("(\\d+(?:\\.\\d+)?)%").find(line)
                 if (percentMatch != null) {
                     val rawNum = percentMatch.groupValues[1].toDoubleOrNull() ?: 0.0
@@ -213,14 +260,14 @@ class ConversionEngine(
                     val calculated = (15 + (rawNum * 0.70)).toInt().coerceIn(15, 85)
                     if (calculated > lastPercent) {
                         lastPercent = calculated
-                        emit(ConversionEvent.Progress(config.taskId, calculated, context.getString(R.string.engine_status_processing_chunks), line.trim()))
+                        emit(ConversionEvent.Progress(config.taskId, calculated, l10n.getString(R.string.engine_status_processing_chunks), trimmedLine))
                     }
                 } else if (line.contains("Writing", ignoreCase = true) || line.contains("Writing world", ignoreCase = true)) {
                     if (lastPercent < 85) lastPercent = 85
-                    emit(ConversionEvent.Progress(config.taskId, 88, context.getString(R.string.engine_status_writing_target), line.trim()))
+                    emit(ConversionEvent.Progress(config.taskId, 88, l10n.getString(R.string.engine_status_writing_target), trimmedLine))
                 } else if (line.contains("Finished converting", ignoreCase = true) || line.contains("Conversion complete", ignoreCase = true)) {
                     lastPercent = 92
-                    emit(ConversionEvent.Progress(config.taskId, 92, context.getString(R.string.engine_status_finishing_output), line.trim()))
+                    emit(ConversionEvent.Progress(config.taskId, 92, l10n.getString(R.string.engine_status_finishing_output), trimmedLine))
                 }
 
                 if (line.startsWith("[SYSTEM] Process exited with code:")) {
@@ -233,7 +280,7 @@ class ConversionEngine(
         } catch (e: Exception) {
             entityExtractDeferred?.cancel()
             tempOutput.deleteRecursively()
-            emit(ConversionEvent.Failure(config.taskId, context.getString(R.string.engine_error_aborted, e.message ?: "")))
+            emit(ConversionEvent.Failure(config.taskId, l10n.getString(R.string.engine_error_aborted, e.message ?: "")))
             return@flow
         } finally {
             activeProcess = null
@@ -244,61 +291,61 @@ class ConversionEngine(
 
         if (isSuccess && exitCode == 0 && entityPipeline != null) {
             try {
-                emit(ConversionEvent.Progress(config.taskId, 94, "正在等待实体预提取完成...", ""))
+                emit(ConversionEvent.Progress(config.taskId, 94, l10n.getString(R.string.engine_status_entity_waiting), ""))
                 entityExtractDeferred?.await()
 
-                emit(ConversionEvent.Progress(config.taskId, 96, "正在向基岩版存档写入生物与实体数据...", ""))
+                emit(ConversionEvent.Progress(config.taskId, 96, l10n.getString(R.string.engine_status_entity_writing_be), ""))
                 val stats = entityPipeline.flushToLevelDb(tempOutput)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体，跳过 ${stats.skippedModded} 个模组实体"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_be_success, stats.totalActors, stats.skippedModded)))
             } catch (e: Exception) {
                 Log.e(TAG, "Error flushing entities to LevelDB", e)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_warn, e.message ?: "")))
             }
         }
 
         if (isSuccess && exitCode == 0 && be2JePipeline != null) {
             try {
-                emit(ConversionEvent.Progress(config.taskId, 96, "正在向 Java 版存档写入生物与实体数据...", ""))
+                emit(ConversionEvent.Progress(config.taskId, 96, l10n.getString(R.string.engine_status_entity_writing_je), ""))
                 val stats = be2JePipeline.flushToJava(tempOutput, config.targetFormat.id, config.inputDir)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体至 ${stats.chunksWritten} 个区块，跳过 ${stats.skippedModded} 个模组实体"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_je_success, stats.totalActors, stats.chunksWritten, stats.skippedModded)))
             } catch (e: Exception) {
                 Log.e(TAG, "Error flushing entities to Java MCA", e)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_warn, e.message ?: "")))
             }
         }
 
         if (isSuccess && exitCode == 0 && je2JePipeline != null) {
             try {
-                emit(ConversionEvent.Progress(config.taskId, 96, "正在向 Java 版存档写入生物与实体数据...", ""))
+                emit(ConversionEvent.Progress(config.taskId, 96, l10n.getString(R.string.engine_status_entity_writing_je), ""))
                 val stats = je2JePipeline.flushToJava(tempOutput, config.targetFormat.id, config.inputDir)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体至 ${stats.chunksWritten} 个区块，跳过 ${stats.skippedModded} 个模组实体"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_je_success, stats.totalActors, stats.chunksWritten, stats.skippedModded)))
             } catch (e: Exception) {
                 Log.e(TAG, "Error flushing entities to Java MCA", e)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_warn, e.message ?: "")))
             }
         }
 
         if (isSuccess && exitCode == 0 && be2BePipeline != null) {
             try {
-                emit(ConversionEvent.Progress(config.taskId, 96, "正在向基岩版存档写入生物与实体数据...", ""))
+                emit(ConversionEvent.Progress(config.taskId, 96, l10n.getString(R.string.engine_status_entity_writing_be), ""))
                 val stats = be2BePipeline.flushToLevelDb(tempOutput)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线] 成功迁移 ${stats.totalActors} 个实体，跳过 ${stats.skippedModded} 个模组实体"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_be_success, stats.totalActors, stats.skippedModded)))
             } catch (e: Exception) {
                 Log.e(TAG, "Error flushing entities to LevelDB", e)
-                emit(ConversionEvent.LogOutput(config.taskId, "[实体管线警告] 写入实体失败，保留原地图: ${e.message}"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_entity_warn, e.message ?: "")))
             }
         }
 
         if (isSuccess && exitCode == 0) {
             try {
-                emit(ConversionEvent.Progress(config.taskId, 98, "正在同步游戏规则 (GameRules)...", ""))
+                emit(ConversionEvent.Progress(config.taskId, 98, l10n.getString(R.string.engine_status_gamerule_syncing), ""))
                 val synced = GameRuleSync.sync(config.inputDir, tempOutput, config.targetFormat)
                 if (synced > 0) {
-                    emit(ConversionEvent.LogOutput(config.taskId, "[游戏规则] 已同步 $synced 项 gamerule 设置"))
+                    emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_gamerule_synced, synced)))
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error syncing gamerules", e)
-                emit(ConversionEvent.LogOutput(config.taskId, "[游戏规则警告] 同步 gamerule 失败: ${e.message}"))
+                emit(ConversionEvent.LogOutput(config.taskId, l10n.getString(R.string.engine_log_gamerule_warn, e.message ?: "")))
             }
         }
 
@@ -312,16 +359,22 @@ class ConversionEngine(
                     tempOutput.deleteRecursively()
                 }
             )
-            check(committed) { context.getString(R.string.engine_error_commit_output) }
-            emit(ConversionEvent.Progress(config.taskId, 100, context.getString(R.string.engine_status_completed), context.getString(R.string.engine_status_time_elapsed, totalTime / 1000)))
+            check(committed) { l10n.getString(R.string.engine_error_commit_output) }
+            emit(ConversionEvent.Progress(config.taskId, 100, l10n.getString(R.string.engine_status_completed), l10n.getString(R.string.engine_status_time_elapsed, totalTime / 1000)))
             emit(ConversionEvent.Success(config.taskId, config.outputDir, totalTime))
         } else {
             entityExtractDeferred?.cancel()
             tempOutput.deleteRecursively()
-            val errorMsg = if (exitCode != null && exitCode != 0) {
-                context.getString(R.string.engine_error_exit_code, exitCode)
-            } else {
-                context.getString(R.string.engine_error_no_output)
+            val detail = lastSystemError ?: lastDiagnosticLine
+            val errorMsg = when {
+                exitCode != null && exitCode != 0 && !detail.isNullOrBlank() ->
+                    l10n.getString(R.string.engine_error_exit_code_detail, exitCode, detail)
+                exitCode != null && exitCode != 0 ->
+                    l10n.getString(R.string.engine_error_exit_code, exitCode)
+                !detail.isNullOrBlank() ->
+                    l10n.getString(R.string.engine_error_no_output_detail, detail)
+                else ->
+                    l10n.getString(R.string.engine_error_no_output)
             }
             emit(ConversionEvent.Failure(config.taskId, errorMsg, exitCode))
         }

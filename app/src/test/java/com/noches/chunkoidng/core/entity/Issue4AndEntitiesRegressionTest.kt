@@ -111,7 +111,6 @@ class Issue4AndEntitiesRegressionTest {
             assertEquals("minecraft:$mob", EntityIdMapper.toJavaId("minecraft:$mob"))
         }
 
-        // Reverse mappings
         assertEquals("minecraft:wither_skull", EntityIdMapper.toJavaId("minecraft:wither_skull_dangerous"))
         assertEquals("minecraft:evoker_fangs", EntityIdMapper.toJavaId("minecraft:evocation_fang"))
         assertEquals("minecraft:breeze_wind_charge", EntityIdMapper.toJavaId("minecraft:breeze_wind_charge_projectile"))
@@ -145,14 +144,12 @@ class Issue4AndEntitiesRegressionTest {
             assertFalse("Expected !hasHealth($it)", EntityGroupTable.hasHealth("minecraft:$it"))
         }
 
-        // armor_stand max health is 6f
         val jeArmorStand = baseJavaEntity("minecraft:armor_stand").apply {
             this["Health"] = 20.0f
         }
         val beArmorStand = BedrockActorBuilder.build(jeArmorStand, 1001L)!!
         assertEquals(6f, nbtFloatValue(beArmorStand["Health"])!!, 0.01f)
 
-        // Non-living in JE->BE must not carry Health or Attributes
         val jeBoat = baseJavaEntity("minecraft:bamboo_raft")
         val beBoat = BedrockActorBuilder.build(jeBoat, 1002L)!!
         assertEquals("minecraft:boat", beBoat.getNullableString("identifier"))
@@ -169,7 +166,6 @@ class Issue4AndEntitiesRegressionTest {
         assertNull(beFang["Health"])
         assertNull(beFang["Attributes"])
 
-        // Non-living in BE->JE must not carry Health or attributes
         val jeFangRoundTrip = JavaEntityBuilder.build(beFang)!!
         assertEquals("minecraft:evoker_fangs", jeFangRoundTrip.getNullableString("id"))
         assertEquals(12, jeFangRoundTrip.getNullableInt("Warmup"))
@@ -192,7 +188,6 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals(-10f, nbtFloatValue(motion[1])!!, 0.01f)
         assertEquals(10f, nbtFloatValue(motion[2])!!, 0.01f)
 
-        // Minecart Y +0.35 lift JE -> BE -> JE round-trip
         val jeMinecart = baseJavaEntity("minecraft:minecart", x = 5.5, y = 64.0, z = 5.5)
         val beMinecart = BedrockActorBuilder.build(jeMinecart, 2002L)!!
         val beY = nbtFloatValue(beMinecart.getNullableList("Pos")!![1])!!
@@ -216,7 +211,6 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals(1.toByte(), beNamedPig.getNullableByte("CustomNameVisible"))
         assertEquals(1.toByte(), beNamedPig.getNullableByte("Persistent"))
 
-        // Round-trip back to modern Java (1.21.5+ expects Compound CustomName)
         val jeRestoredModern = JavaEntityBuilder.build(
             beNamedPig,
             JavaEntityBuilder.JavaTargetOptions(modernComponents = true, flatComponents = true)
@@ -226,7 +220,6 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals("Sir Oink", customNameComp!!.getNullableString("text"))
         assertEquals(1.toByte(), jeRestoredModern.getNullableByte("PersistenceRequired"))
 
-        // Passenger & vehicle with passengers get Persistent=1b even without CustomName
         val wildPassenger = baseJavaEntity("minecraft:zombie")
         val bePassenger = BedrockActorBuilder.build(wildPassenger, 3002L, isPassenger = true)!!
         assertEquals(1.toByte(), bePassenger.getNullableByte("Persistent"))
@@ -238,7 +231,6 @@ class Issue4AndEntitiesRegressionTest {
 
     @Test
     fun testXpOrbTntCommandBlockAndPotionRoundTrips() {
-        // xp_orb
         val jeOrb = baseJavaEntity("minecraft:experience_orb").apply {
             this["Value"] = 42.toShort()
         }
@@ -249,7 +241,6 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals("minecraft:experience_orb", jeOrbBack.getNullableString("id"))
         assertEquals(42.toShort(), jeOrbBack.getNullableShort("Value"))
 
-        // tnt fuse
         val jeTnt = baseJavaEntity("minecraft:tnt").apply {
             this["fuse"] = 60.toShort()
         }
@@ -261,7 +252,6 @@ class Issue4AndEntitiesRegressionTest {
         val jeTntByte = JavaEntityBuilder.build(beTnt, JavaEntityBuilder.JavaTargetOptions(shortFuse = false))!!
         assertEquals(60.toByte(), jeTntByte.getNullableByte("Fuse"))
 
-        // command_block_minecart
         val jeCmdCart = baseJavaEntity("minecraft:command_block_minecart").apply {
             this["Command"] = "say chunkoid"
         }
@@ -270,7 +260,6 @@ class Issue4AndEntitiesRegressionTest {
         val jeCmdCartBack = JavaEntityBuilder.build(beCmdCart)!!
         assertEquals("say chunkoid", jeCmdCartBack.getNullableString("Command"))
 
-        // Legacy 1.20.4 potion with lingering item -> Bedrock lingering_potion -> modern & legacy JE
         val jeLegacyLingering = baseJavaEntity("minecraft:potion").apply {
             this["Item"] = NbtCompound().apply {
                 this["id"] = "minecraft:lingering_potion"
@@ -308,7 +297,6 @@ class Issue4AndEntitiesRegressionTest {
             }
         }
 
-        // Chest minecart: JE -> BE ChestItems -> JE Items
         val jeChestCart = baseJavaEntity("minecraft:chest_minecart").apply {
             this["Items"] = NbtList(sword)
         }
@@ -320,7 +308,7 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals(12.toShort(), chestItems[0].getNullableShort("Damage"))
         val enchList = chestItems[0].getNullableCompound("tag")?.getNullableCompoundList("ench")
         assertNotNull(enchList)
-        assertEquals(9.toShort(), enchList!![0].getNullableShort("id")) // sharpness = 9
+        assertEquals(9.toShort(), enchList!![0].getNullableShort("id"))
         assertEquals(5.toShort(), enchList[0].getNullableShort("lvl"))
 
         val jeChestCartBack = JavaEntityBuilder.build(
@@ -338,7 +326,6 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals("Excalibur", comps.getNullableCompound("minecraft:custom_name")?.getNullableString("text"))
         assertEquals(5, comps.getNullableCompound("minecraft:enchantments")?.getNullableInt("minecraft:sharpness"))
 
-        // Donkey: ChestedHorse + Items <-> Chested + Items
         val jeDonkey = baseJavaEntity("minecraft:donkey").apply {
             this["ChestedHorse"] = true
             this["Items"] = NbtList(
@@ -372,7 +359,6 @@ class Issue4AndEntitiesRegressionTest {
         }
         val db = Iq80DBFactory.factory.open(dbDir, options)
         try {
-            // 1. Real Bedrock format: vehicle Boat (100, Variant=7 -> bamboo_raft) carrying Pig (101)
             val boatActor = NbtCompound().apply {
                 this["identifier"] = "minecraft:boat"
                 this["UniqueID"] = 100L
@@ -389,8 +375,6 @@ class Issue4AndEntitiesRegressionTest {
             putActorInDb(db, 100L, boatActor, chunkX = 0, chunkZ = 0)
             putActorInDb(db, 101L, pigActor, chunkX = 0, chunkZ = 0)
 
-            // 2. Old ChunkoidNG style + mutual-link cycle guard (200 & 201 both point at each other):
-            // 200 has old link pretending RideID=200, VehicleID=201 AND 201 has RideID=201, VehicleID=200 -> cycle guard must break safely without StackOverflowError!
             val cycleA = NbtCompound().apply {
                 this["identifier"] = "minecraft:zombie"
                 this["UniqueID"] = 200L
@@ -446,9 +430,7 @@ class Issue4AndEntitiesRegressionTest {
             assertEquals(1, passengers!!.size)
             assertEquals("minecraft:pig", passengers[0].getNullableString("id"))
 
-            // Pig must NOT also appear as a top-level root entity
             assertNull(entities.find { it.getNullableString("id") == "minecraft:pig" })
-            // Cyclic actors were still handled without crashing
             assertTrue(entities.any { it.getNullableString("id") == "minecraft:zombie" || it.getNullableString("id") == "minecraft:skeleton" })
         }
     }
@@ -459,7 +441,6 @@ class Issue4AndEntitiesRegressionTest {
         val modernWorld = tempFolder.newFolder("je_26_3_world")
         val backToLegacyWorld = tempFolder.newFolder("je_back_1201_world")
 
-        // Write 1.20.1 entities chunk at (0, 0)
         val legacyEntitiesDir = File(legacyWorld, "entities").apply { mkdirs() }
         val legacyEntitiesMca = File(legacyEntitiesDir, "r.0.0.mca")
 
@@ -515,7 +496,6 @@ class Issue4AndEntitiesRegressionTest {
             region.writeChunkNbt(0, 0, NbtFile("", chunkRoot))
         }
 
-        // Convert JE 1.20.1 -> JE 26.3
         val j2jUp = JavaToJavaEntityPipeline()
         j2jUp.scan(legacyWorld, listOf("overworld"), "JAVA_26_3")
         val upStats = j2jUp.flushToJava(modernWorld, "JAVA_26_3", legacyWorld)
@@ -545,7 +525,6 @@ class Issue4AndEntitiesRegressionTest {
             assertNotNull("Expected lingering_potion split in >=1.21.5", potion)
         }
 
-        // Downgrade JE 26.3 -> JE 1.20.1
         val j2jDown = JavaToJavaEntityPipeline()
         j2jDown.scan(modernWorld, listOf("overworld"), "JAVA_1_20_1")
         val downStats = j2jDown.flushToJava(backToLegacyWorld, "JAVA_1_20_1", modernWorld)
@@ -651,7 +630,6 @@ class Issue4AndEntitiesRegressionTest {
         assertFalse(EntityIdMapper.isHandledByChunkerNative("minecraft:cushion"))
         assertTrue(EntityIdMapper.isHandledByChunkerNative("minecraft:cushion", includeBedrockExclusiveNative = true))
 
-        // Bedrock -> Java preserves cushion instead of counting as skippedModded
         val beWorld = tempFolder.newFolder("be_cushion")
         val beDbDir = File(beWorld, "db")
         val jeOut = tempFolder.newFolder("je_cushion_out")
@@ -672,7 +650,6 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals(0, b2jStats.skippedModded)
         assertEquals(1, b2jStats.totalActors)
 
-        // Java -> Java preserves cushion too
         val j2jOut = tempFolder.newFolder("j2j_cushion_out")
         val j2j = JavaToJavaEntityPipeline()
         j2j.scan(jeOut, listOf("overworld"), "JAVA_26_3")
@@ -884,5 +861,71 @@ class Issue4AndEntitiesRegressionTest {
         assertEquals(0.7f, nbtFloatValue(jump["Base"])!!, 1e-4f)
         assertEquals(0f, nbtFloatValue(jump["DefaultMin"])!!, 1e-6f)
         assertEquals(Float.MAX_VALUE, nbtFloatValue(jump["DefaultMax"])!!)
+    }
+
+    @Test
+    fun `cat variant fallback legacy CatType and roundTrip`() {
+        val jeUnknown = baseJavaEntity("minecraft:cat").apply {
+            this["variant"] = "minecraft:custom_unknown"
+        }
+        val beUnknown = BedrockActorBuilder.build(jeUnknown, 4005L)!!
+        assertEquals(8, beUnknown.getNullableInt("Variant"))
+        val unknownDefs = beUnknown.getNullableStringList("definitions")?.map { it.value }.orEmpty()
+        assertTrue("+minecraft:cat_tabby" in unknownDefs)
+
+        val jeLegacyJellie = baseJavaEntity("minecraft:cat").apply {
+            this["CatType"] = 9
+            this["CollarColor"] = 11.toByte()
+        }
+        val beLegacyJellie = BedrockActorBuilder.build(jeLegacyJellie, 4006L)!!
+        assertEquals(10, beLegacyJellie.getNullableInt("Variant"))
+        assertEquals(11.toByte(), beLegacyJellie.getNullableByte("CollarColor"))
+        assertNull(beLegacyJellie.getNullableByte("Color"))
+        val jellieDefs = beLegacyJellie.getNullableStringList("definitions")?.map { it.value }.orEmpty()
+        assertTrue("+minecraft:cat_jellie" in jellieDefs)
+
+        val jeRoundTrip = JavaEntityBuilder.build(beLegacyJellie)!!
+        assertEquals("minecraft:jellie", jeRoundTrip.getNullableString("variant"))
+        assertEquals(11.toByte(), jeRoundTrip.getNullableByte("CollarColor"))
+
+        val legacyBedrockCat = NbtCompound().apply {
+            this["identifier"] = "minecraft:cat"
+            this["Variant"] = 9
+            this["Color"] = 14.toByte()
+        }
+        assertEquals(14.toByte(), JavaEntityBuilder.build(legacyBedrockCat)!!.getNullableByte("CollarColor"))
+    }
+
+    @Test
+    fun `shulker color maps Bedrock Variant definitions Color and roundTrips`() {
+        val jeSilver = baseJavaEntity("minecraft:shulker").apply {
+            this["Color"] = 8.toByte()
+        }
+        val beSilver = BedrockActorBuilder.build(jeSilver, 4007L)!!
+        assertEquals(7, beSilver.getNullableInt("Variant"))
+        assertEquals(8.toByte(), beSilver.getNullableByte("Color"))
+        val silverDefs = beSilver.getNullableStringList("definitions")?.map { it.value }.orEmpty()
+        assertTrue("+minecraft:shulker_silver" in silverDefs)
+        assertEquals(8.toByte(), JavaEntityBuilder.build(beSilver)!!.getNullableByte("Color"))
+
+        val jeRed = baseJavaEntity("minecraft:shulker").apply {
+            this["Color"] = 14.toByte()
+        }
+        val beRed = BedrockActorBuilder.build(jeRed, 4008L)!!
+        assertEquals(1, beRed.getNullableInt("Variant"))
+        assertEquals(14.toByte(), beRed.getNullableByte("Color"))
+        val redDefs = beRed.getNullableStringList("definitions")?.map { it.value }.orEmpty()
+        assertTrue("+minecraft:shulker_red" in redDefs)
+        assertEquals(14.toByte(), JavaEntityBuilder.build(beRed)!!.getNullableByte("Color"))
+
+        val jeUndyed = baseJavaEntity("minecraft:shulker").apply {
+            this["Color"] = 16.toByte()
+        }
+        val beUndyed = BedrockActorBuilder.build(jeUndyed, 4009L)!!
+        assertEquals(16, beUndyed.getNullableInt("Variant"))
+        assertEquals(16.toByte(), beUndyed.getNullableByte("Color"))
+        val undyedDefs = beUndyed.getNullableStringList("definitions")?.map { it.value }.orEmpty()
+        assertTrue("+minecraft:shulker_undyed" in undyedDefs)
+        assertEquals(16.toByte(), JavaEntityBuilder.build(beUndyed)!!.getNullableByte("Color"))
     }
 }

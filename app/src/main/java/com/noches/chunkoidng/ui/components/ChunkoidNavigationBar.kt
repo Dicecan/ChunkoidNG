@@ -12,7 +12,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.ui.navigation.Screen
+import com.noches.chunkoidng.ui.theme.WindowWidthTier
+import com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics
 
 @Composable
 fun ChunkoidNavigationBar(
@@ -20,6 +23,7 @@ fun ChunkoidNavigationBar(
     onNavigateTo: (Screen) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val metrics = rememberAdaptiveMetrics()
     NavigationBar(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -28,9 +32,15 @@ fun ChunkoidNavigationBar(
         Screen.topLevelScreens.forEach { screen ->
             val selected = currentScreen == screen
             val title = stringResource(screen.titleRes)
+            val labelFontSize = if (title.length >= 6 && metrics.widthTier <= WindowWidthTier.COMPACT) {
+                9.5.sp
+            } else {
+                metrics.navLabelFontSize
+            }
             NavigationBarItem(
                 selected = selected,
                 onClick = { onNavigateTo(screen) },
+                alwaysShowLabel = true,
                 icon = {
                     Icon(
                         imageVector = if (selected) screen.selectedIcon else screen.unselectedIcon,
@@ -40,6 +50,8 @@ fun ChunkoidNavigationBar(
                 label = {
                     Text(
                         text = title,
+                        fontSize = labelFontSize,
+                        letterSpacing = if (title.length >= 6) (-0.3).sp else 0.sp,
                         maxLines = 1,
                         softWrap = false,
                         overflow = TextOverflow.Ellipsis,

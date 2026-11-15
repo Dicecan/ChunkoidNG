@@ -171,7 +171,6 @@ class GameRuleSyncTest {
         assertEquals(0.toByte(), beRoot.getNullableByte("tntexplodes"))
         assertEquals(7, beRoot.getNullableInt("randomtickspeed"))
 
-        // Non-zero fire_spread_radius_around_player enables dofiretick
         val outDirFire = tempFolder.newFolder("be_out_fire")
         val inDirFire = tempFolder.newFolder("je26_in_fire")
         writeJe26World(
@@ -272,7 +271,6 @@ class GameRuleSyncTest {
         assertEquals(0.toByte(), jeRules.getNullableByte("minecraft:pvp"))
         assertEquals(4, jeRules.getNullableInt("minecraft:random_tick_speed"))
 
-        // Reverse: JE 1.21.11 -> BE
         val outBe = tempFolder.newFolder("be_from_12111")
         writeBeWorld(outBe, NbtCompound().apply { this["mobgriefing"] = true })
         GameRuleSync.sync(outJe, outBe, ChunkerFormat.findById("BEDROCK_1_21_130")!!)
@@ -324,7 +322,6 @@ class GameRuleSyncTest {
         assertEquals(0.toByte(), beRoot.getNullableByte("dofiretick"))
         assertEquals(9, beRoot.getNullableInt("randomtickspeed"))
 
-        // Reverse: JE 26.3 -> JE <=1.21.10
         val jeLegacyOut = tempFolder.newFolder("je_legacy_out")
         writeJeLegacyWorld(jeLegacyOut, NbtCompound())
         GameRuleSync.sync(je26Out, jeLegacyOut, ChunkerFormat.findById("JAVA_1_21_4")!!)
@@ -339,7 +336,6 @@ class GameRuleSyncTest {
 
     @Test
     fun testBedrockToBedrockAndFormatInputOnJava() {
-        // BE -> BE preserves extras
         val beIn = tempFolder.newFolder("be_be_in")
         val beOut = tempFolder.newFolder("be_be_out")
         writeBeWorld(
@@ -366,7 +362,6 @@ class GameRuleSyncTest {
         assertEquals(1.toByte(), beResult.getNullableByte("showcoordinates"))
         assertEquals(10, beResult.getNullableInt("randomtickspeed"))
 
-        // FORMAT_INPUT on JE 26.3 must stay on JE platform, not be misdetected as Bedrock
         val jeIn = tempFolder.newFolder("je_input_src")
         val jeOut = tempFolder.newFolder("je_input_dst")
         writeJe26World(

@@ -1,5 +1,25 @@
 export const changelog = [
   {
+    version: 'Beta 0.8',
+    code: 8,
+    status: 'current',
+    highlight: {
+      'zh-CN': '游戏规则跨端同步、载具/容器/马匹属性与猫/潜影贝颜色修复、导出安全性加固',
+      en: 'Cross-edition gamerule sync, entity/vehicle/container/color fixes & hardened export integrity',
+      ja: 'ゲームルール同期、エンティティ・乗り物・コンテナ・色変換の修正とエクスポート安全性強化'
+    },
+    date: {
+      'zh-CN': '公开测试版',
+      en: 'Public Beta',
+      ja: '公開ベータ'
+    },
+    items: [
+      { type: 'feat', text: { 'zh-CN': '新增 Java ↔ 基岩版游戏规则（GameRules）自动同步，完整迁移生物破坏（mobGriefing）等关键世界规则。', en: 'Added automatic Java ↔ Bedrock gamerule synchronization, preserving key world rules such as mobGriefing.', ja: 'Java ↔ 統合版間のゲームルール（mobGriefing 等）の自動同期を追加。' } },
+      { type: 'fix', text: { 'zh-CN': '修复空矿车/船持久化丢失、漏斗矿车物品与启用状态丢失、竹筏/白杨木船变体映射，以及马匹速度与跳跃力属性缺失问题。', en: 'Fixed missing persistence on empty minecarts/boats, hopper minecart items/active state, bamboo raft & poplar boat variants, and equine movement/jump attributes.', ja: '空トロッコ・ボートの永続化、ホッパー付きトロッコのアイテム・有効状態、竹イカダ・ポプラボート変種、馬の移動・跳躍属性を修正。' } },
+      { type: 'fix', text: { 'zh-CN': '修复猫花色（含旧版 CatType 与未知回退）及潜影贝颜色（Variant/Color/定义组）双向转换偏差，并加固导出归档与路径安全。', en: 'Fixed cat variant fallback/legacy CatType and shulker color (Variant/Color/definitions) mapping, and hardened archive export integrity.', ja: 'ネコの品種フォールバック・旧 CatType およびシュルカーの色変換を修正し、エクスポートの安全性を強化。' } }
+    ]
+  },
+  {
     version: 'Beta 0.7',
     code: 7,
     status: 'past',

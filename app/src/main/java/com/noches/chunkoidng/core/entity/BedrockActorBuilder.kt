@@ -257,9 +257,6 @@ object BedrockActorBuilder {
                         2 -> definitions.add("+minecraft:${prefix}_medium")
                         else -> definitions.add("+minecraft:${prefix}_large")
                     }
-                } else if (identifier == "minecraft:shulker") {
-                    val color = getByte(javaEntity, "Color", 16)
-                    actor["Color"] = NbtByte(color)
                 } else if (identifier == COMMAND_BLOCK_MINECART) {
                     val cmd = javaEntity.getNullableString("Command")
                     if (!cmd.isNullOrEmpty()) {
@@ -598,7 +595,7 @@ object BedrockActorBuilder {
         }
 
         private fun readObject(): Map<String, Any?> {
-            pos++ // '{'
+            pos++
             val map = linkedMapOf<String, Any?>()
             skipWs()
             if (pos < src.length && src[pos] == '}') {
@@ -629,7 +626,7 @@ object BedrockActorBuilder {
         }
 
         private fun readArray(): List<Any?> {
-            pos++ // '['
+            pos++
             val list = mutableListOf<Any?>()
             skipWs()
             if (pos < src.length && src[pos] == ']') {
@@ -653,7 +650,7 @@ object BedrockActorBuilder {
         }
 
         private fun readString(): String {
-            pos++ // '"'
+            pos++
             val sb = StringBuilder()
             while (pos < src.length) {
                 val c = src[pos++]

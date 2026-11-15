@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.noches.chunkoidng.ui.theme.ChipBadgeShape
 import com.noches.chunkoidng.ui.theme.ExpressiveShapes
+import com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics
 
 data class FaqItem(
     @StringRes
@@ -103,16 +105,24 @@ fun TutorialScreen(
         } catch (_: Exception) {}
     }
 
-    LazyColumn(
+    val metrics = rememberAdaptiveMetrics()
+
+    Box(
         modifier = modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            start = 16.dp,
-            end = 16.dp,
-            top = 8.dp,
-            bottom = 24.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentAlignment = Alignment.TopCenter
     ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .widthIn(max = metrics.maxContentWidth),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                start = metrics.horizontalPadding,
+                end = metrics.horizontalPadding,
+                top = 8.dp,
+                bottom = 24.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
 
         item {
             WikiPortalCard(
@@ -165,6 +175,7 @@ fun TutorialScreen(
                     openUrl("https://qm.qq.com/cgi-bin/qm/qr?k=Chunkoid")
                 }
             )
+        }
         }
     }
 }

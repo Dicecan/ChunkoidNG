@@ -483,13 +483,13 @@ private fun CompletedView(
                 }
                 if (uiState.keyHex.isNotBlank()) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Key (Hex)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                        Text(stringResource(R.string.crypt_key_hex), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                         Text("0x${uiState.keyHex}", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
                 if (uiState.mode == CryptMode.DECRYPT && uiState.ldbVerified) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("LevelDB Verified", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                        Text(stringResource(R.string.crypt_leveldb_verified), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                         Text("0x57FB...", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }

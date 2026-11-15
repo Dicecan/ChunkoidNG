@@ -15,10 +15,6 @@ data class JavaTargetProfile(
     val usesShortFuse: Boolean
 )
 
-/**
- * Resolves Java version traits, DataVersion values, and world entity directory layouts
- * consistently across BE->JE and JE->JE pipelines.
- */
 object JavaTargetFormatHelper {
 
     private data class SemVer(val major: Int, val minor: Int, val patch: Int)

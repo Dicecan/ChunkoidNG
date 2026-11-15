@@ -43,6 +43,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,7 +96,7 @@ fun WelcomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     
-                    Box(modifier = Modifier.width(108.dp)) {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         if (currentStep > 0) {
                             OutlinedButton(
                                 onClick = { currentStep-- },
@@ -112,7 +113,10 @@ fun WelcomeScreen(
                                 Text(
                                     stringResource(R.string.welcome_step_prev),
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -145,7 +149,7 @@ fun WelcomeScreen(
                         }
                     }
 
-                    Box(modifier = Modifier.width(136.dp), contentAlignment = Alignment.CenterEnd) {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                         Button(
                             onClick = {
                                 if (currentStep < 3) {
@@ -172,7 +176,10 @@ fun WelcomeScreen(
                                     else stringResource(R.string.welcome_step_start)
                                 },
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Icon(
@@ -521,7 +528,7 @@ private fun StepLanguagePage(
         Spacer(modifier = Modifier.height(4.dp))
 
         val languages = listOf(
-            Triple("system", stringResource(R.string.welcome_lang_system), "Auto-detect from OS language"),
+            Triple("system", stringResource(R.string.welcome_lang_system), stringResource(R.string.welcome_lang_system_desc)),
             Triple("zh", stringResource(R.string.welcome_lang_zh), "中国大陆地区规范汉字"),
             Triple("en", stringResource(R.string.welcome_lang_en), "Standard International English"),
             Triple("ja", stringResource(R.string.welcome_lang_ja), "日本語ローカライズ")
@@ -746,7 +753,7 @@ private fun StepPermissionsAndEnvPage(viewModel: WelcomeViewModel) {
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "Ready",
+                                    text = stringResource(R.string.welcome_env_badge_ready),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF10B981)
@@ -1130,7 +1137,7 @@ private fun StepPerformancePage(
                 BenchmarkDetailRow(
                     icon = Icons.Outlined.DeveloperBoard,
                     label = stringResource(R.string.welcome_device_ram),
-                    value = "${uiState.hardwareInfo.totalRamMb} MB (~${availGb}G 可用)"
+                    value = stringResource(R.string.welcome_device_ram_val, uiState.hardwareInfo.totalRamMb, availGb)
                 )
                 BenchmarkDetailRow(
                     icon = Icons.Outlined.Storage,
@@ -1148,8 +1155,8 @@ private fun StepPerformancePage(
             onClick = { viewModel.selectMode(PerformanceMode.TUNED) },
             metrics = listOf(
                 "JVM: ${tunedLimits.jvmMaxMemoryMb} MB",
-                "${tunedLimits.parallelism} 线程并发",
-                if (tunedLimits.useSerialGc) "SerialGC" else "并行 GC"
+                stringResource(R.string.welcome_metric_threads, tunedLimits.parallelism),
+                if (tunedLimits.useSerialGc) "SerialGC" else stringResource(R.string.welcome_metric_gc_parallel)
             )
         )
 
@@ -1161,8 +1168,8 @@ private fun StepPerformancePage(
             onClick = { viewModel.selectMode(PerformanceMode.STRICT) },
             metrics = listOf(
                 "JVM: ${strictLimits.jvmMaxMemoryMb} MB",
-                "单线程 (1)",
-                "SerialGC 轻量回收"
+                stringResource(R.string.welcome_metric_single_thread),
+                stringResource(R.string.welcome_metric_gc_serial_light)
             )
         )
 

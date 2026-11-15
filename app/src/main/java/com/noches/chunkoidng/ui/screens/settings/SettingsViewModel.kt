@@ -2,13 +2,17 @@ package com.noches.chunkoidng.ui.screens.settings
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.noches.chunkoidng.core.settings.AppPreferences
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment
 import com.noches.chunkoidng.core.settings.PerformanceMode
 import com.noches.chunkoidng.core.world.ArchiveManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -37,8 +41,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    init {
+        LocaleHelper.observeLanguage(application)
+            .onEach { lang ->
+                _uiState.update { it.copy(appLanguage = lang) }
+            }
+            .launchIn(viewModelScope)
+    }
+
     fun updateAppLanguage(language: String) {
         prefs.appLanguage = language
+        LocaleHelper.notifyLanguageChanged(language)
         _uiState.update { it.copy(appLanguage = language) }
     }
 

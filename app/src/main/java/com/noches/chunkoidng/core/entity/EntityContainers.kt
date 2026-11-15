@@ -4,10 +4,6 @@ import br.com.gamemods.nbtmanipulator.NbtByte
 import br.com.gamemods.nbtmanipulator.NbtCompound
 import br.com.gamemods.nbtmanipulator.NbtList
 
-/**
- * Translates entity container inventories and chested pack-animal state
- * symmetrically between Java and Bedrock entity NBT.
- */
 object EntityContainers {
 
     private val CONTAINER_VEHICLES = setOf(

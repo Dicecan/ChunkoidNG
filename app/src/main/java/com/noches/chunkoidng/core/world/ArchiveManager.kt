@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
 import com.noches.chunkoidng.core.io.SafeFileIO
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.maid.Maid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -21,6 +22,7 @@ import kotlin.coroutines.coroutineContext
 class ArchiveManager(private val context: Context) {
     private val contentResolver: ContentResolver get() = context.contentResolver
     private val prefs by lazy { com.noches.chunkoidng.core.settings.AppPreferences(context) }
+    private val l10n get() = LocaleHelper.localizedContext(context)
 
     val workspaceDir: File get() = File(context.filesDir, "workspace").apply { mkdirs() }
     val inputDir: File get() = File(workspaceDir, "input")
@@ -69,10 +71,10 @@ class ArchiveManager(private val context: Context) {
             if (destDir.exists()) destDir.deleteRecursively()
             destDir.mkdirs()
 
-            onProgress(5, context.getString(R.string.archive_staging_extracting))
+            onProgress(5, l10n.getString(R.string.archive_staging_extracting))
 
             val inputStream = contentResolver.openInputStream(archiveUri)
-                ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_open_input)))
+                ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_open_input)))
 
             val limits = prefs.getEffectiveLimits()
             var lastReported = 0
@@ -89,31 +91,31 @@ class ArchiveManager(private val context: Context) {
                             val pct = (5 + (count / 5)).coerceIn(5, 75)
                             if (pct != lastReported) {
                                 lastReported = pct
-                                onProgress(pct, context.getString(R.string.archive_staging_extracting_progress, count))
+                                onProgress(pct, l10n.getString(R.string.archive_staging_extracting_progress, count))
                             }
                         }
                     }
                 )
             }
 
-            onProgress(80, context.getString(R.string.archive_staging_searching_structure))
+            onProgress(80, l10n.getString(R.string.archive_staging_searching_structure))
             val levelDat = findFileRecursive(destDir, "level.dat")
-                ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_no_level_dat)))
+                ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_no_level_dat)))
 
             val actualWorldDir = levelDat.parentFile ?: destDir
             if (actualWorldDir.canonicalPath != destDir.canonicalPath) {
-                onProgress(85, context.getString(R.string.archive_staging_organizing))
+                onProgress(85, l10n.getString(R.string.archive_staging_organizing))
                 moveDirectoryContents(actualWorldDir, destDir)
             }
 
-            onProgress(95, context.getString(R.string.archive_staging_parsing_metadata))
+            onProgress(95, l10n.getString(R.string.archive_staging_parsing_metadata))
             val rawName = getUriDisplayName(archiveUri).removeSuffix(".mcworld").removeSuffix(".zip")
             val worldInfo = WorldMetadataReader.inspectWorld(destDir, fallbackName = rawName).copy(
                 sourceUri = archiveUri,
                 isArchive = true
             )
 
-            onProgress(100, context.getString(R.string.archive_staging_ready))
+            onProgress(100, l10n.getString(R.string.archive_staging_ready))
             Result.success(worldInfo)
         } catch (e: Exception) {
             if (destDir.exists()) destDir.deleteRecursively()
@@ -135,42 +137,42 @@ class ArchiveManager(private val context: Context) {
             if (destDir.exists()) destDir.deleteRecursively()
             destDir.mkdirs()
 
-            onProgress(5, context.getString(R.string.archive_staging_reading_dir))
+            onProgress(5, l10n.getString(R.string.archive_staging_reading_dir))
             val treeDoc = DocumentFile.fromTreeUri(context, treeUri)
-                ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_access_dir)))
+                ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_access_dir)))
 
             if (!treeDoc.isDirectory) {
-                return@withContext Result.failure(Exception(context.getString(R.string.archive_error_not_a_dir)))
+                return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_not_a_dir)))
             }
 
             var copiedCount = 0
             val copyResult = copyDocumentDirectory(treeDoc, destDir) { count ->
                 copiedCount = count
                 val pct = (10 + count / 2).coerceIn(10, 85)
-                onProgress(pct, context.getString(R.string.archive_staging_copying, copiedCount))
+                onProgress(pct, l10n.getString(R.string.archive_staging_copying, copiedCount))
             }
             if (copyResult.failedFiles.isNotEmpty()) {
-                return@withContext Result.failure(Exception(context.getString(R.string.archive_error_export_files, copyResult.failedFiles.take(3).joinToString())))
+                return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_export_files, copyResult.failedFiles.take(3).joinToString())))
             }
 
-            onProgress(90, context.getString(R.string.archive_staging_verifying))
+            onProgress(90, l10n.getString(R.string.archive_staging_verifying))
             val levelDat = findFileRecursive(destDir, "level.dat")
-                ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_no_level_dat_dir)))
+                ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_no_level_dat_dir)))
 
             val actualWorldDir = levelDat.parentFile ?: destDir
             if (actualWorldDir.canonicalPath != destDir.canonicalPath) {
-                onProgress(93, context.getString(R.string.archive_staging_organizing))
+                onProgress(93, l10n.getString(R.string.archive_staging_organizing))
                 moveDirectoryContents(actualWorldDir, destDir)
             }
 
-            onProgress(97, context.getString(R.string.archive_staging_parsing_metadata))
+            onProgress(97, l10n.getString(R.string.archive_staging_parsing_metadata))
             val folderName = treeDoc.name ?: "Minecraft_World"
             val worldInfo = WorldMetadataReader.inspectWorld(destDir, fallbackName = folderName).copy(
                 sourceUri = treeUri,
                 isArchive = false
             )
 
-            onProgress(100, context.getString(R.string.archive_staging_ready))
+            onProgress(100, l10n.getString(R.string.archive_staging_ready))
             Result.success(worldInfo)
         } catch (e: Exception) {
             if (destDir.exists()) destDir.deleteRecursively()
@@ -198,7 +200,7 @@ class ArchiveManager(private val context: Context) {
         suspend fun recursiveCopy(currSource: DocumentFile, currDest: File) {
             currDest.mkdirs()
             for (child in currSource.listFiles()) {
-                if (!coroutineContext.isActive) throw java.util.concurrent.CancellationException(context.getString(R.string.archive_error_cancelled))
+                if (!coroutineContext.isActive) throw java.util.concurrent.CancellationException(l10n.getString(R.string.archive_error_cancelled))
                 val rawName = child.name ?: "unnamed"
                 val safeChildName = Maid.defense.pathSanitizer.sanitizeFileName(rawName)
                 val destChild = Maid.defense.pathSanitizer.resolveUnderBase(currDest, safeChildName, "ArchiveManager")
@@ -207,7 +209,7 @@ class ArchiveManager(private val context: Context) {
                 } else if (child.isFile) {
                     try {
                         val input = contentResolver.openInputStream(child.uri)
-                            ?: throw java.io.IOException(context.getString(R.string.archive_error_open_stream))
+                            ?: throw java.io.IOException(l10n.getString(R.string.archive_error_open_stream))
                         input.use { inStream ->
                             FileOutputStream(destChild).buffered(64 * 1024).use { outStream ->
                                 inStream.copyTo(outStream, 64 * 1024)
@@ -250,8 +252,6 @@ class ArchiveManager(private val context: Context) {
             val canonicalDest = destDir.canonicalFile
             if (canonicalSource == canonicalDest) return
 
-            // Stage children into a unique temporary sibling directory first so moving nested
-            // directories with identical names (e.g., destDir/world/world) never deletes sourceDir.
             val stagingParent = canonicalDest.parentFile ?: canonicalDest
             val stagingDir = File(stagingParent, ".stage_flatten_${java.util.UUID.randomUUID()}")
             try {
@@ -264,7 +264,6 @@ class ArchiveManager(private val context: Context) {
                     moveOrCopy(file, stagedTarget)
                 }
 
-                // Clear any conflicting siblings in destDir before moving staged contents back in.
                 val stagedFiles = stagingDir.listFiles() ?: emptyArray()
                 for (file in stagedFiles) {
                     val target = File(canonicalDest, file.name)
@@ -315,11 +314,11 @@ class ArchiveManager(private val context: Context) {
     ): Result<Uri> = withContext(Dispatchers.IO) {
         try {
             if (!outputDir.exists() || outputDir.listFiles()?.isEmpty() == true) {
-                return@withContext Result.failure(Exception(context.getString(R.string.archive_error_output_empty)))
+                return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_output_empty)))
             }
 
             val treeDoc = DocumentFile.fromTreeUri(context, targetTreeUri)
-                ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_access_dir)))
+                ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_access_dir)))
 
             val safeName = worldName.replace(Regex("[^\\p{L}\\p{N}_\\- ]"), "_").trim().ifBlank { "ConvertedWorld" }
 
@@ -327,7 +326,7 @@ class ArchiveManager(private val context: Context) {
                 val extension = if (isBedrock) ".mcworld" else ".zip"
                 val mimeType = if (isBedrock) "application/octet-stream" else "application/zip"
                 val docFile = treeDoc.createFile(mimeType, "$safeName$extension")
-                    ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_create_archive)))
+                    ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_create_archive)))
 
                 try {
                     val streamSuccess = SafeFileIO.openTruncatingOutputStream(context.contentResolver, docFile.uri)?.use { out ->
@@ -339,7 +338,7 @@ class ArchiveManager(private val context: Context) {
 
                     if (!streamSuccess) {
                         docFile.delete()
-                        return@withContext Result.failure(Exception(context.getString(R.string.archive_error_open_stream)))
+                        return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_open_stream)))
                     }
                     Result.success(docFile.uri)
                 } catch (e: Exception) {
@@ -348,12 +347,12 @@ class ArchiveManager(private val context: Context) {
                 }
             } else {
                 val destDirDoc = treeDoc.createDirectory(safeName)
-                    ?: return@withContext Result.failure(Exception(context.getString(R.string.archive_error_create_folder)))
+                    ?: return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_create_folder)))
 
                 val failures = copyDirToDocumentFile(outputDir, destDirDoc)
                 if (failures.isNotEmpty()) {
                     destDirDoc.delete()
-                    return@withContext Result.failure(Exception(context.getString(R.string.archive_error_export_files, failures.take(3).joinToString())))
+                    return@withContext Result.failure(Exception(l10n.getString(R.string.archive_error_export_files, failures.take(3).joinToString())))
                 }
                 Result.success(destDirDoc.uri)
             }
@@ -374,9 +373,9 @@ class ArchiveManager(private val context: Context) {
             } else {
                 val newFile = destDirDoc.createFile("application/octet-stream", file.name)
                 try {
-                    if (newFile == null) throw java.io.IOException(context.getString(R.string.archive_error_create_target))
+                    if (newFile == null) throw java.io.IOException(l10n.getString(R.string.archive_error_create_target))
                     val out = SafeFileIO.openTruncatingOutputStream(context.contentResolver, newFile.uri)
-                        ?: throw java.io.IOException(context.getString(R.string.archive_error_open_output))
+                        ?: throw java.io.IOException(l10n.getString(R.string.archive_error_open_output))
                     out.buffered(64 * 1024).use { buffered ->
                         file.inputStream().use { input -> input.copyTo(buffered, 64 * 1024) }
                     }

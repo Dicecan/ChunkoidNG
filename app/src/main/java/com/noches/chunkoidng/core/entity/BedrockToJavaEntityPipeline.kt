@@ -2,8 +2,9 @@ package com.noches.chunkoidng.core.entity
 
 import android.util.Log
 import br.com.gamemods.nbtmanipulator.*
+import com.noches.chunkoidng.core.leveldb.SafeEnv
 import org.iq80.leveldb.Options
-import org.iq80.leveldb.impl.Iq80DBFactory
+import org.iq80.leveldb.impl.DbImpl
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -55,10 +56,9 @@ class BedrockToJavaEntityPipeline(
         log("开始扫描基岩版 LevelDB 实体数据...")
 
         val options = Options().createIfMissing(false)
-        val factory = Iq80DBFactory.factory
 
         try {
-            factory.open(dbDir, options).use { db ->
+            DbImpl(options, dbDir.absolutePath, SafeEnv()).use { db ->
                 val iterator = db.iterator()
                 iterator.seekToFirst()
 

@@ -5,7 +5,6 @@ import { verifyAdmin } from '../middleware/auth.js'
 export const mirrorsRouter = Router()
 export const adminMirrorsRouter = Router()
 
-// GET /api/mirrors - Public list of mirrors
 mirrorsRouter.get('/', (req, res) => {
   const mirrors = getMirrors()
   res.json({

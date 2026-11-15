@@ -10,10 +10,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.UUID
 
-/**
- * Shared atomic file replacement and truncating Android SAF output stream helpers
- * to avoid truncated files or trailing garbage bytes on export overwrites.
- */
 object SafeFileIO {
 
     fun openTruncatingOutputStream(contentResolver: ContentResolver, uri: Uri): OutputStream? {
@@ -21,9 +17,7 @@ object SafeFileIO {
             try {
                 return contentResolver.openOutputStream(uri, mode)
             } catch (_: IllegalArgumentException) {
-                // Provider does not support this mode string; try next fallback.
             } catch (_: UnsupportedOperationException) {
-                // Provider does not support this mode string; try next fallback.
             }
         }
         return null
@@ -73,7 +67,6 @@ object SafeFileIO {
             )
             return
         } catch (_: IOException) {
-            // Fallback for Android filesystems where Files.move REPLACE_EXISTING fails.
         }
 
         if (!targetFile.exists()) {

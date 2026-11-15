@@ -1,7 +1,9 @@
 package com.noches.chunkoidng.core.chunker
 
 import android.content.Context
+import com.noches.chunkoidng.R
 import com.noches.chunkoidng.core.conversion.ChunkerFormat
+import com.noches.chunkoidng.core.settings.LocaleHelper
 import com.noches.chunkoidng.core.world.Platform
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -144,7 +146,7 @@ object ChunkerUpdateManager {
                 lastError = e
             }
         }
-        return ChunkerUpdateStatus.Error(lastError?.localizedMessage ?: "Failed to query Chunker repository")
+        return ChunkerUpdateStatus.Error(lastError?.localizedMessage ?: LocaleHelper.localizedContext(context).getString(R.string.chunker_update_err_query))
     }
 
     suspend fun downloadAndInstall(
@@ -152,6 +154,7 @@ object ChunkerUpdateManager {
         info: ChunkerReleaseInfo,
         onProgress: (Float, Long, Long) -> Unit = { _, _, _ -> }
     ): Boolean = withContext(Dispatchers.IO) {
+        val l10n = LocaleHelper.localizedContext(context)
         _statusFlow.value = ChunkerUpdateStatus.Downloading(0f, 0L, info.fileSize)
         val downloadFile = File(context.filesDir, "cli.jar.download")
         val oldFile = File(context.filesDir, "cli.jar.old")
@@ -168,7 +171,7 @@ object ChunkerUpdateManager {
 
             if (!success || !verifyJarFile(downloadFile)) {
                 if (downloadFile.exists()) downloadFile.delete()
-                _statusFlow.value = ChunkerUpdateStatus.Error("Downloaded file verification failed")
+                _statusFlow.value = ChunkerUpdateStatus.Error(l10n.getString(R.string.chunker_update_err_verify))
                 return@withContext false
             }
 
@@ -206,7 +209,7 @@ object ChunkerUpdateManager {
             if (!targetFile.exists() && oldFile.exists()) {
                 oldFile.renameTo(targetFile)
             }
-            _statusFlow.value = ChunkerUpdateStatus.Error(e.localizedMessage ?: "Installation failed")
+            _statusFlow.value = ChunkerUpdateStatus.Error(e.localizedMessage ?: l10n.getString(R.string.chunker_update_err_install))
             false
         }
     }
@@ -237,7 +240,6 @@ object ChunkerUpdateManager {
                     return false
                 }
             }
-            // Validate ZIP central directory & entry table so truncated downloads are rejected.
             java.util.zip.ZipFile(file).use { zip ->
                 val entries = zip.entries()
                 var hasManifestOrClass = false

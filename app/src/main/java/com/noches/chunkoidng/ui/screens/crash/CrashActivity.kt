@@ -1,5 +1,6 @@
 package com.noches.chunkoidng.ui.screens.crash
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Process
@@ -67,6 +68,10 @@ import kotlin.system.exitProcess
 
 class CrashActivity : ComponentActivity() {
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.localizedContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -76,6 +81,7 @@ class CrashActivity : ComponentActivity() {
         val crashFile = filePath?.let { File(it) }?.takeIf { it.exists() }
         val fullReportText = crashFile?.let(CrashLogManager::readCrashLog)?.ifEmpty { summary } ?: summary
         val preferences = AppPreferences(this)
+        LocaleHelper.applyLocaleInPlace(this, preferences.appLanguage)
         val localizedContext = LocaleHelper.applyLocale(this, preferences.appLanguage)
 
         setContent {

@@ -84,9 +84,7 @@ object EntityStates {
         val collar = entity.getNullableByte("CollarColor")
             ?: entity.getNullableInt("CollarColor")?.toByte()
             ?: return
-        val c = collar.coerceIn(0, 15)
-        actor["Color"] = NbtByte(c)
-        actor["CollarColor"] = NbtByte(c)
+        actor["CollarColor"] = NbtByte(collar.coerceIn(0, 15))
     }
 
     private fun sitting(

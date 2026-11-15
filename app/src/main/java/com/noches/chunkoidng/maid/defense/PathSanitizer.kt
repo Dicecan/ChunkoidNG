@@ -25,7 +25,7 @@ class PathSanitizer(private val securityAuditor: SecurityAuditor) {
             securityAuditor.recordBlock(
                 type = ViolationType.ZIP_SLIP,
                 module = module,
-                message = "检测到包含空字节的恶意路径，已严格拦截",
+                message = "Blocked malicious path containing NUL byte",
                 pathOrTarget = entryPath
             )
             throw SecurityException("Security violation: NUL byte in path: $entryPath")
@@ -45,7 +45,7 @@ class PathSanitizer(private val securityAuditor: SecurityAuditor) {
             securityAuditor.recordBlock(
                 type = ViolationType.ZIP_SLIP,
                 module = module,
-                message = "检测到Zip-Slip路径跨目录逃逸攻击，已严格拦截",
+                message = "Blocked Zip-Slip path traversal outside target directory",
                 pathOrTarget = entryPath
             )
             throw SecurityException("Security violation: path traverses outside base directory: $entryPath")

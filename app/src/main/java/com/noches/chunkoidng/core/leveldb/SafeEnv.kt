@@ -7,12 +7,13 @@ import org.iq80.leveldb.env.RandomInputFile
 import org.iq80.leveldb.env.SequentialFile
 import org.iq80.leveldb.env.WritableFile
 import org.iq80.leveldb.fileenv.EnvImpl
+import org.iq80.leveldb.fileenv.MmapLimiter
 import org.iq80.leveldb.Logger
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
 class SafeEnv : Env {
-    private val delegate = EnvImpl.createEnv()
+    private val delegate = EnvImpl.createEnv(MmapLimiter.newLimiter(0))
 
     override fun nowMicros(): Long = delegate.nowMicros()
     override fun toFile(path: String): File = delegate.toFile(path)

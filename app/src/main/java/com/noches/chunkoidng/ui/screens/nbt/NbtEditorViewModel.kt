@@ -1792,7 +1792,6 @@ class NbtEditorViewModel(application: Application) : AndroidViewModel(applicatio
 
         if (folder == null) return
 
-        // Close active LevelDB handle before snapshotting files so WAL/memtable/CURRENT are flushed cleanly.
         val hadHelper = levelDbHelper != null
         if (hadHelper) {
             levelDbHelper?.close()

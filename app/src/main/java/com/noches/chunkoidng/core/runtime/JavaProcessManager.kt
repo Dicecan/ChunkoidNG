@@ -25,6 +25,56 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         return runCliJarAdvanced(jarFile, emptyList(), arguments.toList())
     }
 
+    private fun buildJavaLaunchCandidates(javaBin: File, jvmArgs: List<String>): List<List<String>> {
+        return buildLaunchCandidates(
+            javaBinPath = javaBin.absolutePath,
+            jvmArgs = jvmArgs,
+            sdkInt = Build.VERSION.SDK_INT,
+            has64BitAbi = Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()
+        )
+    }
+
+    companion object {
+        internal fun buildLaunchCandidates(
+            javaBinPath: String,
+            jvmArgs: List<String>,
+            sdkInt: Int,
+            has64BitAbi: Boolean
+        ): List<List<String>> {
+            val linker = if (has64BitAbi) "/system/bin/linker64" else "/system/bin/linker"
+            val directCmd = listOf(javaBinPath) + jvmArgs
+            val linkerCmd = listOf(linker, javaBinPath) + jvmArgs
+            return if (sdkInt < Build.VERSION_CODES.Q) {
+                listOf(directCmd, linkerCmd)
+            } else {
+                listOf(linkerCmd, directCmd)
+            }
+        }
+    }
+
+    private fun startJavaProcess(
+        javaBin: File,
+        jvmArgs: List<String>,
+        onProcessCreated: ((Process) -> Unit)? = null
+    ): Result<Process> {
+        var lastError: Exception? = null
+        for (cmd in buildJavaLaunchCandidates(javaBin, jvmArgs)) {
+            try {
+                val pb = ProcessBuilder(cmd)
+                setupEnvironment(pb.environment())
+                pb.directory(context.filesDir)
+                pb.redirectErrorStream(true)
+                val process = pb.start()
+                onProcessCreated?.invoke(process)
+                return Result.success(process)
+            } catch (e: Exception) {
+                lastError = e
+                Log.w(TAG, "Failed to launch JVM with command ${cmd.firstOrNull()}: ${e.message}")
+            }
+        }
+        return Result.failure(lastError ?: IllegalStateException("No viable launch command"))
+    }
+
     fun runCliJarAdvanced(
         jarFile: File,
         jvmOptions: List<String> = emptyList(),
@@ -53,49 +103,30 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
         args.add(jarFile.absolutePath)
         args.addAll(cliArguments)
 
-        val linker = if (Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()) "/system/bin/linker64" else "/system/bin/linker"
-        val cmd = mutableListOf(linker, javaBin.absolutePath)
-        cmd.addAll(args)
-
-        val pb = ProcessBuilder(cmd)
-        setupEnvironment(pb.environment())
-        pb.directory(context.filesDir)
-        pb.redirectErrorStream(true)
-
-        var process: Process? = null
-        try {
-            process = pb.start()
-            onProcessCreated?.invoke(process)
-        } catch (e: Exception) {
-            try {
-                val directCmd = mutableListOf(javaBin.absolutePath)
-                directCmd.addAll(args)
-                val directPb = ProcessBuilder(directCmd)
-                setupEnvironment(directPb.environment())
-                directPb.directory(context.filesDir)
-                directPb.redirectErrorStream(true)
-                process = directPb.start()
-                onProcessCreated?.invoke(process)
-            } catch (ex: Exception) {
-                emit("[SYSTEM] Critical Error: Failed to start Java process: ${e.message}")
-                emit(ex.stackTraceToString())
-                return@flow
-            }
+        val startResult = startJavaProcess(javaBin, args, onProcessCreated)
+        val process = startResult.getOrNull()
+        if (process == null) {
+            val err = startResult.exceptionOrNull()
+            val supportedAbis = Build.SUPPORTED_ABIS.joinToString(",")
+            val abiNote = if (Build.SUPPORTED_ABIS.none { it.equals("arm64-v8a", ignoreCase = true) }) {
+                " (Device ABIs: [$supportedAbis]; embedded OpenJDK 17 requires arm64-v8a)"
+            } else ""
+            emit("[SYSTEM] Critical Error: Failed to start Java process: ${err?.message ?: "unknown"}$abiNote")
+            err?.let { emit(it.stackTraceToString()) }
+            return@flow
         }
 
-        if (process != null) {
-            try {
-                BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        emit(line ?: "")
-                    }
+        try {
+            BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    emit(line ?: "")
                 }
-                val exitCode = process.waitFor()
-                emit("[SYSTEM] Process exited with code: $exitCode")
-            } finally {
-                if (process.isAlive) process.destroyForcibly()
             }
+            val exitCode = process.waitFor()
+            emit("[SYSTEM] Process exited with code: $exitCode")
+        } finally {
+            if (process.isAlive) process.destroyForcibly()
         }
     }.flowOn(Dispatchers.IO)
 
@@ -137,7 +168,6 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                     return@flow
                 }
 
-                val linker = if (Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()) "/system/bin/linker64" else "/system/bin/linker"
                 val initialHeapMb = if (maxMemoryMB <= 768) 64 else 128
                 val jvmArgs = mutableListOf(
                     "-Xms${initialHeapMb}m",
@@ -146,17 +176,10 @@ class JavaProcessManager(private val context: Context, private val runtimeEnv: J
                 )
                 jvmArgs.addAll(rawArgs)
 
-                val directCmd = mutableListOf(linker, javaBin.absolutePath)
-                directCmd.addAll(jvmArgs)
-
-                val pb = ProcessBuilder(directCmd)
-                setupEnvironment(pb.environment())
-                pb.directory(context.filesDir)
-                pb.redirectErrorStream(true)
-
                 var process: Process? = null
                 try {
-                    process = pb.start()
+                    val startResult = startJavaProcess(javaBin, jvmArgs)
+                    process = startResult.getOrThrow()
                     BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {

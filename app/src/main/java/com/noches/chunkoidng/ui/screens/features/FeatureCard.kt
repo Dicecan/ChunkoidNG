@@ -46,6 +46,8 @@ fun FeatureCard(
     val isDark = isSystemInDarkTheme()
     val accentColor = if (isDark) feature.accentDark else feature.accentLight
     val accentContainer = if (isDark) feature.accentContainerDark else feature.accentContainerLight
+    val metrics = com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics()
+    val cardPadding = if (metrics.widthTier == com.noches.chunkoidng.ui.theme.WindowWidthTier.COMPACT_NARROW) 12.dp else 16.dp
 
     Card(
         onClick = onClick,
@@ -66,7 +68,7 @@ fun FeatureCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(cardPadding)
         ) {
 
             Row(

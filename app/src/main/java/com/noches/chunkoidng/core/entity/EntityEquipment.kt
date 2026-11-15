@@ -237,11 +237,6 @@ object EntityEquipment {
         return javaItem
     }
 
-    /**
-     * Adapts an existing Java item stack across Minecraft Java Edition versions
-     * (1.12..1.20.4 legacy `tag`/`Count`, 1.20.5..1.21.4 `components`/`levels`,
-     * and 1.21.5+ flat `components` / TextComponent `custom_name`).
-     */
     fun adaptJavaItem(
         item: NbtCompound,
         modernComponents: Boolean,

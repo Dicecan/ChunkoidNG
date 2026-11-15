@@ -246,6 +246,7 @@ fun WorldConverterScreen(
                     ConverterStage.ERROR -> {
                         ErrorView(
                             errorMessage = uiState.errorMessage ?: stringResource(R.string.common_unknown),
+                            logs = uiState.conversionLogs,
                             onRetry = { viewModel.reset() }
                         )
                     }
@@ -794,7 +795,7 @@ private fun CompletedView(
 }
 
 @Composable
-private fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
+private fun ErrorView(errorMessage: String, logs: List<String> = emptyList(), onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -805,6 +806,32 @@ private fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
         Text(stringResource(R.string.converter_failed), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(errorMessage, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        if (logs.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = ExpressiveShapes.medium,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = stringResource(R.string.converter_error_recent_logs),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = logs.takeLast(8).joinToString("\n"),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontSize = 11.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry, shape = ExpressiveShapes.medium) {
             Text(stringResource(R.string.common_retry))

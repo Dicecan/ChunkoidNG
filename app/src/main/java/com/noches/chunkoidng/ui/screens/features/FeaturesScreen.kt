@@ -65,6 +65,8 @@ import com.noches.chunkoidng.core.chunker.ChunkerUpdateManager
 import com.noches.chunkoidng.core.chunker.ChunkerUpdateStatus
 import com.noches.chunkoidng.core.chunker.ChunkerReleaseInfo
 import com.noches.chunkoidng.ui.theme.PillShape
+import com.noches.chunkoidng.ui.theme.WindowWidthTier
+import com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -79,10 +81,17 @@ fun FeaturesScreen(
     onFeatureClick: (FeatureItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val metrics = com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics()
+
     LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Fixed(2),
+        columns = StaggeredGridCells.Fixed(metrics.gridColumns),
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(
+            start = metrics.horizontalPadding,
+            end = metrics.horizontalPadding,
+            top = 8.dp,
+            bottom = 24.dp
+        ),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalItemSpacing = 12.dp
     ) {
@@ -141,6 +150,7 @@ fun FeaturesScreen(
 private fun HeroStatusBanner() {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val metrics = com.noches.chunkoidng.ui.theme.rememberAdaptiveMetrics()
     val runtimeEnv = remember { com.noches.chunkoidng.core.runtime.JavaRuntimeEnvironment(context) }
     val processManager = remember { com.noches.chunkoidng.core.runtime.JavaProcessManager(context, runtimeEnv) }
 
@@ -166,6 +176,8 @@ private fun HeroStatusBanner() {
         }
     }
 
+    val bannerPadding = if (metrics.widthTier == com.noches.chunkoidng.ui.theme.WindowWidthTier.COMPACT_NARROW) 14.dp else 20.dp
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -178,7 +190,7 @@ private fun HeroStatusBanner() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(bannerPadding)
         ) {
 
             Md3ExpressiveClock()
@@ -194,7 +206,10 @@ private fun HeroStatusBanner() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    ) {
                         val infiniteTransition = rememberInfiniteTransition(label = "pulse_trans")
                         val pulseScale by infiniteTransition.animateFloat(
                             initialValue = 0.85f,
@@ -217,7 +232,9 @@ private fun HeroStatusBanner() {
                             text = stringResource(R.string.feature_screen_status_title),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -252,7 +269,7 @@ private fun HeroStatusBanner() {
                                             runtimeEnv.ensureCliJar()
                                         }
                                         if (cliJar.exists() && cliJar.length() > 0) {
-                                            terminalLogs = (terminalLogs + "[SYSTEM] cli.jar verified (${cliJar.length() / 1024} KB)").takeLast(MAX_SELF_CHECK_LOG_LINES)
+                                            terminalLogs = (terminalLogs + context.getString(R.string.cli_log_jar_verified, cliJar.length() / 1024)).takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         }
                                         terminalLogs = (terminalLogs + context.getString(R.string.chunker_update_checking_log)).takeLast(MAX_SELF_CHECK_LOG_LINES)
                                         ChunkerUpdateManager.checkUpdateFlow(context, force = true).collect { updateStatus ->
@@ -294,7 +311,9 @@ private fun HeroStatusBanner() {
                                     text = if (extractionProgress in 1..99) stringResource(R.string.cli_status_extracting, extractionProgress) else stringResource(R.string.cli_status_checking),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             } else {
                                 Icon(
@@ -308,7 +327,9 @@ private fun HeroStatusBanner() {
                                     text = stringResource(R.string.cli_self_test),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -317,35 +338,59 @@ private fun HeroStatusBanner() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    SelfCheckItemChip(
-                        icon = Icons.Outlined.Memory,
-                        title = "OpenJDK 17",
-                        status = if (isChecking && !rootfsReady) stringResource(R.string.cli_status_deploying) else if (rootfsReady) stringResource(R.string.cli_status_ready) else stringResource(R.string.cli_status_not_deploy),
-                        isSuccess = rootfsReady,
-                        modifier = Modifier.weight(1f)
-                    )
-                    val isChunkerUpdateAvailable = chunkerUpdateStatus is ChunkerUpdateStatus.UpdateAvailable
-                    val chunkerStatusText = when (val s = chunkerUpdateStatus) {
-                        is ChunkerUpdateStatus.Checking -> stringResource(R.string.cli_status_checking)
-                        is ChunkerUpdateStatus.Downloading -> stringResource(R.string.chunker_update_downloading, (s.progress * 100).toInt(), "${s.downloadedBytes / (1024 * 1024)}MB", "${s.totalBytes / (1024 * 1024)}MB")
-                        is ChunkerUpdateStatus.Installing -> stringResource(R.string.chunker_update_installing)
-                        is ChunkerUpdateStatus.UpdateAvailable -> stringResource(R.string.chunker_update_available, s.info.version)
-                        else -> if (isChecking && rootfsReady) stringResource(R.string.cli_engine_testing) else if (rootfsReady) "${stringResource(R.string.cli_engine_ready)} (v$currentChunkerVer)" else stringResource(R.string.cli_engine_waiting)
-                    }
+                val isChunkerUpdateAvailable = chunkerUpdateStatus is ChunkerUpdateStatus.UpdateAvailable
+                val chunkerStatusText = when (val s = chunkerUpdateStatus) {
+                    is ChunkerUpdateStatus.Checking -> stringResource(R.string.cli_status_checking)
+                    is ChunkerUpdateStatus.Downloading -> stringResource(R.string.chunker_update_downloading, (s.progress * 100).toInt(), "${s.downloadedBytes / (1024 * 1024)}MB", "${s.totalBytes / (1024 * 1024)}MB")
+                    is ChunkerUpdateStatus.Installing -> stringResource(R.string.chunker_update_installing)
+                    is ChunkerUpdateStatus.UpdateAvailable -> stringResource(R.string.chunker_update_available, s.info.version)
+                    else -> if (isChecking && rootfsReady) stringResource(R.string.cli_engine_testing) else if (rootfsReady) "${stringResource(R.string.cli_engine_ready)} (v$currentChunkerVer)" else stringResource(R.string.cli_engine_waiting)
+                }
 
-                    SelfCheckItemChip(
-                        icon = Icons.Outlined.Terminal,
-                        title = stringResource(R.string.cli_engine_title),
-                        status = chunkerStatusText,
-                        isSuccess = rootfsReady && !isChecking,
-                        badgeText = if (isChunkerUpdateAvailable) stringResource(R.string.chunker_update_badge) else null,
-                        onClick = { showChunkerUpdateDialog = true },
-                        modifier = Modifier.weight(1f)
-                    )
+                if (metrics.widthTier == com.noches.chunkoidng.ui.theme.WindowWidthTier.COMPACT_NARROW) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SelfCheckItemChip(
+                            icon = Icons.Outlined.Memory,
+                            title = "OpenJDK 17",
+                            status = if (isChecking && !rootfsReady) stringResource(R.string.cli_status_deploying) else if (rootfsReady) stringResource(R.string.cli_status_ready) else stringResource(R.string.cli_status_not_deploy),
+                            isSuccess = rootfsReady,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        SelfCheckItemChip(
+                            icon = Icons.Outlined.Terminal,
+                            title = stringResource(R.string.cli_engine_title),
+                            status = chunkerStatusText,
+                            isSuccess = rootfsReady && !isChecking,
+                            badgeText = if (isChunkerUpdateAvailable) stringResource(R.string.chunker_update_badge) else null,
+                            onClick = { showChunkerUpdateDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        SelfCheckItemChip(
+                            icon = Icons.Outlined.Memory,
+                            title = "OpenJDK 17",
+                            status = if (isChecking && !rootfsReady) stringResource(R.string.cli_status_deploying) else if (rootfsReady) stringResource(R.string.cli_status_ready) else stringResource(R.string.cli_status_not_deploy),
+                            isSuccess = rootfsReady,
+                            modifier = Modifier.weight(1f)
+                        )
+                        SelfCheckItemChip(
+                            icon = Icons.Outlined.Terminal,
+                            title = stringResource(R.string.cli_engine_title),
+                            status = chunkerStatusText,
+                            isSuccess = rootfsReady && !isChecking,
+                            badgeText = if (isChunkerUpdateAvailable) stringResource(R.string.chunker_update_badge) else null,
+                            onClick = { showChunkerUpdateDialog = true },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 if (showTerminal) {
@@ -402,7 +447,7 @@ private fun HeroStatusBanner() {
                         showChunkerUpdateDialog = false
                     } else {
                         val currentStatus = ChunkerUpdateManager.statusFlow.value
-                        val errorMsg = if (currentStatus is ChunkerUpdateStatus.Error) currentStatus.message else "Update failed"
+                        val errorMsg = if (currentStatus is ChunkerUpdateStatus.Error) currentStatus.message else context.getString(R.string.chunker_update_failed_generic)
                         android.widget.Toast.makeText(
                             context,
                             errorMsg,
@@ -443,6 +488,12 @@ private fun Md3ExpressiveClock() {
     val minStr = minuteFormat.format(currentTime)
     val secStr = secondFormat.format(currentTime)
     val dateStr = dateFormat.format(currentTime)
+    val metrics = rememberAdaptiveMetrics()
+    val clockBaseStyle = if (metrics.widthTier == WindowWidthTier.COMPACT_NARROW) {
+        MaterialTheme.typography.displaySmall.copy(fontSize = 34.sp, lineHeight = 40.sp)
+    } else {
+        MaterialTheme.typography.displayMedium
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -455,7 +506,7 @@ private fun Md3ExpressiveClock() {
         ) {
             Text(
                 text = hourStr,
-                style = MaterialTheme.typography.displayMedium.copy(
+                style = clockBaseStyle.copy(
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-1.5).sp
                 ),
@@ -474,7 +525,7 @@ private fun Md3ExpressiveClock() {
             )
             Text(
                 text = ":",
-                style = MaterialTheme.typography.displayMedium.copy(
+                style = clockBaseStyle.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-1).sp
                 ),
@@ -486,7 +537,7 @@ private fun Md3ExpressiveClock() {
 
             Text(
                 text = minStr,
-                style = MaterialTheme.typography.displayMedium.copy(
+                style = clockBaseStyle.copy(
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-1.5).sp
                 ),
@@ -658,7 +709,10 @@ private fun ChunkerUpdateDialog(
                         )
                         if (info.newlySupportedVersions.isNotEmpty()) {
                             Text(
-                                text = stringResource(R.string.chunker_update_new_versions_title) + "：" + info.newlySupportedVersions.joinToString(", ") { it.displayName },
+                                text = stringResource(
+                                    R.string.chunker_update_new_versions_list,
+                                    info.newlySupportedVersions.joinToString(", ") { it.displayName }
+                                ),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.secondary
                             )
@@ -716,7 +770,7 @@ private fun ChunkerUpdateDialog(
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = stringResource(R.string.cli_status_checking),
+                                text = stringResource(R.string.chunker_update_checking),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -775,7 +829,7 @@ private fun ChunkerUpdateDialog(
         dismissButton = {
             if (status !is ChunkerUpdateStatus.Downloading && status !is ChunkerUpdateStatus.Installing) {
                 androidx.compose.material3.TextButton(onClick = onDismiss) {
-                    Text(if (status is ChunkerUpdateStatus.UpdateAvailable) stringResource(R.string.chunker_update_btn_later) else stringResource(android.R.string.ok))
+                    Text(if (status is ChunkerUpdateStatus.UpdateAvailable) stringResource(R.string.chunker_update_btn_later) else stringResource(R.string.common_ok))
                 }
             }
         }
