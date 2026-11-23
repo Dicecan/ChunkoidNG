@@ -21,9 +21,9 @@ export const release = {
   apkUrl: '',
   sha256: '',
   note: {
-    'zh-CN': 'Beta 0.9 新增游戏规则跨端同步、载具/容器/马匹属性与猫/潜影贝颜色等实体转换修复，并加固导出安全性。',
-    en: 'Beta 0.9 adds gamerule sync, comprehensive entity/vehicle/container/equine & cat/shulker color fixes, and hardened export integrity.',
-    ja: 'Beta 0.9 ではゲームルール同期、乗り物・コンテナ・馬属性やネコ・シュルカー色変換の修正、およびエクスポート安全性の強化を実施しました。'
+    'zh-CN': 'Beta 0.9 修复 Android 11 及以下配色异常，支持深浅色手动切换，MAID™ 看板新增系统版本展示，并完善网易解密携带地图直达版本转换。',
+    en: 'Beta 0.9 fixes Android 11 & below color palette issues, adds manual light/dark switching, displays Android OS version in MAID™ dashboard, and improves NetEase decrypted-map handoff to World Converter.',
+    ja: 'Beta 0.9 では Android 11 以下の配色修正、ライト／ダーク手動切替、MAID™ へのOSバージョン表示、NetEase復号マップの変換引き渡しを強化しました。'
   },
   size: {
     'zh-CN': '约 56 MB',
