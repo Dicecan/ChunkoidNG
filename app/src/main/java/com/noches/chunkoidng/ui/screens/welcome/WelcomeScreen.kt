@@ -462,9 +462,10 @@ private fun StepIntroPage(isUpdate: Boolean = false) {
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
                 ) {
+                    val versionBadge = stringResource(R.string.app_version_badge)
                     Text(
-                        text = if (isUpdate) stringResource(R.string.welcome_badge_update, "Beta 0.6")
-                               else "Beta 0.6 · EncoreTeam Recode",
+                        text = if (isUpdate) stringResource(R.string.welcome_badge_update, versionBadge)
+                               else "$versionBadge · EncoreTeam Recode",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,

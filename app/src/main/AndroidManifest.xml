@@ -42,6 +42,12 @@
             android:process=":crash"
             android:theme="@style/Theme.ChunkoidNG" />
 
+        <activity
+            android:name=".ui.screens.console.CalabiyauEasterEggActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.ChunkoidNG" />
+
         <service
             android:name=".service.ConversionForegroundService"
             android:foregroundServiceType="dataSync"

@@ -2,6 +2,7 @@ package com.noches.chunkoidng.maid.audit
 
 import android.app.ActivityManager
 import android.content.Context
+import android.os.Build
 import android.os.Environment
 import com.noches.chunkoidng.maid.model.DeviceTier
 import com.noches.chunkoidng.maid.model.MaidAuditReport
@@ -33,6 +34,7 @@ class HealthDiagnostic(
 
         return MaidAuditReport(
             deviceModel = hw.model,
+            androidVersion = "Android ${Build.VERSION.RELEASE ?: "Unknown"} (API ${Build.VERSION.SDK_INT})",
             deviceTier = hw.tier,
             cpuCores = hw.cpuCores,
             cpuMaxFreqMhz = hw.cpuMaxFreqMhz,

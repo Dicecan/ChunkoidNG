@@ -49,11 +49,13 @@ data class CryptUiState(
     val logs: List<String> = emptyList(),
 
     val worldName: String = "",
+    val outputWorldDir: String? = null,
     val durationMs: Long = 0,
     val keyHex: String = "",
     val filesProcessed: Int = 0,
     val ldbVerified: Boolean = true,
     val isExporting: Boolean = false,
+    val isHandingOff: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -199,6 +201,7 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
                                 stage = CryptUiStage.COMPLETED,
                                 processProgress = 100,
                                 worldName = event.worldName,
+                                outputWorldDir = event.outputDir.absolutePath,
                                 durationMs = event.durationMs,
                                 keyHex = "",
                                 filesProcessed = event.filesProcessed,
@@ -223,18 +226,36 @@ class NetEaseCryptViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun prepareHandoffToConverter(onReady: () -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val outputDir = cryptManager.workspaceCryptDir
-            if (outputDir.exists()) {
-                val converterInput = archiveManager.inputDir
-                if (converterInput.exists()) converterInput.deleteRecursively()
-                converterInput.mkdirs()
-                outputDir.copyRecursively(converterInput, overwrite = true)
+    fun prepareHandoffToConverter(
+        onReady: (String) -> Unit,
+        onError: (String) -> Unit = {}
+    ) {
+        if (_uiState.value.isHandingOff) return
+        _uiState.update { it.copy(isHandingOff = true) }
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val savedPath = _uiState.value.outputWorldDir
+                    val outputDir = if (!savedPath.isNullOrBlank()) File(savedPath) else cryptManager.workspaceCryptDir
+                    require(outputDir.isDirectory && !outputDir.listFiles().isNullOrEmpty()) {
+                        getApplication<Application>().getString(R.string.crypt_handoff_missing)
+                    }
+                    val converterInput = archiveManager.inputDir
+                    if (converterInput.exists()) converterInput.deleteRecursively()
+                    converterInput.mkdirs()
+                    check(outputDir.copyRecursively(converterInput, overwrite = true)) {
+                        getApplication<Application>().getString(R.string.crypt_handoff_failed)
+                    }
+                    converterInput.absolutePath
+                }
             }
-            withContext(Dispatchers.Main) {
-                onReady()
-            }
+            _uiState.update { it.copy(isHandingOff = false) }
+            result.fold(
+                onSuccess = { path -> onReady(path) },
+                onFailure = { e ->
+                    onError(e.message ?: getApplication<Application>().getString(R.string.crypt_handoff_failed))
+                }
+            )
         }
     }
 

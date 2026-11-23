@@ -161,6 +161,7 @@ fun MaidDashboardDialog(
                             val text = buildString {
                                 appendLine(context.getString(R.string.maid_report_header))
                                 appendLine(context.getString(R.string.maid_report_device, report.deviceModel, context.getString(report.deviceTier.titleRes)))
+                                appendLine(context.getString(R.string.maid_report_os, report.androidVersion))
                                 appendLine(context.getString(R.string.maid_report_cpu, report.cpuCores, report.cpuMaxFreqMhz, report.computeScore))
                                 appendLine(context.getString(R.string.maid_report_ram, report.totalRamMb, report.freeRamMb))
                                 appendLine(context.getString(R.string.maid_report_heap, report.currentHeapUsedMb, report.currentHeapMaxMb))
@@ -261,6 +262,11 @@ private fun DashboardOverviewTab(report: com.noches.chunkoidng.maid.model.MaidAu
                     }
                     Text(
                         text = stringResource(R.string.maid_overview_device_model, report.deviceModel),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = stringResource(R.string.maid_overview_os_version, report.androidVersion),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -1,8 +1,28 @@
 export const changelog = [
   {
+    version: 'Beta 0.9',
+    code: 9,
+    status: 'current',
+    highlight: {
+      'zh-CN': '低版本 Android 配色修复、深浅色手动切换、MAID™ 系统版本展示与网易解密直达转换',
+      en: 'Android 11 & below palette fix, manual light/dark theme switch, MAID™ OS info & NetEase decrypt handoff',
+      ja: 'Android 11以下配色修正、明暗手動切替、MAID™ OS情報表示、NetEase復号マップ直接引き渡し'
+    },
+    date: {
+      'zh-CN': '公开测试版',
+      en: 'Public Beta',
+      ja: '公開ベータ'
+    },
+    items: [
+      { type: 'fix', text: { 'zh-CN': '修复 Android 11 及以下不支持动态取色设备的浅色容器发绿异常与状态栏图标配色，并同步禁用无效的动态取色开关。', en: 'Fixed light surface tint overflow and status bar contrast on Android 11 and below where dynamic color is unsupported.', ja: 'Android 11以下でダイナミックカラー非対応時のライトテーマ配色崩れとステータスバー視認性を修正。' } },
+      { type: 'feat', text: { 'zh-CN': '「深色模式跟随系统」支持自由开关，关闭后可即时手动切换浅色模式与深色模式。', en: 'Made "Dark Mode Follows System" toggleable with instant manual Light/Dark theme switching.', ja: '「ダークモードをシステムに同期」の切替に対応し、オフ時にライト／ダークを手動切替可能に。' } },
+      { type: 'feat', text: { 'zh-CN': 'MAID™ 巡检看板与诊断报告新增系统版本（Android 版本与 API 级别）展示；网易解密完成后支持直接携带解密地图跳转版本转换，并新增终端横屏彩蛋。', en: 'Added Android OS version to MAID™ dashboard & reports, added direct decrypted-map handoff to World Converter, and added a new landscape terminal easter egg.', ja: 'MAID™ ダッシュボードにOSバージョン表示を追加し、NetEase復号マップの変換引き渡しと新イースターエッグを実装。' } }
+    ]
+  },
+  {
     version: 'Beta 0.8',
     code: 8,
-    status: 'current',
+    status: 'past',
     highlight: {
       'zh-CN': '游戏规则跨端同步、载具/容器/马匹属性与猫/潜影贝颜色修复、导出安全性加固',
       en: 'Cross-edition gamerule sync, entity/vehicle/container/color fixes & hardened export integrity',

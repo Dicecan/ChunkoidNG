@@ -4,7 +4,8 @@ data class TerminalCommandResponse(
     val lines: List<String> = emptyList(),
     val clearLogs: Boolean = false,
     val toggleMatrixMode: Boolean? = null,
-    val unlockKonami: Boolean = false
+    val unlockKonami: Boolean = false,
+    val launchCalabiyauEasterEgg: Boolean = false
 )
 
 object TerminalEasterEggEngine {
@@ -116,6 +117,14 @@ object TerminalEasterEggEngine {
                     "[EASTER] Wake up, Steve...",
                     "  The Overworld has you. Follow the Enderman.",
                     "  [MATRIX] Phosphor green theme toggled. Type 'matrix' again to toggle."
+                )
+            )
+
+            "卡拉比丘", "卡拉彼丘", "calabiyau", "strinova" -> TerminalCommandResponse(
+                launchCalabiyauEasterEgg = true,
+                lines = listOf(
+                    "[EASTER] 发现恶意引航者：推演战局强制关闭",
+                    "[SYSTEM] System operation: error"
                 )
             )
 

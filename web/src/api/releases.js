@@ -121,7 +121,7 @@ export function resolveAssetUrl(asset, mirrorId, mirrorsList = DEFAULT_MIRRORS, 
 
   // If local mirror, ALWAYS use relative path against current browser origin
   if (mirrorId === 'local') {
-    const tag = tagName || asset.tagName || 'Beta-0.8'
+    const tag = tagName || asset.tagName || 'Beta-0.9'
     return `/api/download/${encodeURIComponent(tag)}/${encodeURIComponent(asset.name)}`
   }
 
@@ -142,7 +142,7 @@ export function resolveAssetUrl(asset, mirrorId, mirrorsList = DEFAULT_MIRRORS, 
   if (!mirror) return rawUrl
 
   if (mirror.type === 'local') {
-    const tag = tagName || asset.tagName || 'Beta-0.8'
+    const tag = tagName || asset.tagName || 'Beta-0.9'
     return `/api/download/${encodeURIComponent(tag)}/${encodeURIComponent(asset.name)}`
   }
 

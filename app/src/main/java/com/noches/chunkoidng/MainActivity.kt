@@ -66,7 +66,15 @@ class MainActivity : ComponentActivity() {
                 LocalActivityResultRegistryOwner provides activity,
                 LocalConfiguration provides localizedContext.resources.configuration
             ) {
-                ChunkoidNGTheme(dynamicColor = uiState.dynamicColorEnabled) {
+                val isDarkTheme = if (uiState.followSystemDarkMode) {
+                    androidx.compose.foundation.isSystemInDarkTheme()
+                } else {
+                    uiState.manualDarkMode
+                }
+                ChunkoidNGTheme(
+                    darkTheme = isDarkTheme,
+                    dynamicColor = uiState.dynamicColorEnabled
+                ) {
                     MainAppScaffold(
                         onLanguageSelected = { lang ->
                             settingsViewModel.updateAppLanguage(lang)

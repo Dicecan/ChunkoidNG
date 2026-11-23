@@ -105,7 +105,7 @@ data class CrashReport(
             } catch (_: Exception) {
                 null
             }
-            val versionName = pInfo?.versionName ?: "Beta 0.6"
+            val versionName = pInfo?.versionName ?: "Beta 0.9"
             val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 pInfo?.longVersionCode ?: 6L
             } else {

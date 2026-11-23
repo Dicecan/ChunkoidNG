@@ -45,4 +45,13 @@ class TerminalEasterEggEngineTest {
         assertFalse(help!!.clearLogs)
         assertTrue(help.lines.any { it.contains("creeper") })
     }
+
+    @Test
+    fun calabiyauEasterEggTriggersLandscapeWindow() {
+        for (trigger in listOf("卡拉比丘", "卡拉彼丘", "Calabiyau", "strinova")) {
+            val res = TerminalEasterEggEngine.evaluate(trigger)
+            assertNotNull(res)
+            assertTrue(res!!.launchCalabiyauEasterEgg)
+        }
+    }
 }

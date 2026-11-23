@@ -40,7 +40,7 @@ sealed class CryptEvent {
 class WorldCryptManager(private val context: Context) {
 
     val workspaceCryptDir: File
-        get() = File(context.filesDir, "workspace/crypt_output").apply { mkdirs() }
+        get() = File(context.filesDir, "workspace/crypt_output")
 
     fun processWorldDirectory(
         sourceDir: File,
@@ -159,8 +159,10 @@ class WorldCryptManager(private val context: Context) {
         }
         val duration = System.currentTimeMillis() - startTime
         try {
-            if (workspaceCryptDir.exists()) workspaceCryptDir.deleteRecursively()
-            check(taskDir.renameTo(workspaceCryptDir)) { context.getString(R.string.crypt_error_commit_output, "") }
+            val targetDir = workspaceCryptDir
+            targetDir.parentFile?.mkdirs()
+            if (targetDir.exists()) targetDir.deleteRecursively()
+            check(taskDir.renameTo(targetDir)) { context.getString(R.string.crypt_error_commit_output, "") }
         } catch (e: Exception) {
             taskDir.deleteRecursively()
             emit(CryptEvent.Failure(context.getString(R.string.crypt_error_commit_output, e.message ?: "")))

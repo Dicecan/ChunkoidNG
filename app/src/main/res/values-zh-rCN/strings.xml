@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">首个专为安卓打造的开源 Minecraft 世界转换工具</string>
-    <string name="app_version_display">Next-Generation · Beta 0.8 (Compose MD3E)</string>
-    <string name="app_version_badge">Beta 0.8</string>
+    <string name="app_version_display">Next-Generation · Beta 0.9 (Compose MD3E)</string>
+    <string name="app_version_badge">Beta 0.9</string>
 
     <string name="common_ok">确定</string>
     <string name="common_cancel">取消</string>
@@ -144,7 +144,9 @@
     <string name="decryptor_custom_key_hint">留空默认: 88329851</string>
     <string name="decryptor_action_decrypt">执行解密还原</string>
     <string name="decryptor_action_encrypt">执行被动加密</string>
-    <string name="decryptor_action_to_converter">流转到世界转换器</string>
+    <string name="decryptor_action_to_converter">携带解密地图前往版本转换</string>
+    <string name="crypt_handoff_missing">未找到解密后的地图目录，请重新解密</string>
+    <string name="crypt_handoff_failed">传递解密地图到转换器失败</string>
 
     <string name="settings_category_appearance">界面与外观</string>
     <string name="settings_language_title">界面语言</string>
@@ -155,8 +157,11 @@
     <string name="settings_language_ja">日本語</string>
     <string name="settings_dynamic_color_title">动态取色 (Monet)</string>
     <string name="settings_dynamic_color_desc">跟随系统壁纸色调自动适配 MD3 主题容器颜色</string>
+    <string name="settings_dynamic_color_unsupported">当前系统低于 Android 12，不支持动态取色，已使用默认主题配色</string>
     <string name="settings_dark_mode_title">深色模式跟随系统</string>
     <string name="settings_dark_mode_desc">依据 Android 系统的深浅色模式自动切换界面</string>
+    <string name="settings_theme_light">浅色模式</string>
+    <string name="settings_theme_dark">深色模式</string>
     <string name="settings_category_engine">引擎与性能</string>
     <string name="settings_jvm_heap_title">JVM 最大堆内存分配</string>
     <string name="settings_jvm_heap_current">当前设定：%1$d MB</string>
@@ -178,7 +183,7 @@
     <string name="about_team_org">现维护组织</string>
     <string name="about_team_contributors">核心贡献者</string>
     <string name="about_team_license">开源协议</string>
-    <string name="about_features_title">Beta 0.8 实装功能与特性</string>
+    <string name="about_features_title">Beta 0.9 实装功能与特性</string>
     <string name="about_feature_pack">材质包双版本双向深度转换工坊</string>
     <string name="about_feature_pack_desc">支持 Java 版与基岩版材质包全双向转换、模型与 Blockstates 映射重构、贴图格式自动适配、MCMETA 动画帧安全展开与熔断保护</string>
     <string name="about_feature_midi">MIDI 音乐转红石机械与超平坦工坊</string>
@@ -924,6 +929,7 @@
     <string name="cli_log_jar_verified">[SYSTEM] cli.jar 校验通过 (%1$d KB)</string>
     <string name="maid_report_header">=== MAID™ 巡检报告 ===</string>
     <string name="maid_report_device">设备：%1$s (%2$s)</string>
+    <string name="maid_report_os">系统版本：%1$s</string>
     <string name="maid_report_cpu">CPU：%1$d 核心 @ %2$d MHz (算力得分: %3$d)</string>
     <string name="maid_report_ram">物理内存：总计 %1$d MB，可用 %2$d MB</string>
     <string name="maid_report_heap">ART 堆：已用 %1$d MB / 上限 %2$d MB</string>
@@ -932,6 +938,7 @@
     <string name="maid_report_events">最近审计事件：%1$d 条</string>
     <string name="maid_report_event_line"> - [%1$s] [%2$s] %3$s: %4$s (目标: %5$s)</string>
     <string name="maid_overview_device_model">设备型号：%1$s</string>
+    <string name="maid_overview_os_version">系统版本：%1$s</string>
     <string name="maid_overview_cpu_specs">CPU 规格：%1$d 核心 · 主频 %2$d MHz · 算力得分: %3$d</string>
     <string name="maid_overview_memory_section">内存与运行水位</string>
     <string name="maid_overview_art_heap">ART 堆占用：%1$d MB / %2$d MB</string>

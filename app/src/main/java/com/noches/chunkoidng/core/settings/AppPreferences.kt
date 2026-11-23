@@ -3,8 +3,20 @@ package com.noches.chunkoidng.core.settings
 import android.content.Context
 import android.content.SharedPreferences
 import com.noches.chunkoidng.maid.Maid
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class AppPreferences(private val context: Context) {
+    companion object {
+        private val _themeRevision = MutableStateFlow(0)
+        val themeRevision: StateFlow<Int> = _themeRevision.asStateFlow()
+
+        private fun notifyThemeChanged() {
+            _themeRevision.value = _themeRevision.value + 1
+        }
+    }
+
     private val prefs: SharedPreferences = context.getSharedPreferences("chunkoid_prefs", Context.MODE_PRIVATE)
 
     var onboardingCompleted: Boolean
@@ -56,7 +68,24 @@ class AppPreferences(private val context: Context) {
 
     var dynamicColorEnabled: Boolean
         get() = prefs.getBoolean("dynamic_color", true)
-        set(value) = prefs.edit().putBoolean("dynamic_color", value).apply()
+        set(value) {
+            prefs.edit().putBoolean("dynamic_color", value).apply()
+            notifyThemeChanged()
+        }
+
+    var followSystemDarkMode: Boolean
+        get() = prefs.getBoolean("follow_system_dark_mode", true)
+        set(value) {
+            prefs.edit().putBoolean("follow_system_dark_mode", value).apply()
+            notifyThemeChanged()
+        }
+
+    var manualDarkMode: Boolean
+        get() = prefs.getBoolean("manual_dark_mode", false)
+        set(value) {
+            prefs.edit().putBoolean("manual_dark_mode", value).apply()
+            notifyThemeChanged()
+        }
 
     var lowRamModeEnabled: Boolean
         get() = prefs.getBoolean("low_ram_mode", false)

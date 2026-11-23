@@ -28,7 +28,7 @@ val OutlineVariantLight = Color(0xFFBFC9C4)
 
 val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
 val SurfaceContainerLowLight = Color(0xFFF1F5F2)
-val SurfaceContainerLight = Color(0xFFEBEFECE)
+val SurfaceContainerLight = Color(0xFFEBEFEC)
 val SurfaceContainerHighLight = Color(0xFFE5EAE7)
 val SurfaceContainerHighestLight = Color(0xFFDFE4E1)
 

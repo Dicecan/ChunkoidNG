@@ -26,7 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BatterySaver
 import androidx.compose.material.icons.outlined.Brightness4
 import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
@@ -237,12 +239,17 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
 
+                    val supportsDynamicColor = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
                     SettingsSwitchRow(
                         icon = Icons.Outlined.Palette,
                         title = stringResource(R.string.settings_dynamic_color_title),
-                        subtitle = stringResource(R.string.settings_dynamic_color_desc),
-                        checked = uiState.dynamicColorEnabled,
-                        onCheckedChange = { viewModel.updateDynamicColor(it) }
+                        subtitle = stringResource(
+                            if (supportsDynamicColor) R.string.settings_dynamic_color_desc
+                            else R.string.settings_dynamic_color_unsupported
+                        ),
+                        checked = supportsDynamicColor && uiState.dynamicColorEnabled,
+                        onCheckedChange = { if (supportsDynamicColor) viewModel.updateDynamicColor(it) },
+                        enabled = supportsDynamicColor
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 12.dp),
@@ -252,10 +259,48 @@ fun SettingsScreen(
                         icon = Icons.Outlined.Brightness4,
                         title = stringResource(R.string.settings_dark_mode_title),
                         subtitle = stringResource(R.string.settings_dark_mode_desc),
-                        checked = true,
-                        onCheckedChange = {},
-                        enabled = false
+                        checked = uiState.followSystemDarkMode,
+                        onCheckedChange = { viewModel.updateFollowSystemDarkMode(it) },
+                        enabled = true
                     )
+                    androidx.compose.animation.AnimatedVisibility(visible = !uiState.followSystemDarkMode) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 48.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                androidx.compose.material3.FilterChip(
+                                    selected = !uiState.manualDarkMode,
+                                    onClick = { viewModel.updateManualDarkMode(false) },
+                                    label = { Text(stringResource(R.string.settings_theme_light)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.LightMode,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                androidx.compose.material3.FilterChip(
+                                    selected = uiState.manualDarkMode,
+                                    onClick = { viewModel.updateManualDarkMode(true) },
+                                    label = { Text(stringResource(R.string.settings_theme_dark)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.DarkMode,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

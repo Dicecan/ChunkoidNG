@@ -263,6 +263,32 @@ class WorldConverterViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun loadHandoffWorld(dirPath: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val sourceDir = java.io.File(dirPath)
+            if (!sourceDir.isDirectory || sourceDir.listFiles().isNullOrEmpty()) return@launch
+            val stagedDir = archiveManager.inputDir
+            if (sourceDir.canonicalPath != stagedDir.canonicalPath) {
+                if (stagedDir.exists()) stagedDir.deleteRecursively()
+                stagedDir.mkdirs()
+                sourceDir.copyRecursively(stagedDir, overwrite = true)
+            }
+            val world = WorldMetadataReader.inspectWorld(stagedDir)
+            val defaultTarget = resolveSmartTargetFormat(world)
+            withContext(Dispatchers.Main) {
+                _uiState.update {
+                    it.copy(
+                        stage = ConverterStage.CONFIGURE,
+                        worldInfo = world,
+                        targetFormat = defaultTarget,
+                        overrideWorldName = world.name,
+                        errorMessage = null
+                    )
+                }
+            }
+        }
+    }
+
     fun loadPreStagedWorld() {
         val stagedDir = archiveManager.inputDir
         if (stagedDir.exists() && stagedDir.listFiles()?.isNotEmpty() == true) {

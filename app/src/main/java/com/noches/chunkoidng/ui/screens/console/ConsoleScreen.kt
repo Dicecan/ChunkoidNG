@@ -157,6 +157,13 @@ fun ConsoleScreen(
                 if (easterResponse.unlockKonami) {
                     konamiUnlocked = true
                 }
+                if (easterResponse.launchCalabiyauEasterEgg) {
+                    val intent = android.content.Intent(context, CalabiyauEasterEggActivity::class.java)
+                    if (context !is android.app.Activity) {
+                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                }
                 logs.addAll(easterResponse.lines)
                 trimLogs(logs)
                 return

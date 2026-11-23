@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">ChunkoidNG</string>
     <string name="app_tagline">Open-source Minecraft Java-Bedrock world converter for Android</string>
-    <string name="app_version_display">Next-Generation · Beta 0.8 (Compose MD3E)</string>
-    <string name="app_version_badge">Beta 0.8</string>
+    <string name="app_version_display">Next-Generation · Beta 0.9 (Compose MD3E)</string>
+    <string name="app_version_badge">Beta 0.9</string>
 
     <string name="common_ok">OK</string>
     <string name="common_cancel">Cancel</string>
@@ -144,7 +144,9 @@
     <string name="decryptor_custom_key_hint">Default: 88329851</string>
     <string name="decryptor_action_decrypt">Start Decryption</string>
     <string name="decryptor_action_encrypt">Start Passive Encryption</string>
-    <string name="decryptor_action_to_converter">Pass to World Converter</string>
+    <string name="decryptor_action_to_converter">Carry Decrypted Map to Converter</string>
+    <string name="crypt_handoff_missing">Decrypted world directory not found, please decrypt again</string>
+    <string name="crypt_handoff_failed">Failed to hand off decrypted world to converter</string>
 
     <string name="settings_category_appearance">Interface &amp; Appearance</string>
     <string name="settings_language_title">App Language</string>
@@ -155,8 +157,11 @@
     <string name="settings_language_ja">日本語</string>
     <string name="settings_dynamic_color_title">Dynamic Color (Monet)</string>
     <string name="settings_dynamic_color_desc">Adapt theme colors to system wallpaper</string>
+    <string name="settings_dynamic_color_unsupported">Dynamic color requires Android 12+; using default theme palette</string>
     <string name="settings_dark_mode_title">Dark Mode Follows System</string>
     <string name="settings_dark_mode_desc">Automatically switch between light and dark themes</string>
+    <string name="settings_theme_light">Light Mode</string>
+    <string name="settings_theme_dark">Dark Mode</string>
     <string name="settings_category_engine">Engine &amp; Performance</string>
     <string name="settings_jvm_heap_title">JVM Max Heap Allocation</string>
     <string name="settings_jvm_heap_current">Current: %1$d MB</string>
@@ -178,7 +183,7 @@
     <string name="about_team_org">Current Maintainer</string>
     <string name="about_team_contributors">Core Contributors</string>
     <string name="about_team_license">Open Source License</string>
-    <string name="about_features_title">Beta 0.8 Features &amp; Highlights</string>
+    <string name="about_features_title">Beta 0.9 Features &amp; Highlights</string>
     <string name="about_feature_pack">Bidirectional Resource Pack Converter</string>
     <string name="about_feature_pack_desc">Full bidirectional Java &amp; Bedrock resource pack conversion, model &amp; blockstates mapping, texture adaptation, and safe MCMETA frame expansion</string>
     <string name="about_feature_midi">MIDI to Redstone Music &amp; World Workshop</string>
@@ -924,6 +929,7 @@
     <string name="cli_log_jar_verified">[SYSTEM] cli.jar verified (%1$d KB)</string>
     <string name="maid_report_header">=== MAID™ INSPECTION REPORT ===</string>
     <string name="maid_report_device">Device: %1$s (%2$s)</string>
+    <string name="maid_report_os">OS Version: %1$s</string>
     <string name="maid_report_cpu">CPU: %1$d cores @ %2$d MHz (Score: %3$d)</string>
     <string name="maid_report_ram">RAM: Total %1$d MB, Free %2$d MB</string>
     <string name="maid_report_heap">Heap: Used %1$d MB / Max %2$d MB</string>
@@ -932,6 +938,7 @@
     <string name="maid_report_events">Recent Audit Events: %1$d</string>
     <string name="maid_report_event_line"> - [%1$s] [%2$s] %3$s: %4$s (target: %5$s)</string>
     <string name="maid_overview_device_model">Device Model: %1$s</string>
+    <string name="maid_overview_os_version">OS Version: %1$s</string>
     <string name="maid_overview_cpu_specs">CPU: %1$d cores · %2$d MHz · Score: %3$d</string>
     <string name="maid_overview_memory_section">Memory &amp; Storage Watermarks</string>
     <string name="maid_overview_art_heap">ART Heap: %1$d MB / %2$d MB</string>

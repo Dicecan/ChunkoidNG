@@ -25,10 +25,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.noches.chunkoidng.ui.components.ChunkoidNavigationBar
 import com.noches.chunkoidng.ui.components.ChunkoidTopAppBar
 import com.noches.chunkoidng.ui.screens.about.AboutScreen
@@ -152,10 +154,21 @@ fun MainAppScaffold(
                 )
             }
 
-            composable("world_converter") {
+            composable(
+                route = "world_converter?handoffDir={handoffDir}",
+                arguments = listOf(
+                    navArgument("handoffDir") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val handoffDir = backStackEntry.arguments?.getString("handoffDir")
                 com.noches.chunkoidng.ui.screens.converter.WorldConverterScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToHistory = { navController.navigate("conversion_history") }
+                    onNavigateToHistory = { navController.navigate("conversion_history") },
+                    handoffDir = handoffDir
                 )
             }
 
@@ -169,8 +182,9 @@ fun MainAppScaffold(
             composable("netease_crypt") {
                 NetEaseCryptScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToConverter = {
-                        navController.navigate("world_converter") {
+                    onNavigateToConverter = { worldDirPath ->
+                        val encoded = Uri.encode(worldDirPath)
+                        navController.navigate("world_converter?handoffDir=$encoded") {
                             launchSingleTop = true
                         }
                     }

@@ -103,13 +103,16 @@ import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 fun WorldConverterScreen(
     onNavigateBack: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    handoffDir: String? = null,
     viewModel: WorldConverterViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        if (uiState.stage == ConverterStage.SELECT_SOURCE) {
+    LaunchedEffect(handoffDir) {
+        if (!handoffDir.isNullOrBlank()) {
+            viewModel.loadHandoffWorld(handoffDir)
+        } else if (uiState.stage == ConverterStage.SELECT_SOURCE) {
             viewModel.loadPreStagedWorld()
         }
     }

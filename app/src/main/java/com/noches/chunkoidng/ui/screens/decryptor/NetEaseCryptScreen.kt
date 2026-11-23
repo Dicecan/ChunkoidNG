@@ -80,7 +80,7 @@ import com.noches.chunkoidng.ui.theme.ExpressiveShapes
 @Composable
 fun NetEaseCryptScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToConverter: () -> Unit,
+    onNavigateToConverter: (String) -> Unit,
     viewModel: NetEaseCryptViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -190,9 +190,14 @@ fun NetEaseCryptScreen(
                                 exportLauncher.launch(null)
                             },
                             onGoToConverter = {
-                                viewModel.prepareHandoffToConverter {
-                                    onNavigateToConverter()
-                                }
+                                viewModel.prepareHandoffToConverter(
+                                    onReady = { worldDirPath ->
+                                        onNavigateToConverter(worldDirPath)
+                                    },
+                                    onError = { msg ->
+                                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                    }
+                                )
                             },
                             onNewTask = { viewModel.resetState() }
                         )
@@ -503,9 +508,18 @@ private fun CompletedView(
                 onClick = onGoToConverter,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = ExpressiveShapes.medium,
+                enabled = !uiState.isHandingOff && !uiState.isExporting,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Icon(Icons.Outlined.SwapHoriz, contentDescription = null)
+                if (uiState.isHandingOff) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(Icons.Outlined.SwapHoriz, contentDescription = null)
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.decryptor_action_to_converter), fontWeight = FontWeight.Bold)
             }

@@ -21,6 +21,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _uiState = MutableStateFlow(
         SettingsUiState(
             dynamicColorEnabled = prefs.dynamicColorEnabled,
+            followSystemDarkMode = prefs.followSystemDarkMode,
+            manualDarkMode = prefs.manualDarkMode,
             lowRamModeEnabled = prefs.lowRamModeEnabled,
             wakeLockEnabled = prefs.wakeLockEnabled,
             keepOriginalNbt = prefs.keepOriginalNbt,
@@ -47,6 +49,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 _uiState.update { it.copy(appLanguage = lang) }
             }
             .launchIn(viewModelScope)
+
+        AppPreferences.themeRevision
+            .onEach {
+                _uiState.update {
+                    it.copy(
+                        dynamicColorEnabled = prefs.dynamicColorEnabled,
+                        followSystemDarkMode = prefs.followSystemDarkMode,
+                        manualDarkMode = prefs.manualDarkMode
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun updateAppLanguage(language: String) {
@@ -69,6 +83,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun updateDynamicColor(enabled: Boolean) {
         prefs.dynamicColorEnabled = enabled
         _uiState.update { it.copy(dynamicColorEnabled = enabled) }
+    }
+
+    fun updateFollowSystemDarkMode(enabled: Boolean) {
+        prefs.followSystemDarkMode = enabled
+        _uiState.update { it.copy(followSystemDarkMode = enabled) }
+    }
+
+    fun updateManualDarkMode(isDark: Boolean) {
+        prefs.manualDarkMode = isDark
+        _uiState.update { it.copy(manualDarkMode = isDark) }
     }
 
     fun updateLowRamMode(enabled: Boolean) {
@@ -154,6 +178,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
 data class SettingsUiState(
     val dynamicColorEnabled: Boolean = true,
+    val followSystemDarkMode: Boolean = true,
+    val manualDarkMode: Boolean = false,
     val lowRamModeEnabled: Boolean = false,
     val wakeLockEnabled: Boolean = true,
     val keepOriginalNbt: Boolean = false,

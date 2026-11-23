@@ -7,7 +7,7 @@ export const docPages = [
       title: '快速开始',
       summary: '首次安装后需要了解的运行环境、权限与基本流程。',
       sections: [
-        { heading: '安装与首次启动', paragraphs: ['Chunkoid NG 当前处于 Beta 0.8 测试阶段，请从下载页或项目仓库获取安装包。', '首次启动时，应用需要复制内置的 OpenJDK 17 运行环境（RootFS）到应用私有目录，此过程只需一次，请保持应用处于前台。'] },
+        { heading: '安装与首次启动', paragraphs: ['Chunkoid NG 当前处于 Beta 0.9 测试阶段，请从下载页或项目仓库获取安装包。', '首次启动时，应用需要复制内置的 OpenJDK 17 运行环境（RootFS）到应用私有目录，此过程只需一次，请保持应用处于前台。'] },
         { heading: '权限说明', list: ['通知权限：用于展示转换进度与完成提醒（Android 13 及以上需要手动授予）。', '前台服务：保证长时间转换过程不被系统回收。', '电池优化白名单：可选，授予后长时间转换更稳定，部分厂商系统需要额外设置。', '存储访问：通过系统文件选择器（SAF）授权，应用只会访问你主动选择的目录，不会遍历整机存储。'] },
         { heading: '推荐工作流', list: ['在「功能」页进入「存档转换」。', '选择世界文件夹或 .zip / .mcworld 压缩包。', '等待应用读取世界信息，确认识别的平台与版本正确。', '选择目标版本，按需配置维度裁剪与世界设置。', '开始转换，保持应用在后台运行，等待完成通知。', '导出到目标目录，并在游戏内验证存档可正常读取。'] }
       ]
@@ -16,7 +16,7 @@ export const docPages = [
       title: 'Getting Started',
       summary: 'Runtime, permissions and the basic workflow to know after installing.',
       sections: [
-        { heading: 'Installation and first launch', paragraphs: ['Chunkoid NG is currently in the Beta 0.8 release stage. Get the installer from the download page or the repository.', 'On first launch the app needs to copy its bundled OpenJDK 17 runtime (RootFS) into the app private directory. This happens only once — keep the app in the foreground while it completes.'] },
+        { heading: 'Installation and first launch', paragraphs: ['Chunkoid NG is currently in the Beta 0.9 release stage. Get the installer from the download page or the repository.', 'On first launch the app needs to copy its bundled OpenJDK 17 runtime (RootFS) into the app private directory. This happens only once — keep the app in the foreground while it completes.'] },
         { heading: 'Permissions', list: ['Notifications: used to show conversion progress and completion alerts (must be granted manually on Android 13 and above).', 'Foreground service: keeps long conversions from being reclaimed by the system.', 'Battery optimization allowlist: optional. Granting it makes long conversions more stable; some vendor ROMs require extra steps.', 'Storage access: granted through the system file picker (SAF). The app only accesses directories you explicitly choose and never scans your entire storage.'] },
         { heading: 'Recommended workflow', list: ['Open "World Conversion" from the Features page.', 'Select a world folder or a .zip / .mcworld archive.', 'Wait for the app to read the world metadata and confirm the detected platform and version are correct.', 'Choose the target version and configure dimension pruning and world settings as needed.', 'Start the conversion, keep the app running in the background, and wait for the completion notification.', 'Export to your target directory and verify in-game that the world loads correctly.'] }
       ]
@@ -25,7 +25,7 @@ export const docPages = [
       title: 'はじめに',
       summary: 'インストール後に知っておきたい実行環境、権限、基本的な流れ。',
       sections: [
-        { heading: 'インストールと初回起動', paragraphs: ['Chunkoid NG は現在 Beta 0.8 ベータテスト段階です。インストーラはダウンロードページまたはリポジトリから入手してください。', '初回起動時、アプリは内蔵の OpenJDK 17 実行環境（RootFS）をアプリ専用ディレクトリへコピーします。この処理は一度だけなので、完了するまでアプリを前面に保ってください。'] },
+        { heading: 'インストールと初回起動', paragraphs: ['Chunkoid NG は現在 Beta 0.9 ベータテスト段階です。インストーラはダウンロードページまたはリポジトリから入手してください。', '初回起動時、アプリは内蔵の OpenJDK 17 実行環境（RootFS）をアプリ専用ディレクトリへコピーします。この処理は一度だけなので、完了するまでアプリを前面に保ってください。'] },
         { heading: '権限について', list: ['通知：変換の進捗と完了を知らせるために使用します（Android 13 以降では手動での許可が必要です）。', 'フォアグラウンドサービス：長時間の変換がシステムに回収されないようにします。', '電池最適化の除外：任意です。許可すると長時間の変換が安定します。メーカー製 ROM では追加設定が必要な場合があります。', 'ストレージアクセス：システムのファイル選択（SAF）で許可します。アプリはあなたが選んだフォルダにのみアクセスし、端末全体を走査することはありません。'] },
         { heading: 'おすすめの流れ', list: ['「機能」ページから「ワールド変換」を開きます。', 'ワールドフォルダ、または .zip / .mcworld を選択します。', 'アプリがワールド情報を読み取るまで待ち、判定されたプラットフォームとバージョンが正しいか確認します。', '変換先のバージョンを選び、必要に応じてディメンション整理とワールド設定を行います。', '変換を開始し、アプリをバックグラウンドで動かしたまま完了通知を待ちます。', '目的のフォルダへ書き出し、ゲーム内で正常に読み込めることを確認します。'] }
       ]
@@ -39,7 +39,7 @@ export const docPages = [
       sections: [
         { heading: '支持的范围', list: ['方向：Java 版 → 基岩版，基岩版 → Java 版。', '版本：约 1.8.8 至 1.21+，可在目标版本列表中自由选择。', '输入形式：世界文件夹、.zip 压缩包、.mcworld 文件。'] },
         { heading: '版本选择建议', paragraphs: ['应用会在读取世界后自动推荐一个「等价目标版本」，这是按游戏世代推荐的双端对应基线，通常是最稳妥的选择。', '若目标版本低于源版本（降级），应用会给出风险提示。涉及 1.18 的世界高度扩展或 1.13 的方块扁平化时，降级可能造成不可逆的数据损失。'] },
-        { heading: '生物与实体智能迁移（Beta 0.8 突破）', paragraphs: ['Chunkoid NG 首创全量生物与实体智能迁移流水线，彻底攻克上游 Chunker 仅注册画与物品展示框导致生物全空或成为「空壳」的历史痛点。', '工作台默认开启【生物与实体迁移】开关。Chunker 处理完区块地形后，系统自动执行后置实体迁移流水线。'], list: ['全向覆盖：支持 JE ↔ BE 双向互转、JE ↔ JE 跨版本（1.17+ entities/*.mca 提取与 1.20.5+ 装备格式适配）及 BE ➔ BE 跨版本。', '村民交易完整保留：深度解析 Offers.Recipes，保留附魔书（如经验修补）、绿宝石比率、交易等级与补货上限。', '跨区块引用与挂接修复：通过全局维度拓扑重构与确定性拴绳桩映射，彻底解决猪与栅栏跨区块拴绳断裂消失、船/矿车与村民跨区块脱节难题。', '类型安全与模组过滤：显式转换基岩整数型 Health 为 Java FloatTag 杜绝加载崩溃，自动识别并剔除第三方模组实体。'] },
+        { heading: '生物与实体智能迁移（Beta 0.9 突破）', paragraphs: ['Chunkoid NG 首创全量生物与实体智能迁移流水线，彻底攻克上游 Chunker 仅注册画与物品展示框导致生物全空或成为「空壳」的历史痛点。', '工作台默认开启【生物与实体迁移】开关。Chunker 处理完区块地形后，系统自动执行后置实体迁移流水线。'], list: ['全向覆盖：支持 JE ↔ BE 双向互转、JE ↔ JE 跨版本（1.17+ entities/*.mca 提取与 1.20.5+ 装备格式适配）及 BE ➔ BE 跨版本。', '村民交易完整保留：深度解析 Offers.Recipes，保留附魔书（如经验修补）、绿宝石比率、交易等级与补货上限。', '跨区块引用与挂接修复：通过全局维度拓扑重构与确定性拴绳桩映射，彻底解决猪与栅栏跨区块拴绳断裂消失、船/矿车与村民跨区块脱节难题。', '类型安全与模组过滤：显式转换基岩整数型 Health 为 Java FloatTag 杜绝加载崩溃，自动识别并剔除第三方模组实体。'] },
         { heading: '转换过程', paragraphs: ['转换由内置的 Chunker CLI 在 OpenJDK 17 沙箱中执行，全程离线。', '进度按引擎输出实时解析，同时提供原始日志视图，便于排查异常。', '产物会先写入临时目录并校验（需包含 level.dat 或 db/ 目录）后才正式落盘，失败时会自动清理临时文件。'] },
         { heading: '注意事项', list: ['务必在转换前备份原始存档。', '大型存档转换耗时较长，建议连接电源并使用前台服务模式。', '转换完成后请在游戏内实际进入一次，确认区块、实体与红石机械表现正常。'] }
       ]
@@ -50,7 +50,7 @@ export const docPages = [
       sections: [
         { heading: 'Supported range', list: ['Directions: Java → Bedrock and Bedrock → Java.', 'Versions: roughly 1.8.8 through 1.21+, freely selectable from the target version list.', 'Inputs: world folders, .zip archives and .mcworld files.'] },
         { heading: 'Choosing a target version', paragraphs: ['After reading a world, the app recommends an "equivalent target version" — the paired baseline for that game epoch, and usually the safest choice.', 'If the target version is lower than the source (a downgrade), the app shows a risk warning. When the 1.18 world height expansion or the 1.13 block flattening is involved, downgrading can cause irreversible data loss.'] },
-        { heading: 'Smart Entity Migration (Beta 0.8 Breakthrough)', paragraphs: ['Chunkoid NG introduces an independently developed full entity migration pipeline, solving the long-standing limitation where upstream Chunker only supports 4 decorative entities.', 'The entity migration toggle is enabled by default in the workbench. After Chunker finishes processing terrain and blocks, Chunkoid NG runs its custom entity pipeline.'], list: ['Quad-directional coverage: Supports JE ↔ BE, BE ➔ JE, JE ➔ JE cross-version (handling 1.17+ entities/*.mca split and 1.20.5+ equipment schemas), and BE ➔ BE cross-version.', 'Full villager trade retention: Faithfully translates Offers.Recipes, preserving Mending and enchanted books, emerald exchange counts, villager profession levels, and replenishment limits.', 'Cross-chunk links & mounts: Staged global topology scanning and deterministic knot IDs keep leashed animals attached to distant fences and passengers seated in vehicles across chunk borders.', 'Type safety & mod filtering: Explicitly casts Bedrock integer Health to Java FloatTag to prevent deserialization crashes, and automatically strips modded entities to ensure target world integrity.'] },
+        { heading: 'Smart Entity Migration (Beta 0.9 Breakthrough)', paragraphs: ['Chunkoid NG introduces an independently developed full entity migration pipeline, solving the long-standing limitation where upstream Chunker only supports 4 decorative entities.', 'The entity migration toggle is enabled by default in the workbench. After Chunker finishes processing terrain and blocks, Chunkoid NG runs its custom entity pipeline.'], list: ['Quad-directional coverage: Supports JE ↔ BE, BE ➔ JE, JE ➔ JE cross-version (handling 1.17+ entities/*.mca split and 1.20.5+ equipment schemas), and BE ➔ BE cross-version.', 'Full villager trade retention: Faithfully translates Offers.Recipes, preserving Mending and enchanted books, emerald exchange counts, villager profession levels, and replenishment limits.', 'Cross-chunk links & mounts: Staged global topology scanning and deterministic knot IDs keep leashed animals attached to distant fences and passengers seated in vehicles across chunk borders.', 'Type safety & mod filtering: Explicitly casts Bedrock integer Health to Java FloatTag to prevent deserialization crashes, and automatically strips modded entities to ensure target world integrity.'] },
         { heading: 'How conversion runs', paragraphs: ['Conversion is performed by the bundled Chunker CLI inside the OpenJDK 17 sandbox, fully offline.', 'Progress is parsed live from engine output, and a raw log view is available for troubleshooting.', 'Output is first written to a temporary directory and validated (it must contain level.dat or a db/ directory) before being committed; temporary files are cleaned up automatically on failure.'] },
         { heading: 'Caveats', list: ['Always back up the original world before converting.', 'Large worlds take a long time; connecting a charger and using foreground service mode is recommended.', 'After conversion, actually load the world once in-game to confirm chunks, entities and redstone contraptions behave correctly.'] }
       ]
@@ -61,7 +61,7 @@ export const docPages = [
       sections: [
         { heading: '対応範囲', list: ['方向：Java 版 → 統合版、統合版 → Java 版。', 'バージョン：約 1.8.8 〜 1.21+。変換先の一覧から自由に選択できます。', '入力形式：ワールドフォルダ、.zip、.mcworld ファイル。'] },
         { heading: '変換先バージョンの選び方', paragraphs: ['ワールドを読み取ると、アプリが「対応する基準バージョン」を自動で提案します。これはゲーム世代ごとの対応関係に基づくもので、通常は最も安全な選択です。', '変換先が元のバージョンより低い場合（ダウングレード）、アプリがリスクを警告します。1.18 のワールド高さ拡張や 1.13 のブロック平坦化が関わる場合、ダウングレードは元に戻せないデータ損失を招くことがあります。'] },
-        { heading: '生物・エンティティ全量変換（Beta 0.8 画期的機能）', paragraphs: ['Chunkoid NG は自社開発の全量エンティティ移行パイプラインを搭載し、従来の変換ツールで Chunker が装飾エンティティ 4 種のみしか扱えず、生物が空洞化・消失していた問題を根本解決しました。', 'ワールド変換作業台の【生物とエンティティの移行】スイッチは標準で有効になっています。Chunker が地形とブロックの変換を終えた後、専用のエンティティ処理パイプラインが自動実行されます。'], list: ['全方向対応：JE ➔ BE、BE ➔ JE の双方向はもちろん、JE ➔ JE（1.17+ entities/*.mca と旧形式の相互変換、1.20.5+ 装備辞書対応）や BE ➔ BE の世代間移行にも完全対応。', '村人の取引内容を完全維持：Offers.Recipes を双方向で正確に変換し、修繕などのエンチャント本、エメラルドの取引数、取引ランク、補充上限をそのまま維持。', 'チャンク間参照・騎乗リンクの修復：グローバル次元トポロジーと決定論的首ひも杭により、チャンクをまたぐ柵と動物の首ひも切れや、ボート・トロッコ・馬と乗員の分離を解消。', '型安全性と MOD フィルタリング：統合版の整数型 Health を Java 版の FloatTag へ明示変換してクラッシュを防止し、非標準の MOD エンティティを自動除外して安全性を確保。'] },
+        { heading: '生物・エンティティ全量変換（Beta 0.9 画期的機能）', paragraphs: ['Chunkoid NG は自社開発の全量エンティティ移行パイプラインを搭載し、従来の変換ツールで Chunker が装飾エンティティ 4 種のみしか扱えず、生物が空洞化・消失していた問題を根本解決しました。', 'ワールド変換作業台の【生物とエンティティの移行】スイッチは標準で有効になっています。Chunker が地形とブロックの変換を終えた後、専用のエンティティ処理パイプラインが自動実行されます。'], list: ['全方向対応：JE ➔ BE、BE ➔ JE の双方向はもちろん、JE ➔ JE（1.17+ entities/*.mca と旧形式の相互変換、1.20.5+ 装備辞書対応）や BE ➔ BE の世代間移行にも完全対応。', '村人の取引内容を完全維持：Offers.Recipes を双方向で正確に変換し、修繕などのエンチャント本、エメラルドの取引数、取引ランク、補充上限をそのまま維持。', 'チャンク間参照・騎乗リンクの修復：グローバル次元トポロジーと決定論的首ひも杭により、チャンクをまたぐ柵と動物の首ひも切れや、ボート・トロッコ・馬と乗員の分離を解消。', '型安全性と MOD フィルタリング：統合版の整数型 Health を Java 版の FloatTag へ明示変換してクラッシュを防止し、非標準の MOD エンティティを自動除外して安全性を確保。'] },
         { heading: '変換の流れ', paragraphs: ['変換は内蔵の Chunker CLI が OpenJDK 17 サンドボックス上で実行し、すべてオフラインで完結します。', '進捗はエンジンの出力からリアルタイムに解析され、生のログ表示も確認できるため、異常の切り分けに役立ちます。', '出力はまず一時ディレクトリに書き込まれ、検証（level.dat または db/ ディレクトリの存在を確認）を経てから確定します。失敗時は一時ファイルが自動で削除されます。'] },
         { heading: '注意事項', list: ['変換前に必ず元のワールドをバックアップしてください。', '大きなワールドの変換は時間がかかるため、電源に接続し、フォアグラウンドサービスを有効にすることをおすすめします。', '変換後はゲーム内で一度実際に入り、チャンク・エンティティ・レッドストーン装置が正常か確認してください。'] }
       ]
@@ -223,13 +223,13 @@ export const docPages = [
   {
     slug: 'maid-governance',
     'zh-CN': {
-      title: 'MAID™ 安全与资源治理 (Beta 0.8 预览)',
+      title: 'MAID™ 安全与资源治理 (Beta 0.9 预览)',
       summary: '全架构完整性守卫、Zip 炸弹防御、温和截断与女仆™巡检看板说明。',
       sections: [
         {
           heading: '什么是 MAID™',
           paragraphs: [
-            'MAID (Managed Architecture for Integrity & Defense，全架构完整性与安全防御系统) 是 Chunkoid NG 正在为 Beta 0.8 集成研发的底层安全与性能治理核心，在软件内拟人化简写为「女仆™」。',
+            'MAID (Managed Architecture for Integrity & Defense，全架构完整性与安全防御系统) 是 Chunkoid NG 正在为 Beta 0.9 集成研发的底层安全与性能治理核心，在软件内拟人化简写为「女仆™」。',
             '在过去，路径校验、解压安全与防炸弹限制分散在各个独立业务模块中；MAID 将所有安全守卫统一收拢进 defense、tuning、audit 三大子系统，实现全局一致的防御与资源调控。'
           ]
         },
@@ -258,7 +258,7 @@ export const docPages = [
       ]
     },
     en: {
-      title: 'MAID™ Security & Governance (Beta 0.8 Preview)',
+      title: 'MAID™ Security & Governance (Beta 0.9 Preview)',
       summary: 'App-wide integrity guard, zip bomb shield, gentle truncation and MAID™ dashboard.',
       sections: [
         {
@@ -293,7 +293,7 @@ export const docPages = [
       ]
     },
     ja: {
-      title: 'MAID™ セキュリティと統治 (Beta 0.8 プレビュー)',
+      title: 'MAID™ セキュリティと統治 (Beta 0.9 プレビュー)',
       summary: 'アプリ全体の保全防御、書庫爆弾対策、安全切詰とメイド™巡回看板の解説。',
       sections: [
         {
